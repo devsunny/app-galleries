@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.asksunny.galleries.web.mvc.persistence.UserMapper">
+
+  <cache />
+
+  <select id="getAllUser" resultType="User">
+    SELECT
+    USERS.firstName,
+	USERS.lastName,
+	USERS.userid,
+	USERS.password
+    FROM USERS   
+  </select>
+  
+  <select id="getUserByUserid" parameterType="string" resultType="User">
+    SELECT
+    USERS.firstName,
+	USERS.lastName,
+	USERS.userid,
+	USERS.password
+    FROM USERS
+    WHERE USERS.USERID = #{userid}     
+  </select>
+
+  <select id="getUserByUseridAndPassword" parameterType="User" resultType="User">
+    SELECT
+    USERS.firstName,
+	USERS.lastName,
+	USERS.userid,
+	USERS.password
+    FROM USERS
+    WHERE USERS.USERID = #{userid} AND #{password}
+  </select>
+
+  <update id="updateUser" parameterType="User">
+    UPDATE USERS SET     
+      FIRSTNAME = #{firstName},
+      LASTNAME = #{lastName},
+      PASSWORD = #{password}
+     WHERE USERID = #{userid}
+  </update>
+
+  <insert id="insertUser" parameterType="User">
+    INSERT INTO USERS
+      (FIRSTNAME, LASTNAME, USERID, Password)
+    VALUES
+      (#{firstName}, #{lastName}, #{userid}, #{password})
+  </insert>
+
+</mapper>
