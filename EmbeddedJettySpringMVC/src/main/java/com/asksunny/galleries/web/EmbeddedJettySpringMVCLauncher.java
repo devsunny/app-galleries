@@ -14,11 +14,9 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
@@ -81,15 +79,14 @@ public class EmbeddedJettySpringMVCLauncher {
 			}
 			server.setConnectors(new Connector[] { serverConnector });
 			String applocation = new ClassPathResource("webapp").getURI().toString();
-			ResourceHandler resource_handler = createStaticResourceHandler(new ClassPathResource("webapp").getURI().toString(), true, new String[] { "index.html" });
+			ResourceHandler resource_handler = createStaticResourceHandler(applocation, true, new String[] { "index.html" });
 			WebAppContext springContext = createSpringWebAppContext(applocation, "/mvc", "/*", new ClassPathResource("webapp/WEB-INF/spring/Spring-WebAppContext.xml").getURI().toString(), "dev");
 		
 
 			HandlerList handlers = new HandlerList();
-			handlers.setHandlers(new Handler[] { springContext,
-					resource_handler, new DefaultHandler() });
-			
-			server.setHandler(springContext);
+			handlers.setHandlers(new Handler[] { resource_handler, springContext,
+					 new DefaultHandler() });			
+			server.setHandler(handlers);
 
 			server.start();
 			server.join();
@@ -121,17 +118,13 @@ public class EmbeddedJettySpringMVCLauncher {
 		ResourceHandler resource_handler = new ResourceHandler();
 		resource_handler.setDirectoriesListed(allowDirListing);
 		if(welcomeFiles!=null) resource_handler.setWelcomeFiles(welcomeFiles);
-		resource_handler.setResourceBase(resourceBase);
+		resource_handler.setResourceBase(resourceBase);		
 		return resource_handler;
 	}
 
 	protected static WebApplicationContext createSpringContext(
-			String configPackagePath, String profile) {
-		
-		XmlWebApplicationContext context = new XmlWebApplicationContext();
-		//context.setConfigLocation(new ClassPathResource("webapp/WEB-INF/spring/Spring-WebAppContext.xml").getURI().toString());
-		
-		//AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();	
+			String configPackagePath, String profile) {		
+		XmlWebApplicationContext context = new XmlWebApplicationContext();			
 		context.setConfigLocation(configPackagePath);		
 		if (profile != null)
 			context.getEnvironment().setDefaultProfiles(profile);
