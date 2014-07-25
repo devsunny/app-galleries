@@ -13,6 +13,7 @@ import com.asksunny.galleries.web.mvc.domain.User;
 import com.asksunny.galleries.web.mvc.service.UserService;
 
 @Controller
+@RequestMapping(value = "/user")
 public class UserServiceController {
 
 	@Autowired
@@ -22,13 +23,13 @@ public class UserServiceController {
 
 	}
 
-	@RequestMapping(value = "/user", method = RequestMethod.GET)
+	@RequestMapping(method = RequestMethod.GET)
 	public String getUser(Model model) {		
 		model.addAttribute("users", userService.getAllUser());
 		return "userlist";
 	}
 
-	@RequestMapping(value = "/user/{userid}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{userid}", method = RequestMethod.GET)
 	public String getUser(@PathVariable("userid") String userid, Model model) {
 		if(userid.equalsIgnoreCase("new")){
 			User user = new User();
@@ -40,7 +41,7 @@ public class UserServiceController {
 		return "userdetail";
 	}
 	
-	@RequestMapping(value = "/user", method = RequestMethod.POST)
+	@RequestMapping(method = RequestMethod.POST)
 	public String createOrUpdate(@ModelAttribute User user, BindingResult bndResult,  Model model) {
 		User  u = userService.getUser(user.getUserid());
 		if(u==null){

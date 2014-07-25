@@ -4,7 +4,7 @@
 <title>User Accounts</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link rel="stylesheet" type="text/css" media="all"
-	href="../../static/css/keyman.css" th:href="@{~/static/css/keyman.css}" />
+	href="../../static/css/keyman.css" th:href="@{~/static/css/userman.css}" />
 </head>
 <body>
  <h1>User list</h1>  
@@ -20,6 +20,6 @@
         <td th:text="${user.lastName}">Smith</td>
       </tr>
     </table>   
-    <p><a href="user/new" th:href="@{user/{id}(id='new')}">Add New User</a></p>  
+    <p><a href="user/new" th:href="@{/user/{id}(id='new')}">Add New User</a></p>  
 </body>
 </html>

@@ -2,6 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
 <title>User Detail</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" media="all"
+	href="../../static/css/keyman.css" th:href="@{~/static/css/userman.css}" />
 </head>
 <body>
 	<form action="user" th:attr="action=@{/user}" method="POST">
@@ -26,6 +29,6 @@
 				th:value="${#strings.isEmpty(user.userid)?'Add Me!':'Update Me!'}" />
 		</fieldset>
 	</form>
-	 <p><a href="user" th:href="@{user}">User List</a></p> 
+	 <p><a href="user" th:href="@{/user}">User List</a></p> 
 </body>
 </html>
