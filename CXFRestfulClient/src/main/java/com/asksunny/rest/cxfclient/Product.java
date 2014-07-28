@@ -1,4 +1,4 @@
-package com.asksunny.demo.rest.domain;
+package com.asksunny.rest.cxfclient;
 
 import java.util.Date;
 

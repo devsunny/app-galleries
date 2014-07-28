@@ -2,6 +2,7 @@ package com.asksunny.demo.rest.service;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -22,6 +23,9 @@ public class ProductService {
 			p.setManfacture(String.format("Name-%d_%d", pageNumber, index));
 			p.setQuantity(index*pageSize);
 			p.setMsrp(rand.nextDouble() * index * 10);
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DAY_OF_MONTH, rand.nextInt(100)*-1);
+			p.setManfacturedDate(cal.getTime());
 			products.add(p);
 		}
 		return products;
