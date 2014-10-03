@@ -24,21 +24,44 @@ public class JDBCServerHandler extends SimpleChannelInboundHandler<PostgresMessa
 			throws Exception 
 	{
 		PostgresMessage resp = new PostgresMessage();		
-		if(postgresMessage.getMessageType()==0){
+		if(postgresMessage.getMessageType()==0){			
+			ByteBuf in = postgresMessage.getMessage();
+			int val = in.readInt();
+			//byte[]  keyValPairs = in.array();
+			int len = in.readableBytes();
+			byte[] data = new byte[len];
+			in.readBytes(data);
+			int start = 0;
+			String key = null;
+			for(int i=0; i<data.length; i++)
+			{
+				byte b = data[i];
+				if(b==0 || i==data.length-1){
+					if(i==start) break;
+					String strVal = new String(data, start, i-start);					
+					if(key==null){
+						key = strVal;
+					}else{
+						connectionInfo.setProperty(key, strVal);
+						key = null;
+					}
+					start = i +1;
+				}
+				
+			}
 			resp.setMessageType('R');			
 		    ByteBuf buf = Unpooled.buffer();
 		    buf.writeInt(3);
 		    resp.setMessage(buf);
-		    ctx.writeAndFlush(resp);
-		  String xyz =   postgresMessage.getMessage().toString(CharsetUtil.UTF_8);
-		  System.out.println(xyz);
-		    
+		    ctx.writeAndFlush(resp);		    
 		}else{
 			System.out.println("What Type:" + (char)postgresMessage.getMessageType());
 			switch(postgresMessage.getMessageType())
 			{
 			case 'p':
-				//password message;
+				String password = postgresMessage.getMessage().toString(CharsetUtil.US_ASCII);
+				connectionInfo.setProperty("password", password);
+				//Authentication Here;
 				break;
 			case 'P':
 				//prepared
@@ -51,6 +74,9 @@ public class JDBCServerHandler extends SimpleChannelInboundHandler<PostgresMessa
 		
 	}
 
+	
+	
+	
 
 
 	@Override
