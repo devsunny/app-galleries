@@ -1,5 +1,7 @@
 package com.asksunny.odbc;
 
+import com.asksunny.ssl.SecureSocketSslContextFactory;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
@@ -21,9 +23,9 @@ public class ODBCServer {
 	 */
 	public static void main(String[] args) throws Exception{
 		// Configure SSL context
-		SelfSignedCertificate ssc = new SelfSignedCertificate();
-		final SslContext sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
-
+		//SelfSignedCertificate ssc = new SelfSignedCertificate();
+		//final SslContext sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
+		
 		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
@@ -36,7 +38,7 @@ public class ODBCServer {
 						public void initChannel(SocketChannel ch)
 								throws Exception {
 							ch.pipeline().addLast(
-									new ODBCServerHandler(sslCtx));
+									new ODBCServerHandler());
 						}
 					});
 
