@@ -25,6 +25,13 @@ public class PostgresMessage implements ReferenceCounted {
 		}
 		return this.message;
 	}
+	
+	public PostgresMessage initMessage() {
+		if (this.message == null) {
+			this.message = Unpooled.buffer();
+		}
+		return this;
+	}
 
 	public String readString() {
 		byte[] buf = new byte[this.message.readableBytes()];
@@ -37,23 +44,26 @@ public class PostgresMessage implements ReferenceCounted {
 		return new String(buf, CharsetUtil.US_ASCII);
 	}
 
-	public void writeString(String data) {
+	public PostgresMessage writeString(String data) {
 		this.message.writeBytes(data.getBytes(CharsetUtil.US_ASCII)).writeByte(
 				0);
+		return this;
 	}
 
-	public void writeString(String data1, String data2) {
+	public PostgresMessage writeString(String data1, String data2) {
 		this.message.writeBytes(data1.getBytes(CharsetUtil.US_ASCII))
 				.writeBytes(data2.getBytes(CharsetUtil.US_ASCII)).writeByte(0);
+		return this;
 	}
 
-	public void writeString(String data1, String data2, String data3) {
+	public PostgresMessage writeString(String data1, String data2, String data3) {
 		this.message.writeBytes(data1.getBytes(CharsetUtil.US_ASCII))
 				.writeBytes(data2.getBytes(CharsetUtil.US_ASCII))
 				.writeBytes(data3.getBytes(CharsetUtil.US_ASCII)).writeByte(0);
+		return this;
 	}
 	
-	public void writeString(String data1, String data2, String data3, String... moreStrs) {
+	public PostgresMessage writeString(String data1, String data2, String data3, String... moreStrs) {
 		this.message.writeBytes(data1.getBytes(CharsetUtil.US_ASCII))
 				.writeBytes(data2.getBytes(CharsetUtil.US_ASCII))
 				.writeBytes(data3.getBytes(CharsetUtil.US_ASCII));
@@ -61,7 +71,14 @@ public class PostgresMessage implements ReferenceCounted {
 			this.message.writeBytes(x.getBytes(CharsetUtil.US_ASCII));
 		}
 		this.message.writeByte(0);
+		return this;
 	}
+	
+	public PostgresMessage writeByte(int byteVal) {		
+		this.message.writeByte(byteVal);
+		return this;
+	}
+	
 
 	public ByteBuf getMessage() {
 		return message;
@@ -75,6 +92,10 @@ public class PostgresMessage implements ReferenceCounted {
 		super();
 		this.messageType = messageType;
 		this.message = message;
+	}
+	
+	public PostgresMessage(int messageType) {
+		this(messageType, null);		
 	}
 
 	public PostgresMessage() {

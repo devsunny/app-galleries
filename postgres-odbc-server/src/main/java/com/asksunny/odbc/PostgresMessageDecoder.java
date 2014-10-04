@@ -14,8 +14,6 @@ public class PostgresMessageDecoder extends ByteToMessageDecoder {
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in,
 			List<Object> out) throws Exception {
-		
-		System.out.println("------------------------------------------xxxxxxxx " + in.readableBytes());
 		if(inited){
 			if (in.readableBytes() < 5) {
 				return;
