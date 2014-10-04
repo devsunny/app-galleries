@@ -10,11 +10,15 @@ import java.util.List;
 
 import javax.net.ssl.SSLEngine;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.asksunny.ssl.SecureSocketSslContextFactory;
 
 public class ODBCServerHandler extends ByteToMessageDecoder {
 
-	
+	private static Logger logger = LoggerFactory
+			.getLogger(ODBCServerHandler.class);
 
 	public ODBCServerHandler() {
 		super();
@@ -24,6 +28,7 @@ public class ODBCServerHandler extends ByteToMessageDecoder {
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in,
 			List<Object> out) throws Exception {
+		if(logger.isDebugEnabled()) logger.debug("Detect request mode");
 		if (SslHandler.isEncrypted(in)) {
 			switchToSSLServer(ctx);
 		} else {
@@ -33,6 +38,7 @@ public class ODBCServerHandler extends ByteToMessageDecoder {
 	}
 
 	private void switchToSSLServer(ChannelHandlerContext ctx) {
+		if(logger.isDebugEnabled()) logger.debug("switch To SSL Mode");
 		ChannelPipeline p = ctx.pipeline();
 		SSLEngine engine = SecureSocketSslContextFactory.getServerContext()
 				.createSSLEngine();
@@ -46,6 +52,7 @@ public class ODBCServerHandler extends ByteToMessageDecoder {
 	}
 
 	private void switchToSSLNegotiate(ChannelHandlerContext ctx) {
+		if(logger.isDebugEnabled()) logger.debug("start up");
 		ChannelPipeline p = ctx.pipeline();
 		p.addLast("ssl-negodecoder", new SSLNegotiateDecoder());
 		p.addLast("String-encoder", new SSLNegotiateEncoder());

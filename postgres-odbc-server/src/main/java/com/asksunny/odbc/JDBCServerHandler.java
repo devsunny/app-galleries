@@ -23,11 +23,19 @@ import io.netty.util.CharsetUtil;
 public class JDBCServerHandler extends
 		SimpleChannelInboundHandler<PostgresMessage> {
 
+	
+	public final static String DATABASE = "database";
+	public final static String DATESTYLE = "DateStyle";
+	public final static String CLIENT_ENCODING = "client_encoding";
+	public final static String USER = "user";
+	public final static String EXTRA_FLOAT_DIGITS = "extra_float_digits";
+	public final static String TIMEZONE = "TimeZone";
+	public final static String DEFAULT_CLIENT_ENCODING = "UTF8";
 	private static Logger logger = LoggerFactory
 			.getLogger(JDBCServerHandler.class);
 	private Properties connectionInfo;
 	private boolean autoCommit = true;
-	private String clientEncoding = "ISO";
+	
 
 	public JDBCServerHandler() {
 		connectionInfo = new Properties();
@@ -55,6 +63,7 @@ public class JDBCServerHandler extends
 					if (key == null) {
 						key = strVal;
 					} else {
+						if(logger.isDebugEnabled()) logger.debug("{}:{}", key, strVal);
 						connectionInfo.setProperty(key, strVal);
 						key = null;
 					}
@@ -79,7 +88,6 @@ public class JDBCServerHandler extends
 				connectionInfo.setProperty("password", password);
 				try {
 					// Do authentication here;
-
 					PostgresMessage authOk = new PostgresMessage('R', null);
 					authOk.createBuffer().writeInt(0);
 					ctx.writeAndFlush(authOk);
@@ -96,7 +104,7 @@ public class JDBCServerHandler extends
 									.getProperty("user")));
 					ctx.writeAndFlush(new NameValuePair(
 							"standard_conforming_strings", "off")); // TODO
-					ctx.writeAndFlush(new NameValuePair("TimeZone", "EST"));
+					ctx.writeAndFlush(new NameValuePair("TimeZone", "America/New_York"));
 
 					PostgresMessage keyData = new PostgresMessage('K', null);
 					keyData.createBuffer().writeInt(1234).writeInt(4567);
@@ -119,9 +127,14 @@ public class JDBCServerHandler extends
 				break;
 			case 'Q':
 				String query = postgresMessage.readString();
-				System.out.println("query=----" + query);
-				
-				
+				System.out.println("query=----[" + query + "]");	
+				if(query!=null && query.trim().equalsIgnoreCase("select pg_client_encoding()")){
+					if(logger.isDebugEnabled()) logger.debug("Sending client encoding");
+					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
+				}else{
+					if(logger.isDebugEnabled()) logger.debug("Sending No data");
+					sendNoData(ctx);
+				}				
 				commandCompleted(ctx, SQLCommandType.OTHER, 0);
 				readyForQuery(ctx);
 				break;
@@ -146,6 +159,38 @@ public class JDBCServerHandler extends
 
 		}
 
+	}
+	
+	
+	protected void sendSettingQueryResponse(ChannelHandlerContext ctx, String settingName) throws Exception {
+		
+		String setting = getConnectionInfo().getProperty(settingName, DEFAULT_CLIENT_ENCODING);		
+		PostgresMessage metadata = new PostgresMessage('T');
+		metadata.createBuffer().writeShort(1);
+		metadata.writeString(settingName.toUpperCase());
+		// object ID
+		metadata.getMessage().writeInt(0);
+		// attribute number of the column
+		metadata.getMessage().writeShort(0);
+		// data type
+		metadata.getMessage().writeInt(PostgresTypes.PG_TYPE_VARCHAR);
+		// pg_type.typlen
+		metadata.getMessage().writeShort(
+				getTypeSize(PostgresTypes.PG_TYPE_VARCHAR, setting.getBytes().length +1));
+		// pg_attribute.atttypmod
+		metadata.getMessage().writeInt(-1);
+		// the format type: text = 0, binary = 1
+		metadata.getMessage()
+				.writeShort(formatAsText(PostgresTypes.PG_TYPE_VARCHAR) ? 0 : 1);
+		ctx.writeAndFlush(metadata);
+		
+		PostgresMessage dataRow = new PostgresMessage('D');		
+		dataRow.createBuffer().writeShort(1);	
+		byte[] data = setting.getBytes(getEncoding());
+        dataRow.getMessage().writeInt(data.length);
+        dataRow.getMessage().writeBytes(data);        
+        ctx.writeAndFlush(dataRow);
+		
 	}
 
 	protected void sendNoData(ChannelHandlerContext ctx) throws Exception {
@@ -222,8 +267,9 @@ public class JDBCServerHandler extends
     }
 	
 	private String getEncoding() {
-        if ("UNICODE".equals(clientEncoding)) {
-            return "UTF-8";
+        String clientEncoding = getConnectionInfo().getProperty(CLIENT_ENCODING, DEFAULT_CLIENT_ENCODING);
+		if ("UNICODE".equals(clientEncoding)) {
+            return "UTF8";
         }
         return clientEncoding;
     }
