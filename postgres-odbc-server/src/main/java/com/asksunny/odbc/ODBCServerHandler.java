@@ -40,6 +40,7 @@ public class ODBCServerHandler extends ByteToMessageDecoder {
 		p.addLast("ssl", new SslHandler(engine));
 		p.addLast("postgres-message-decoder", new PostgresMessageDecoder());
 		p.addLast("postgres-message-encoder", new PostgresMessageEncoder());
+		p.addLast("name-value-encoder", new NameValuePairEncoder());
 		p.addLast("jdbcServerHandler", new JDBCServerHandler());
 		p.remove(this);
 	}

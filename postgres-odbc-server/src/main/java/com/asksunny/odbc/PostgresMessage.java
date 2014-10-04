@@ -1,6 +1,8 @@
 package com.asksunny.odbc;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCounted;
 
 public class PostgresMessage implements ReferenceCounted {
@@ -15,7 +17,50 @@ public class PostgresMessage implements ReferenceCounted {
 
 	public void setMessageType(int messageType) {
 		this.messageType = messageType;
+	}
 
+	public ByteBuf createBuffer() {
+		if (this.message == null) {
+			this.message = Unpooled.buffer();
+		}
+		return this.message;
+	}
+
+	public String readString() {
+		byte[] buf = new byte[this.message.readableBytes()];
+		for (int i = 0; i < buf.length; i++) {
+			buf[i] = this.message.readByte();
+			if (buf[i] == 0) {
+				break;
+			}
+		}
+		return new String(buf, CharsetUtil.US_ASCII);
+	}
+
+	public void writeString(String data) {
+		this.message.writeBytes(data.getBytes(CharsetUtil.US_ASCII)).writeByte(
+				0);
+	}
+
+	public void writeString(String data1, String data2) {
+		this.message.writeBytes(data1.getBytes(CharsetUtil.US_ASCII))
+				.writeBytes(data2.getBytes(CharsetUtil.US_ASCII)).writeByte(0);
+	}
+
+	public void writeString(String data1, String data2, String data3) {
+		this.message.writeBytes(data1.getBytes(CharsetUtil.US_ASCII))
+				.writeBytes(data2.getBytes(CharsetUtil.US_ASCII))
+				.writeBytes(data3.getBytes(CharsetUtil.US_ASCII)).writeByte(0);
+	}
+	
+	public void writeString(String data1, String data2, String data3, String... moreStrs) {
+		this.message.writeBytes(data1.getBytes(CharsetUtil.US_ASCII))
+				.writeBytes(data2.getBytes(CharsetUtil.US_ASCII))
+				.writeBytes(data3.getBytes(CharsetUtil.US_ASCII));
+		for(String x:moreStrs){
+			this.message.writeBytes(x.getBytes(CharsetUtil.US_ASCII));
+		}
+		this.message.writeByte(0);
 	}
 
 	public ByteBuf getMessage() {
