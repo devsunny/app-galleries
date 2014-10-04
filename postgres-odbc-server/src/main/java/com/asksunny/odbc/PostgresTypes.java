@@ -32,6 +32,11 @@ public class PostgresTypes {
     public static final int PG_TYPE_NUMERIC = 1700;
     
     
+    
+   
+    
+    
+    
     /**
      * Convert the SQL type to a PostgreSQL type
      *

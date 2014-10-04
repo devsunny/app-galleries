@@ -6,6 +6,12 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
 
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.set.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,16 +20,16 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.CharsetUtil;
+
 /**
  * This class is impired by H2 Database PGServer and PGServerThread Class;
  * 
  * @author SunnyLiu
- *
+ * 
  */
 public class JDBCServerHandler extends
 		SimpleChannelInboundHandler<PostgresMessage> {
 
-	
 	public final static String DATABASE = "database";
 	public final static String DATESTYLE = "DateStyle";
 	public final static String CLIENT_ENCODING = "client_encoding";
@@ -35,7 +41,6 @@ public class JDBCServerHandler extends
 			.getLogger(JDBCServerHandler.class);
 	private Properties connectionInfo;
 	private boolean autoCommit = true;
-	
 
 	public JDBCServerHandler() {
 		connectionInfo = new Properties();
@@ -63,7 +68,8 @@ public class JDBCServerHandler extends
 					if (key == null) {
 						key = strVal;
 					} else {
-						if(logger.isDebugEnabled()) logger.debug("{}:{}", key, strVal);
+						if (logger.isDebugEnabled())
+							logger.debug("{}:{}", key, strVal);
 						connectionInfo.setProperty(key, strVal);
 						key = null;
 					}
@@ -104,7 +110,8 @@ public class JDBCServerHandler extends
 									.getProperty("user")));
 					ctx.writeAndFlush(new NameValuePair(
 							"standard_conforming_strings", "off")); // TODO
-					ctx.writeAndFlush(new NameValuePair("TimeZone", "America/New_York"));
+					ctx.writeAndFlush(new NameValuePair("TimeZone",
+							"America/New_York"));
 
 					PostgresMessage keyData = new PostgresMessage('K', null);
 					keyData.createBuffer().writeInt(1234).writeInt(4567);
@@ -126,15 +133,18 @@ public class JDBCServerHandler extends
 				readyForQuery(ctx);
 				break;
 			case 'Q':
-				String query = postgresMessage.readString();
-				System.out.println("query=----[" + query + "]");	
-				if(query!=null && query.trim().equalsIgnoreCase("select pg_client_encoding()")){
-					if(logger.isDebugEnabled()) logger.debug("Sending client encoding");
-					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
-				}else{
-					if(logger.isDebugEnabled()) logger.debug("Sending No data");
-					sendNoData(ctx);
-				}				
+				String query = postgresMessage.readString().trim();
+				if (logger.isDebugEnabled())
+					logger.debug("Query:[{}]", query);
+				int queryStatus = processQuery(ctx, query);
+				switch (queryStatus) {				
+				case SQLCommandType.PG_QUERY_GET_CLIENT_PROP:
+					if(logger.isDebugEnabled()) logger.debug("PG_QUERY_GET_CLIENT_PROP:[{}]", query);
+					break;				
+				default:
+					sendNoData(ctx);					
+					break;
+				}
 				commandCompleted(ctx, SQLCommandType.OTHER, 0);
 				readyForQuery(ctx);
 				break;
@@ -160,11 +170,50 @@ public class JDBCServerHandler extends
 		}
 
 	}
-	
-	
-	protected void sendSettingQueryResponse(ChannelHandlerContext ctx, String settingName) throws Exception {
-		
-		String setting = getConnectionInfo().getProperty(settingName, DEFAULT_CLIENT_ENCODING);		
+
+	protected int processQuery(ChannelHandlerContext ctx, String query) {
+		int ret = 0;
+		try {
+			Statement stmt = CCJSqlParserUtil.parse(query);
+			if (stmt instanceof Set) {
+				Set set = (Set) stmt;
+				if (logger.isDebugEnabled())
+					logger.debug("SETTING: {} = {}", set.getName(),
+							set.getValue());
+				this.connectionInfo.put(set.getName(), set.getValue());
+				ret = SQLCommandType.PG_QUERY_SET_CLIENT_PROP;
+			} else if (stmt instanceof Select) {
+				PgSystemFunctionSearcher search = new PgSystemFunctionSearcher(
+						"pg_client_encoding");
+				if (search.search((Select) stmt)) {					
+					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
+					ret = SQLCommandType.PG_QUERY_GET_CLIENT_PROP;
+				} else {
+					ret = SQLCommandType.PG_QUERY_SELECT;
+				}
+			} else if (stmt instanceof Insert) {
+				ret = SQLCommandType.PG_QUERY_INSERT;
+			} else if (stmt instanceof Insert) {
+				ret = SQLCommandType.PG_QUERY_DELETE;
+			} else if (stmt instanceof Insert) {
+				ret = SQLCommandType.PG_QUERY_UPDATE;
+			} else {
+				ret = SQLCommandType.PG_QUERY_OTHER;
+			}
+		} catch (Throwable t) {
+			ret = SQLCommandType.PG_QUERY_PARSER_ERROR;
+			logger.warn("Failed JSQLParser parsing", t);
+			;
+		}
+
+		return ret;
+	}
+
+	protected void sendSettingQueryResponse(ChannelHandlerContext ctx,
+			String settingName) throws Exception {
+
+		String setting = getConnectionInfo().getProperty(settingName,
+				DEFAULT_CLIENT_ENCODING);
 		PostgresMessage metadata = new PostgresMessage('T');
 		metadata.createBuffer().writeShort(1);
 		metadata.writeString(settingName.toUpperCase());
@@ -176,21 +225,22 @@ public class JDBCServerHandler extends
 		metadata.getMessage().writeInt(PostgresTypes.PG_TYPE_VARCHAR);
 		// pg_type.typlen
 		metadata.getMessage().writeShort(
-				getTypeSize(PostgresTypes.PG_TYPE_VARCHAR, setting.getBytes().length +1));
+				getTypeSize(PostgresTypes.PG_TYPE_VARCHAR,
+						setting.getBytes().length + 1));
 		// pg_attribute.atttypmod
 		metadata.getMessage().writeInt(-1);
 		// the format type: text = 0, binary = 1
-		metadata.getMessage()
-				.writeShort(formatAsText(PostgresTypes.PG_TYPE_VARCHAR) ? 0 : 1);
+		metadata.getMessage().writeShort(
+				formatAsText(PostgresTypes.PG_TYPE_VARCHAR) ? 0 : 1);
 		ctx.writeAndFlush(metadata);
-		
-		PostgresMessage dataRow = new PostgresMessage('D');		
-		dataRow.createBuffer().writeShort(1);	
+
+		PostgresMessage dataRow = new PostgresMessage('D');
+		dataRow.createBuffer().writeShort(1);
 		byte[] data = setting.getBytes(getEncoding());
-        dataRow.getMessage().writeInt(data.length);
-        dataRow.getMessage().writeBytes(data);        
-        ctx.writeAndFlush(dataRow);
-		
+		dataRow.getMessage().writeInt(data.length);
+		dataRow.getMessage().writeBytes(data);
+		ctx.writeAndFlush(dataRow);
+
 	}
 
 	protected void sendNoData(ChannelHandlerContext ctx) throws Exception {
@@ -198,81 +248,86 @@ public class JDBCServerHandler extends
 		ctx.writeAndFlush(endOfData);
 	}
 
-	protected void sendDataRow(ChannelHandlerContext ctx, ResultSet rs) throws Exception {
+	protected void sendDataRow(ChannelHandlerContext ctx, ResultSet rs)
+			throws Exception {
 		ResultSetMetaData metaData = rs.getMetaData();
 		int columns = metaData.getColumnCount();
-		PostgresMessage dataRow = new PostgresMessage('D');		
-		dataRow.createBuffer().writeShort(columns);		
+		PostgresMessage dataRow = new PostgresMessage('D');
+		dataRow.createBuffer().writeShort(columns);
 		for (int i = 1; i <= columns; i++) {
 			writeDataColumn(dataRow, rs, i,
 					PostgresTypes.convertType(metaData.getColumnType(i)));
 		}
 		ctx.writeAndFlush(dataRow);
 	}
-	
-	private void writeDataColumn(PostgresMessage dataRow, ResultSet rs, int column, int pgType)
-            throws Exception {
-        if (formatAsText(pgType)) {
-            // plain text
-            switch (pgType) {
-            case PostgresTypes.PG_TYPE_BOOL:
-            	dataRow.getMessage().writeInt(1);
-            	dataRow.getMessage().writeByte(rs.getBoolean(column) ? 't' : 'f');
-                break;
-            default:
-                String s = rs.getString(column);
-                if (s == null) {
-                    dataRow.getMessage().writeInt(-1);
-                } else {
-                    byte[] data = s.getBytes(getEncoding());
-                    dataRow.getMessage().writeInt(data.length);
-                    dataRow.getMessage().writeBytes(data);
-                }
-            }
-        } else {
-            // binary
-            switch (pgType) {
-            case PostgresTypes.PG_TYPE_INT2:
-                dataRow.getMessage().writeInt(2);
-                dataRow.getMessage().writeShort(rs.getShort(column));
-                break;
-            case PostgresTypes.PG_TYPE_INT4:
-                dataRow.getMessage().writeInt(4);
-                dataRow.getMessage().writeInt(rs.getInt(column));
-                break;
-            case PostgresTypes.PG_TYPE_INT8:
-                dataRow.getMessage().writeInt(8);
-                dataRow.getMessage().writeLong(rs.getLong(column));
-                break;
-            case PostgresTypes.PG_TYPE_FLOAT4:
-                dataRow.getMessage().writeInt(4);
-                dataRow.getMessage().writeFloat(rs.getFloat(column));
-                break;
-            case PostgresTypes.PG_TYPE_FLOAT8:
-                dataRow.getMessage().writeInt(8);
-                dataRow.getMessage().writeDouble(rs.getDouble(column));
-                break;
-            case PostgresTypes.PG_TYPE_BYTEA:
-                byte[] data = rs.getBytes(column);
-                if (data == null) {
-                    dataRow.getMessage().writeInt(-1);
-                } else {
-                    dataRow.getMessage().writeInt(data.length);
-                    dataRow.getMessage().writeBytes(data);
-                }
-                break;
-            default: throw new IllegalStateException("output binary format is undefined");
-            }
-        }
-    }
-	
+
+	private void writeDataColumn(PostgresMessage dataRow, ResultSet rs,
+			int column, int pgType) throws Exception {
+		if (formatAsText(pgType)) {
+			// plain text
+			switch (pgType) {
+			case PostgresTypes.PG_TYPE_BOOL:
+				dataRow.getMessage().writeInt(1);
+				dataRow.getMessage().writeByte(
+						rs.getBoolean(column) ? 't' : 'f');
+				break;
+			default:
+				String s = rs.getString(column);
+				if (s == null) {
+					dataRow.getMessage().writeInt(-1);
+				} else {
+					byte[] data = s.getBytes(getEncoding());
+					dataRow.getMessage().writeInt(data.length);
+					dataRow.getMessage().writeBytes(data);
+				}
+			}
+		} else {
+			// binary
+			switch (pgType) {
+			case PostgresTypes.PG_TYPE_INT2:
+				dataRow.getMessage().writeInt(2);
+				dataRow.getMessage().writeShort(rs.getShort(column));
+				break;
+			case PostgresTypes.PG_TYPE_INT4:
+				dataRow.getMessage().writeInt(4);
+				dataRow.getMessage().writeInt(rs.getInt(column));
+				break;
+			case PostgresTypes.PG_TYPE_INT8:
+				dataRow.getMessage().writeInt(8);
+				dataRow.getMessage().writeLong(rs.getLong(column));
+				break;
+			case PostgresTypes.PG_TYPE_FLOAT4:
+				dataRow.getMessage().writeInt(4);
+				dataRow.getMessage().writeFloat(rs.getFloat(column));
+				break;
+			case PostgresTypes.PG_TYPE_FLOAT8:
+				dataRow.getMessage().writeInt(8);
+				dataRow.getMessage().writeDouble(rs.getDouble(column));
+				break;
+			case PostgresTypes.PG_TYPE_BYTEA:
+				byte[] data = rs.getBytes(column);
+				if (data == null) {
+					dataRow.getMessage().writeInt(-1);
+				} else {
+					dataRow.getMessage().writeInt(data.length);
+					dataRow.getMessage().writeBytes(data);
+				}
+				break;
+			default:
+				throw new IllegalStateException(
+						"output binary format is undefined");
+			}
+		}
+	}
+
 	private String getEncoding() {
-        String clientEncoding = getConnectionInfo().getProperty(CLIENT_ENCODING, DEFAULT_CLIENT_ENCODING);
+		String clientEncoding = getConnectionInfo().getProperty(
+				CLIENT_ENCODING, DEFAULT_CLIENT_ENCODING);
 		if ("UNICODE".equals(clientEncoding)) {
-            return "UTF8";
-        }
-        return clientEncoding;
-    }
+			return "UTF8";
+		}
+		return clientEncoding;
+	}
 
 	protected void sendRowDescription(ChannelHandlerContext ctx,
 			ResultSetMetaData meta) throws Exception {
@@ -345,10 +400,16 @@ public class JDBCServerHandler extends
 		}
 	}
 
+	protected void sendErrorResponse(ChannelHandlerContext ctx, Exception re)
+			throws Exception {
+		SQLException sex = new SQLException(re.toString(), "CDS999", 9999);
+		sendErrorResponse(ctx, sex);
+
+	}
+
 	protected void sendErrorResponse(ChannelHandlerContext ctx, SQLException re)
 			throws Exception {
 		PostgresMessage errorMessage = new PostgresMessage('E');
-
 		errorMessage.initMessage().writeByte('S').writeString("ERROR")
 				.writeByte('C').writeString(re.getSQLState()).writeByte('M')
 				.writeString(re.getMessage()).writeByte('D')
