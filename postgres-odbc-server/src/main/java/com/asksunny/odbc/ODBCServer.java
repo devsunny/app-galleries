@@ -13,6 +13,12 @@ public class ODBCServer {
 
 	static final int PORT = Integer
 			.parseInt(System.getProperty("port", "5433"));
+	private static final ServerSettings serverSettings = new ServerSettings();
+	static{
+		//init server setting here;
+		serverSettings.put("max_identifier_length", new ServerSetting("max_identifier_length", "63"));
+		
+	}
 
 	/**
 	 * @param args
@@ -46,5 +52,14 @@ public class ODBCServer {
 		}
 
 	}
+
+
+	public static ServerSettings getServersettings() {
+		return serverSettings;
+	}
+	
+	
+	
+	
 
 }

@@ -10,7 +10,8 @@ public enum SQLCommandType {
 	public static final int PG_QUERY_INSERT = 3;
 	public static final int PG_QUERY_DELETE = 4;
 	public static final int PG_QUERY_UPDATE = 5;
-	public static final int PG_QUERY_OTHER = 6; // all other ddl commands;
+	public static final int PG_QUERY_SHOW = 6;
+	public static final int PG_QUERY_OTHER = 99; // all other ddl commands;
 	public static final int PG_QUERY_PARSER_ERROR = -1; // all other ddl
 														// commands;
 

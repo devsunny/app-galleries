@@ -1,5 +1,6 @@
 package com.asksunny.odbc;
 
+import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -11,9 +12,12 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.set.Set;
+import net.sf.jsqlparser.statement.show.Show;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.asksunny.jdbc4.BogusResultSetProvider;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -41,6 +45,7 @@ public class JDBCServerHandler extends
 			.getLogger(JDBCServerHandler.class);
 	private Properties connectionInfo;
 	private boolean autoCommit = true;
+	private Charset clientEncodingCharSet = Charset.defaultCharset();
 
 	public JDBCServerHandler() {
 		connectionInfo = new Properties();
@@ -83,8 +88,8 @@ public class JDBCServerHandler extends
 			resp.setMessage(buf);
 			ctx.writeAndFlush(resp);
 		} else {
-			System.out.println("What Type:"
-					+ (char) postgresMessage.getMessageType());
+			if (logger.isDebugEnabled())
+				logger.debug("Command Type:{}", postgresMessage.getMessageType());
 			switch (postgresMessage.getMessageType()) {
 			case 'p':
 				if (logger.isDebugEnabled())
@@ -137,12 +142,21 @@ public class JDBCServerHandler extends
 				if (logger.isDebugEnabled())
 					logger.debug("Query:[{}]", query);
 				int queryStatus = processQuery(ctx, query);
-				switch (queryStatus) {				
+				switch (queryStatus) {
 				case SQLCommandType.PG_QUERY_GET_CLIENT_PROP:
-					if(logger.isDebugEnabled()) logger.debug("PG_QUERY_GET_CLIENT_PROP:[{}]", query);
-					break;				
+					if (logger.isDebugEnabled())
+						logger.debug("PG_QUERY_GET_CLIENT_PROP:[{}]", query);
+					break;
+				case SQLCommandType.PG_QUERY_SHOW:
+					if (logger.isDebugEnabled())
+						logger.debug("PG_QUERY_SHOW:[{}]", query);
+					break;
+				case SQLCommandType.PG_QUERY_SELECT:
+					if (logger.isDebugEnabled())
+						logger.debug("PG_QUERY_SELECT:[{}]", query);					
+					break;
 				default:
-					sendNoData(ctx);					
+					sendNoData(ctx);
 					break;
 				}
 				commandCompleted(ctx, SQLCommandType.OTHER, 0);
@@ -181,14 +195,18 @@ public class JDBCServerHandler extends
 					logger.debug("SETTING: {} = {}", set.getName(),
 							set.getValue());
 				this.connectionInfo.put(set.getName(), set.getValue());
+				if (set.getName().equalsIgnoreCase(CLIENT_ENCODING)) {
+					this.setClientEncodingCharSet(set.getValue());
+				}
 				ret = SQLCommandType.PG_QUERY_SET_CLIENT_PROP;
 			} else if (stmt instanceof Select) {
 				PgSystemFunctionSearcher search = new PgSystemFunctionSearcher(
 						"pg_client_encoding");
-				if (search.search((Select) stmt)) {					
+				if (search.search((Select) stmt)) {
 					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
 					ret = SQLCommandType.PG_QUERY_GET_CLIENT_PROP;
 				} else {
+					sendResultSet(ctx, BogusResultSetProvider.newResultSet());					
 					ret = SQLCommandType.PG_QUERY_SELECT;
 				}
 			} else if (stmt instanceof Insert) {
@@ -197,6 +215,10 @@ public class JDBCServerHandler extends
 				ret = SQLCommandType.PG_QUERY_DELETE;
 			} else if (stmt instanceof Insert) {
 				ret = SQLCommandType.PG_QUERY_UPDATE;
+			} else if (stmt instanceof Show) {
+				Show show = (Show) stmt;
+				handleShowCommand(ctx, show.getName());
+				ret = SQLCommandType.PG_QUERY_SHOW;
 			} else {
 				ret = SQLCommandType.PG_QUERY_OTHER;
 			}
@@ -209,11 +231,32 @@ public class JDBCServerHandler extends
 		return ret;
 	}
 
+	protected void handleShowCommand(ChannelHandlerContext ctx,
+			String settingName) throws Exception {
+		if (settingName.equalsIgnoreCase("ALL")) {
+
+		} else {
+			String setting = ODBCServer.getServersettings().getSetting(
+					settingName);
+			if (setting != null) {
+				sendSettingResponse(ctx, settingName, setting);
+			} else {
+				sendSettingResponse(ctx, settingName, "off");
+			}
+		}
+
+	}
+
 	protected void sendSettingQueryResponse(ChannelHandlerContext ctx,
 			String settingName) throws Exception {
-
 		String setting = getConnectionInfo().getProperty(settingName,
 				DEFAULT_CLIENT_ENCODING);
+		sendSettingResponse(ctx, settingName, setting);
+	}
+
+	protected void sendSettingResponse(ChannelHandlerContext ctx,
+			String settingName, String setting) throws Exception {
+
 		PostgresMessage metadata = new PostgresMessage('T');
 		metadata.createBuffer().writeShort(1);
 		metadata.writeString(settingName.toUpperCase());
@@ -236,7 +279,7 @@ public class JDBCServerHandler extends
 
 		PostgresMessage dataRow = new PostgresMessage('D');
 		dataRow.createBuffer().writeShort(1);
-		byte[] data = setting.getBytes(getEncoding());
+		byte[] data = setting.getBytes(getClientEncodingCharSet());
 		dataRow.getMessage().writeInt(data.length);
 		dataRow.getMessage().writeBytes(data);
 		ctx.writeAndFlush(dataRow);
@@ -248,6 +291,20 @@ public class JDBCServerHandler extends
 		ctx.writeAndFlush(endOfData);
 	}
 
+	protected void sendResultSet(ChannelHandlerContext ctx, ResultSet rs)
+			throws Exception {		 
+         ResultSetMetaData meta = rs.getMetaData();
+         try {
+             sendRowDescription(ctx, meta);
+             while (rs.next()) {
+                 sendDataRow(ctx, rs);
+             }
+             commandCompleted(ctx, SQLCommandType.SELECT, 0);
+         } catch (Exception e) {
+             sendErrorResponse(ctx, e);            
+         }
+	}	
+	
 	protected void sendDataRow(ChannelHandlerContext ctx, ResultSet rs)
 			throws Exception {
 		ResultSetMetaData metaData = rs.getMetaData();
@@ -276,7 +333,7 @@ public class JDBCServerHandler extends
 				if (s == null) {
 					dataRow.getMessage().writeInt(-1);
 				} else {
-					byte[] data = s.getBytes(getEncoding());
+					byte[] data = s.getBytes(getClientEncodingCharSet());
 					dataRow.getMessage().writeInt(data.length);
 					dataRow.getMessage().writeBytes(data);
 				}
@@ -320,13 +377,23 @@ public class JDBCServerHandler extends
 		}
 	}
 
-	private String getEncoding() {
-		String clientEncoding = getConnectionInfo().getProperty(
-				CLIENT_ENCODING, DEFAULT_CLIENT_ENCODING);
-		if ("UNICODE".equals(clientEncoding)) {
-			return "UTF8";
+	public Charset getClientEncodingCharSet() {
+		return clientEncodingCharSet;
+	}
+
+	public void setClientEncodingCharSet(Charset clientEncodingCharSet) {
+		this.clientEncodingCharSet = clientEncodingCharSet;
+	}
+
+	public void setClientEncodingCharSet(String clientEncoding) {
+		try {
+			if (Charset.isSupported(clientEncoding)) {
+				this.clientEncodingCharSet = Charset.forName(clientEncoding);
+			}
+
+		} catch (Exception ex) {
+			this.clientEncodingCharSet = Charset.defaultCharset();
 		}
-		return clientEncoding;
 	}
 
 	protected void sendRowDescription(ChannelHandlerContext ctx,
