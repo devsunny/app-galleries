@@ -1,6 +1,14 @@
 package com.asksunny.odbc;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.CharsetUtil;
+
 import java.nio.charset.Charset;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -18,12 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.asksunny.jdbc4.BogusResultSetProvider;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.CharsetUtil;
 
 /**
  * This class is impired by H2 Database PGServer and PGServerThread Class;
@@ -46,6 +48,8 @@ public class JDBCServerHandler extends
 	private Properties connectionInfo;
 	private boolean autoCommit = true;
 	private Charset clientEncodingCharSet = Charset.defaultCharset();
+
+	private String preName = null;
 
 	public JDBCServerHandler() {
 		connectionInfo = new Properties();
@@ -89,7 +93,8 @@ public class JDBCServerHandler extends
 			ctx.writeAndFlush(resp);
 		} else {
 			if (logger.isDebugEnabled())
-				logger.debug("Command Type:{}", postgresMessage.getMessageType());
+				logger.debug("Command Type:{}",
+						(char) postgresMessage.getMessageType());
 			switch (postgresMessage.getMessageType()) {
 			case 'p':
 				if (logger.isDebugEnabled())
@@ -109,7 +114,7 @@ public class JDBCServerHandler extends
 					ctx.writeAndFlush(new NameValuePair("server_encoding",
 							"SQL_ASCII"));
 					ctx.writeAndFlush(new NameValuePair("server_version",
-							"8.1.4"));
+							"9.3"));
 					ctx.writeAndFlush(new NameValuePair(
 							"session_authorization", connectionInfo
 									.getProperty("user")));
@@ -131,10 +136,26 @@ public class JDBCServerHandler extends
 				}
 				break;
 			case 'P':
+
 				String name = postgresMessage.readString();
 				String sql = postgresMessage.readString();
-
-				commandCompleted(ctx, SQLCommandType.OTHER, 0);
+				preName = name;
+				if (logger.isDebugEnabled())
+					logger.debug("Prepare Query:{}[{}]", name, sql);
+				int count = postgresMessage.getMessage().readShort();
+				if (logger.isDebugEnabled())
+					logger.debug("Prepare Query Parameter count:[{}]", count);
+				for (int i = 0; i < count; i++) {
+					int type = postgresMessage.getMessage().readInt();
+					if (logger.isDebugEnabled())
+						logger.debug("Prepare Query Parameter Type:[{}]", type);
+				}
+				try {
+					// Invoke Java Prepare statement Here
+					sendParseComplete(ctx);
+				} catch (Exception e) {
+					sendErrorResponse(ctx, e);
+				}
 				readyForQuery(ctx);
 				break;
 			case 'Q':
@@ -153,30 +174,168 @@ public class JDBCServerHandler extends
 					break;
 				case SQLCommandType.PG_QUERY_SELECT:
 					if (logger.isDebugEnabled())
-						logger.debug("PG_QUERY_SELECT:[{}]", query);					
+						logger.debug("PG_QUERY_SELECT:[{}]", query);
 					break;
 				default:
 					sendNoData(ctx);
 					break;
 				}
-				commandCompleted(ctx, SQLCommandType.OTHER, 0);
+				sendCommandCompleted(ctx, SQLCommandType.OTHER, 0);
 				readyForQuery(ctx);
+				break;
+			case 'B':
+				if (logger.isDebugEnabled())
+					logger.debug("PG_QUERY Binding");
+				String portalName = postgresMessage.readString();
+				String prepName = postgresMessage.readString();
+
+				if (prepName.equals(prepName)) {
+					if (logger.isDebugEnabled())
+						logger.debug("PG_QUERY found Binding:{}/{}",
+								portalName, prepName);
+				} else {
+					if (logger.isDebugEnabled())
+						logger.debug("PG_QUERY not found Binding:{}/{}",
+								portalName, prepName);
+				}
+
+				int formatCodeCount = postgresMessage.getMessage().readShort();
+				int[] formatCodes = new int[formatCodeCount];
+				for (int i = 0; i < formatCodeCount; i++) {
+					formatCodes[i] = postgresMessage.getMessage().readShort();
+				}
+				int paramCount = postgresMessage.getMessage().readShort();
+				try {
+					for (int i = 0; i < paramCount; i++) {
+						// setParameter(prep.prep, prep.paramType[i], i,
+						// formatCodes);
+					}
+				} catch (Exception e) {
+					sendErrorResponse(ctx, e);
+					break;
+				}
+				int resultCodeCount = postgresMessage.getMessage().readShort();
+				int[] resultColumnFormat = new int[resultCodeCount];
+				for (int i = 0; i < resultCodeCount; i++) {
+					resultColumnFormat[i] = postgresMessage.getMessage()
+							.readShort();
+				}
+				sendBindComplete(ctx);
+				if (logger.isDebugEnabled())
+					logger.debug("PG_QUERY Binding Completed");
+				break;
+			case 'C':
+				char ctype = (char) postgresMessage.getMessage().readByte();
+				String cname = postgresMessage.readString();
+				if (logger.isDebugEnabled())
+					logger.debug("Close command:[{}]{}", ctype, cname);
+				if (ctype == 'S') {
+					// Prepared p = prepared.remove(name);
+					// if (p != null) {
+					// /JdbcUtils.closeSilently(p.prep);
+					// }
+				} else if (ctype == 'P') {
+					// portals.remove(name);
+				} else {
+					logger.warn("Only S or P accepted, unknow close type:[{}]",
+							ctype);
+					sendErrorResponse(ctx, "expected S or P");
+					break;
+				}
+				sendCloseComplete(ctx);
+				break;
+			case 'D':
+				char dtype = (char) postgresMessage.getMessage().readByte();
+				String dname = postgresMessage.readString();
+				if (logger.isDebugEnabled())
+					logger.debug("Describe command:[{}]/[{}]", dtype, dname);
+				if (dtype == 'S') {
+					if (logger.isDebugEnabled())
+						logger.debug(
+								"Prepared Parameter description:[{}]/[{}]",
+								dtype, dname);
+					// Prepared p = prepared.get(name);
+					// if (p == null) {
+					// sendErrorResponse(ctx, "Prepared not found: " + name);
+					// } else {
+					// sendParameterDescription(p);
+					// }
+					sendErrorResponse(ctx, "Not implemented yet");
+				} else if (dtype == 'P') {
+					if (logger.isDebugEnabled())
+						logger.debug("Portal Parameter description:[{}]/[{}]",
+								dtype, dname);
+					// Portal p = portals.get(name);
+					// if (p == null) {
+					// sendErrorResponse("Portal not found: " + name);
+					// } else {
+					// PreparedStatement prep = p.prep.prep;
+					// try {
+					// ResultSetMetaData meta = prep.getMetaData();
+					// sendRowDescription(meta);
+					// } catch (Exception e) {
+					// sendErrorResponse(e);
+					// }
+					// }
+					sendRowDescription(ctx, BogusResultSetProvider.newResultSet().getMetaData());
+					sendErrorResponse(ctx, "Not implemented yet");
+				} else {
+					// server.trace("expected S or P, got " + type);
+					sendErrorResponse(ctx, "expected S or P");
+				}
+				break;
+			case 'E':
+				String ename = postgresMessage.readString();
+				if (logger.isDebugEnabled())
+					logger.debug("Execute command:[{}]", ename);
+				// send error response here is portal not exist;
+				int maxRows = postgresMessage.getMessage().readShort();
+				if (logger.isDebugEnabled())
+					logger.debug("Max Rows:[{}]", maxRows);
+
+				try {
+					// prep.setMaxRows(maxRows);
+					// setActiveRequest(prep);
+					// boolean result = prep.execute();
+					// if (result) {
+					// try {
+					// ResultSet rs = prep.getResultSet();
+					// // the meta-data is sent in the prior 'Describe'
+					// while (rs.next()) {
+					// sendDataRow(rs);
+					// }
+					// sendCommandComplete(prep, 0);
+					// } catch (Exception e) {
+					// sendErrorResponse(e);
+					// }
+					// } else {
+					// sendCommandComplete(prep, prep.getUpdateCount());
+					// }
+					ResultSet rs = BogusResultSetProvider.newResultSet();
+					sendResultSet(ctx, rs);
+					sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+				} catch (Exception e) {
+					// if (prep.wasCancelled()) {
+					// sendCancelQueryResponse();
+					// } else {
+					// sendErrorResponse(e);
+					// }
+					sendErrorResponse(ctx, e);
+				} finally {
+					// setActiveRequest(null);
+				}
 				break;
 			case 'S':
-
-				System.out.println("Sync=----");
-
+				if (logger.isDebugEnabled())
+					logger.debug("Sync Command");
 				readyForQuery(ctx);
 				break;
-			case 'X': {
+			case 'X': 
 				close(ctx);
 				break;
-			}
-
 			default:
-				System.out.println("Unhandled command:"
-						+ postgresMessage.getMessage().toString(
-								CharsetUtil.US_ASCII));
+				logger.warn("Unhandled command:{}", postgresMessage
+						.getMessage().toString(CharsetUtil.US_ASCII));
 				readyForQuery(ctx);
 				break;
 			}
@@ -206,7 +365,7 @@ public class JDBCServerHandler extends
 					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
 					ret = SQLCommandType.PG_QUERY_GET_CLIENT_PROP;
 				} else {
-					sendResultSet(ctx, BogusResultSetProvider.newResultSet());					
+					sendResultSet(ctx, BogusResultSetProvider.newResultSet());
 					ret = SQLCommandType.PG_QUERY_SELECT;
 				}
 			} else if (stmt instanceof Insert) {
@@ -245,6 +404,103 @@ public class JDBCServerHandler extends
 			}
 		}
 
+	}
+	
+	
+	protected void setParameter(PostgresMessage postgresMessage, PreparedStatement prep,   int pgType, int i, int[] formatCodes) throws SQLException, Exception {
+        boolean text = (i >= formatCodes.length) || (formatCodes[i] == 0);
+        int col = i + 1;
+        int paramLen = postgresMessage.getMessage().readInt();
+        if (paramLen == -1) {
+            prep.setNull(col, Types.NULL);
+        } else if (text) {
+            // plain text
+            byte[] data = new byte[paramLen];
+            postgresMessage.getMessage().readBytes(data);
+            //readFully(data);
+            prep.setString(col, new String(data, getClientEncodingCharSet()));
+        } else {
+            // binary
+            switch (pgType) {
+            case PostgresTypes.PG_TYPE_INT2:
+               // checkParamLength(4, paramLen);
+                prep.setShort(col, postgresMessage.getMessage().readShort());
+                break;
+            case PostgresTypes.PG_TYPE_INT4:
+               // checkParamLength(4, paramLen);
+                prep.setInt(col, postgresMessage.getMessage().readInt());
+                break;
+            case PostgresTypes.PG_TYPE_INT8:
+                //checkParamLength(8, paramLen);
+                prep.setLong(col, postgresMessage.getMessage().readLong());
+                break;
+            case PostgresTypes.PG_TYPE_FLOAT4:
+                //checkParamLength(4, paramLen);
+                prep.setFloat(col, postgresMessage.getMessage().readFloat());
+                break;
+            case PostgresTypes.PG_TYPE_FLOAT8:
+                //checkParamLength(8, paramLen);
+                prep.setDouble(col, postgresMessage.getMessage().readDouble());
+                break;
+            case PostgresTypes.PG_TYPE_BYTEA:
+            	byte[] data1 = new byte[paramLen];
+                postgresMessage.getMessage().readBytes(data1);
+                //readFully(data);
+                prep.setBytes(col, data1);            	
+                break;
+            default:
+               //("Binary format for type: "+pgType+" is unsupported");
+            	byte[] data2 = new byte[paramLen];
+                postgresMessage.getMessage().readBytes(data2);
+                //readFully(data);
+                prep.setString(col, new String(data2, getClientEncodingCharSet()));
+            }
+        }
+    }
+	
+	
+
+	protected void sendParameterDescription(ChannelHandlerContext ctx)
+			throws Exception {
+		try {
+			PreparedStatement prep = null; // Prepared p; PreparedStatement prep
+											// = p.prep;
+			ParameterMetaData meta = prep.getParameterMetaData();
+			int count = meta.getParameterCount();
+			PostgresMessage message = new PostgresMessage('t');
+			message.createBuffer().writeShort(count);
+
+			for (int i = 0; i < count; i++) {
+				int type;
+				// if (p.paramType != null && p.paramType[i] != 0) {
+				// type = p.paramType[i];
+				// } else {
+				type = PostgresTypes.PG_TYPE_VARCHAR;
+				// }
+				// server.checkType(type);
+				message.getMessage().writeInt(type);
+			}
+			ctx.writeAndFlush(message);
+		} catch (Exception e) {
+			sendErrorResponse(ctx, e);
+		}
+	}
+
+	protected void sendParseComplete(ChannelHandlerContext ctx)
+			throws Exception {
+		PostgresMessage message = new PostgresMessage('1');
+		ctx.writeAndFlush(message);
+	}
+
+	protected void sendBindComplete(ChannelHandlerContext ctx) throws Exception {
+		PostgresMessage message = new PostgresMessage('2');
+		ctx.writeAndFlush(message);
+	}
+
+	protected void sendCloseComplete(ChannelHandlerContext ctx)
+			throws Exception {
+		PostgresMessage message = new PostgresMessage('3');
+		ctx.writeAndFlush(message);
 	}
 
 	protected void sendSettingQueryResponse(ChannelHandlerContext ctx,
@@ -292,19 +548,19 @@ public class JDBCServerHandler extends
 	}
 
 	protected void sendResultSet(ChannelHandlerContext ctx, ResultSet rs)
-			throws Exception {		 
-         ResultSetMetaData meta = rs.getMetaData();
-         try {
-             sendRowDescription(ctx, meta);
-             while (rs.next()) {
-                 sendDataRow(ctx, rs);
-             }
-             commandCompleted(ctx, SQLCommandType.SELECT, 0);
-         } catch (Exception e) {
-             sendErrorResponse(ctx, e);            
-         }
-	}	
-	
+			throws Exception {
+		ResultSetMetaData meta = rs.getMetaData();
+		try {
+			sendRowDescription(ctx, meta);
+			while (rs.next()) {
+				sendDataRow(ctx, rs);
+			}
+			sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+		} catch (Exception e) {
+			sendErrorResponse(ctx, e);
+		}
+	}
+
 	protected void sendDataRow(ChannelHandlerContext ctx, ResultSet rs)
 			throws Exception {
 		ResultSetMetaData metaData = rs.getMetaData();
@@ -504,7 +760,7 @@ public class JDBCServerHandler extends
 		ctx.writeAndFlush(readyForQuery);
 	}
 
-	protected void commandCompleted(ChannelHandlerContext ctx,
+	protected void sendCommandCompleted(ChannelHandlerContext ctx,
 			SQLCommandType type, int updateCount) throws Exception {
 		PostgresMessage cmdCompleted = new PostgresMessage('C', null);
 		cmdCompleted.createBuffer();
