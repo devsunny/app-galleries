@@ -33,7 +33,7 @@ import com.asksunny.jdbc4.BogusResultSetProvider;
  * @author SunnyLiu
  * 
  */
-public class JDBCServerHandler extends
+public class PostgreSqlProtocolHandler extends
 		SimpleChannelInboundHandler<PostgresMessage> {
 
 	public final static String DATABASE = "database";
@@ -44,14 +44,14 @@ public class JDBCServerHandler extends
 	public final static String TIMEZONE = "TimeZone";
 	public final static String DEFAULT_CLIENT_ENCODING = "UTF8";
 	private static Logger logger = LoggerFactory
-			.getLogger(JDBCServerHandler.class);
+			.getLogger(PostgreSqlProtocolHandler.class);
 	private Properties connectionInfo;
 	private boolean autoCommit = true;
 	private Charset clientEncodingCharSet = Charset.defaultCharset();
 
 	private String preName = null;
 
-	public JDBCServerHandler() {
+	public PostgreSqlProtocolHandler() {
 		connectionInfo = new Properties();
 	}
 
@@ -312,9 +312,7 @@ public class JDBCServerHandler extends
 					// sendCommandComplete(prep, prep.getUpdateCount());
 					// }
 					ResultSet rs = BogusResultSetProvider.newResultSet();
-					sendResultSet(ctx, rs, true, true);
-					System.err.println("Here------------------------");
-					//sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+					sendResultSet(ctx, rs, true, true);					
 				} catch (Exception e) {
 					// if (prep.wasCancelled()) {
 					// sendCancelQueryResponse();
