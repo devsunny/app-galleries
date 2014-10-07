@@ -312,8 +312,9 @@ public class JDBCServerHandler extends
 					// sendCommandComplete(prep, prep.getUpdateCount());
 					// }
 					ResultSet rs = BogusResultSetProvider.newResultSet();
-					sendResultSet(ctx, rs);
-					sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+					sendResultSet(ctx, rs, true, true);
+					System.err.println("Here------------------------");
+					//sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
 				} catch (Exception e) {
 					// if (prep.wasCancelled()) {
 					// sendCancelQueryResponse();
@@ -549,17 +550,23 @@ public class JDBCServerHandler extends
 
 	protected void sendResultSet(ChannelHandlerContext ctx, ResultSet rs)
 			throws Exception {
+		sendResultSet(ctx, rs, Boolean.TRUE, Boolean.TRUE);
+	}
+	
+	protected void sendResultSet(ChannelHandlerContext ctx, ResultSet rs, boolean withMetaData, boolean sendComplete)
+			throws Exception {
 		ResultSetMetaData meta = rs.getMetaData();
 		try {
-			sendRowDescription(ctx, meta);
+			if(withMetaData) sendRowDescription(ctx, meta);
 			while (rs.next()) {
 				sendDataRow(ctx, rs);
 			}
-			sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+			if(sendComplete) sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
 		} catch (Exception e) {
 			sendErrorResponse(ctx, e);
 		}
 	}
+	
 
 	protected void sendDataRow(ChannelHandlerContext ctx, ResultSet rs)
 			throws Exception {
@@ -760,8 +767,17 @@ public class JDBCServerHandler extends
 		ctx.writeAndFlush(readyForQuery);
 	}
 
+	
+
+	
 	protected void sendCommandCompleted(ChannelHandlerContext ctx,
 			SQLCommandType type, int updateCount) throws Exception {
+		//traceUsage(this.getClass(), "sendCommandCompleted");
+		
+		if(logger.isDebugEnabled()){
+			logger.debug(StackTraceUtils.buildStackTrace(getClass(), "sendCommandCompleted", SimpleChannelInboundHandler.class));
+		}
+		
 		PostgresMessage cmdCompleted = new PostgresMessage('C', null);
 		cmdCompleted.createBuffer();
 		if (type == SQLCommandType.INSERT) {
@@ -807,5 +823,7 @@ public class JDBCServerHandler extends
 	public void setConnectionInfo(Properties connectionInfo) {
 		this.connectionInfo = connectionInfo;
 	}
+	
+	
 
 }
