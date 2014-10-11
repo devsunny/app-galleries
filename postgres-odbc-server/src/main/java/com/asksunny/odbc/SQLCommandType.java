@@ -2,7 +2,7 @@ package com.asksunny.odbc;
 
 public enum SQLCommandType {
 
-	INSERT, DELETE, UPDATE, SELECT, CALL, BEGIN, OTHER ;
+	INSERT, DELETE, UPDATE, SELECT, CALL, BEGIN, SHOW, SET, OTHER ;
 
 	public static final int PG_QUERY_SET_CLIENT_PROP = 0;
 	public static final int PG_QUERY_GET_CLIENT_PROP = 1;

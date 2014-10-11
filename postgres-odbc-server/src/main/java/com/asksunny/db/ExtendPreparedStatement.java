@@ -3,9 +3,19 @@ package com.asksunny.db;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 
+import com.asksunny.odbc.SQLCommandType;
+
 public class ExtendPreparedStatement implements PreparedStatement {
 
+	
+	
 	protected java.sql.Statement wrappedObject = null;
+	private int[] postgreSQLParamTypes = null;
+	private int[] resultColumnFormats = null;
+	private SQLCommandType commandType = SQLCommandType.OTHER;
+	private boolean cancelled = false;
+	
+	
 	
 
 	public ExtendPreparedStatement(PreparedStatement wrappedObject) {
@@ -18,6 +28,10 @@ public class ExtendPreparedStatement implements PreparedStatement {
 
 	public Statement getWrappedObject() {
 		return wrappedObject;
+	}
+	
+	public PreparedStatement getPreparedStatement() {
+		return (PreparedStatement)wrappedObject;
 	}
 
 	public void setBoolean(int arg0, boolean arg1) throws java.sql.SQLException {
@@ -470,5 +484,40 @@ public class ExtendPreparedStatement implements PreparedStatement {
 			throws java.sql.SQLException {
 		return wrappedObject.isWrapperFor(arg0);
 	}
+
+	public int[] getPostgreSQLParamTypes() {
+		return postgreSQLParamTypes;
+	}
+
+	public void setPostgreSQLParamTypes(int[] postgreSQlParamTypes) {
+		this.postgreSQLParamTypes = postgreSQlParamTypes;
+	}
+
+	public int[] getResultColumnFormats() {
+		return resultColumnFormats;
+	}
+
+	public void setResultColumnFormats(int[] resultColumnFormats) {
+		this.resultColumnFormats = resultColumnFormats;
+	}
+
+	public SQLCommandType getCommandType() {
+		return commandType;
+	}
+
+	public void setCommandType(SQLCommandType commandType) {
+		this.commandType = commandType;
+	}
+
+	public boolean wasCancelled() {
+		return cancelled;
+	}
+
+	public void setCancelled(boolean cancelled) {
+		this.cancelled = cancelled;
+	}
+	
+	
+	
 
 }

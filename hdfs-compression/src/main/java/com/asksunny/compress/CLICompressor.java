@@ -31,6 +31,9 @@ public class CLICompressor {
 			if (type.equalsIgnoreCase("bz2") || type.equalsIgnoreCase("bzip2")) {
 				out = factory.createCompressorOutputStream(
 						CompressorStreamFactory.BZIP2, fout);
+			}else if (type.equalsIgnoreCase("default") || type.equalsIgnoreCase("deflate")) {
+				org.apache.hadoop.io.compress.DefaultCodec codec = new org.apache.hadoop.io.compress.DefaultCodec();
+				out = codec.createOutputStream(fout);
 			} else if (type.equalsIgnoreCase("snappy")) {
 				out = new SnappyOutputStream(fout);
 			} else if (type.equalsIgnoreCase("lzo")) {

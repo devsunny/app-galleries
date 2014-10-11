@@ -19,15 +19,21 @@ public class LocalJDBCSqlSession implements SqlSession {
 	static Logger logger = LoggerFactory.getLogger(LocalJDBCSqlSession.class);
 	private String driverClassName = "org.postgresql.Driver";
 	private String url = "jdbc:postgresql://localhost:5432/postgres";
-	private String user = "sliu";
-	private String password = "test";
+	private String user = "SunnyLiu";
+	private String password = "";
 
 	private Connection connection = null;
 	private HashMap<String, ExtendPreparedStatement> statements = new HashMap<String, ExtendPreparedStatement>();
 
+	private ExtendPreparedStatement activeExtendPreparedStatement = null;
+	
+	
 	public LocalJDBCSqlSession() throws SQLException {
 
 	}
+	
+	
+	
 	
 	public boolean getAutoCommit(boolean boolAutocommit) throws SQLException
 	{
@@ -51,22 +57,38 @@ public class LocalJDBCSqlSession implements SqlSession {
 		}
 	}
 
-	public PreparedStatement getPreparedStatement(String name)
+	public ExtendPreparedStatement getPreparedStatement(String name)
 			throws SQLException {
-		PreparedStatement ret = statements.get(name);
-		if (ret == null)
+		name = name==null?"":name.trim().toLowerCase();
+		ExtendPreparedStatement ret = statements.get(name);
+		if (ret == null){
 			throw new SQLException(
-					String.format("Undefined statement:%s", name),
+					String.format("Undefined statement:[%s]", name),
 					"SQLSESSON0001", 9001);
+		}else{
+			if(logger.isDebugEnabled()){
+				logger.debug("Matched parsed statement found;[{}]", name);
+			}
+		}
 		return ret;
 	}
 
-	public PreparedStatement prepare(String name, String sql)
-			throws SQLException {
+	public ExtendPreparedStatement prepare(String name, String sql)
+			throws SQLException {		
 		// do sql rewrite here
+		name = name==null?"":name.trim().toLowerCase();
+		ExtendPreparedStatement pret = this.statements.remove(name);
+		if(pret!=null){
+			pret.close();
+			//only one named statement at any time;
+		}
 		String rewriteSQl = sql;
+		rewriteSQl = "INSERT INTO TEST (id, name) values (?, ?)";
+		
+		
 		PreparedStatement ret = connection.prepareStatement(rewriteSQl);
-		ExtendPreparedStatement pret = new ExtendPreparedStatement(ret);
+		pret = new ExtendPreparedStatement(ret);
+		if(logger.isDebugEnabled()) logger.debug("Statement prepared:[{}]", name);
 		this.statements.put(name, pret);		
 		return pret;
 	}
@@ -182,6 +204,24 @@ public class LocalJDBCSqlSession implements SqlSession {
 		this.password = password;
 
 	}
+	
+	
+	
+
+	public ExtendPreparedStatement getActiveExtendPreparedStatement() {
+		return activeExtendPreparedStatement;
+	}
+
+
+
+
+	public void setActiveExtendPreparedStatement(
+			ExtendPreparedStatement activeExtendPreparedStatement) {
+		this.activeExtendPreparedStatement = activeExtendPreparedStatement;
+	}
+
+
+
 
 	@Override
 	public void close() throws IOException {
