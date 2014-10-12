@@ -27,6 +27,11 @@ public class StackTraceUtils {
 				showStopClass, showStopMethodName);
 	}
 
+	
+	public static void showStackTrace() {
+		System.err.println(buildStackTrace());
+	}
+	
 	public static String buildStackTrace() {
 		Exception ex = new Exception();
 		return buildStackTrace(ex, StackTraceUtils.class, "buildStackTrace",

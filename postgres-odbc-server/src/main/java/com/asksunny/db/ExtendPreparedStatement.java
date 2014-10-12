@@ -1,37 +1,41 @@
 package com.asksunny.db;
 
+import java.io.Serializable;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.asksunny.odbc.SQLCommandType;
+import com.asksunny.sql.RewritedSqlStatement;
 
-public class ExtendPreparedStatement implements PreparedStatement {
+public class ExtendPreparedStatement implements PreparedStatement, Serializable {
 
-	
-	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 73693099719074L;
 	protected java.sql.Statement wrappedObject = null;
 	private int[] postgreSQLParamTypes = null;
 	private int[] resultColumnFormats = null;
 	private SQLCommandType commandType = SQLCommandType.OTHER;
 	private boolean cancelled = false;
-	
-	
+	private RewritedSqlStatement rewritedStatement = null;
 	
 
 	public ExtendPreparedStatement(PreparedStatement wrappedObject) {
-		this.wrappedObject = wrappedObject;		
+		this.wrappedObject = wrappedObject;
 	}
 
 	public ExtendPreparedStatement(Statement wrappedObject) {
-		this.wrappedObject = wrappedObject;		
+		this.wrappedObject = wrappedObject;
 	}
 
 	public Statement getWrappedObject() {
 		return wrappedObject;
 	}
-	
+
 	public PreparedStatement getPreparedStatement() {
-		return (PreparedStatement)wrappedObject;
+		return (PreparedStatement) wrappedObject;
 	}
 
 	public void setBoolean(int arg0, boolean arg1) throws java.sql.SQLException {
@@ -303,6 +307,16 @@ public class ExtendPreparedStatement implements PreparedStatement {
 		wrappedObject.close();
 	}
 
+	public void closeSilently() {
+		if (wrappedObject != null) {
+			try {
+				wrappedObject.close();
+			} catch (SQLException e) {
+				;
+			}
+		}
+	}
+
 	public int executeUpdate(java.lang.String arg0, int[] arg1)
 			throws java.sql.SQLException {
 		return wrappedObject.executeUpdate(arg0, arg1);
@@ -516,8 +530,14 @@ public class ExtendPreparedStatement implements PreparedStatement {
 	public void setCancelled(boolean cancelled) {
 		this.cancelled = cancelled;
 	}
-	
-	
-	
+
+	public RewritedSqlStatement getRewritedStatement() {
+		return rewritedStatement;
+	}
+
+	public void setRewritedStatement(RewritedSqlStatement rewritedStatement) {
+		this.rewritedStatement = rewritedStatement;
+		setCommandType(rewritedStatement.getType());
+	}
 
 }

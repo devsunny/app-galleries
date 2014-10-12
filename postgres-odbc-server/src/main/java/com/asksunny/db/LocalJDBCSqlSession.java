@@ -81,11 +81,8 @@ public class LocalJDBCSqlSession implements SqlSession {
 		if(pret!=null){
 			pret.close();
 			//only one named statement at any time;
-		}
-		String rewriteSQl = sql;
-		rewriteSQl = "INSERT INTO TEST (id, name) values (?, ?)";
-		
-		
+		}		
+		String rewriteSQl = sql;		
 		PreparedStatement ret = connection.prepareStatement(rewriteSQl);
 		pret = new ExtendPreparedStatement(ret);
 		if(logger.isDebugEnabled()) logger.debug("Statement prepared:[{}]", name);

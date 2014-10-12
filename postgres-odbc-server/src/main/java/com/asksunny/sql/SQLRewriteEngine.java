@@ -19,12 +19,14 @@ public class SQLRewriteEngine
 	private static Logger logger = LoggerFactory
 			.getLogger(SQLRewriteEngine.class);
 	
-	public static RewritedSqlStatement rewrite(String sql)
+	public static RewritedSqlStatement rewritePostgresParameter(String sql)
 	{
-		RewritedSqlStatement rewrited = new RewritedSqlStatement();
-		rewrited.setSql(sql);
+		RewritedSqlStatement rewrited = new RewritedSqlStatement();		
 		try{
-			Statement stmt = CCJSqlParserUtil.parse(sql);				
+			sql = sql.trim();
+			rewrited.setSql(sql);
+			Statement stmt = CCJSqlParserUtil.parse(sql);
+			stmt.accept(new PostgresIndexedParameterVisitor());
 			if(stmt instanceof Select){
 				rewrited.setType(SQLCommandType.SELECT);
 			}else if(stmt instanceof Insert){
@@ -40,8 +42,12 @@ public class SQLRewriteEngine
 			}else{
 				rewrited.setType(SQLCommandType.OTHER);
 			}
-		}catch(Exception ex){
-			logger.warn("Failed to rewrite SQL", ex);
+			
+			if(logger.isDebugEnabled()) logger.debug("Rwrited Statement:[{}]{}",rewrited.getType(), stmt.getClass().getName());
+			rewrited.setParsedStatement(stmt);
+			rewrited.setRewritedsql(stmt.toString());
+		}catch(Throwable ex){
+			logger.warn("Failed to rewrite SQL:[{}]",sql, ex);
 			;
 		}
 		return rewrited;

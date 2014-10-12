@@ -36,7 +36,9 @@ public class PgSystemFunctionSearcher extends ExpressionVisitorAdapter implement
 	
 	public boolean search(Select select)
 	{
-		select.getSelectBody().accept(this);
+		if(select!=null && select.getSelectBody()!=null) {
+			select.getSelectBody().accept(this);
+		}
 		return this.foundMatch;
 	}
 	

@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.CharsetUtil;
 
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
@@ -14,6 +15,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -29,11 +31,15 @@ import com.asksunny.db.ExtendPreparedStatement;
 import com.asksunny.db.LocalJDBCSqlSession;
 import com.asksunny.db.SqlSessionFactory;
 import com.asksunny.jdbc4.BogusResultSetProvider;
+import com.asksunny.sql.RewritedSqlStatement;
+import com.asksunny.sql.SQLRewriteEngine;
 
 /**
- * This class is impired by H2 Database PGServer and PGServerThread Class;
+ * This class was inspired by H2 Database PGServer and PGServerThread Class;
  * 
  * @author SunnyLiu
+ * 
+ *  
  * 
  */
 public class PostgreSqlProtocolHandler extends
@@ -42,18 +48,30 @@ public class PostgreSqlProtocolHandler extends
 	public final static String DATABASE = "database";
 	public final static String DATESTYLE = "DateStyle";
 	public final static String CLIENT_ENCODING = "client_encoding";
+	public final static String SERVER_ENCODING = "server_encoding";
+	public final static String SERVER_VERSION = "server_version";
+	public final static String SESSION_AUTHORIZATION = "session_authorization";
+	public final static String IS_SUPERUSER = "is_superuser";
+	public final static String TIMEZONE = "session_authorization";
 	public final static String USER = "user";
 	public final static String EXTRA_FLOAT_DIGITS = "extra_float_digits";
-	public final static String TIMEZONE = "TimeZone";
+	public final static String STANDARD_CONFORMING_STRINGS = "standard_conforming_strings";
 	public final static String DEFAULT_CLIENT_ENCODING = "UTF8";
+	
+	public final static String CONSTANT_VAL_OFF = "off";
+	public final static String CONSTANT_VAL_ISO = "ISO";
+	
+	public final static String POSTGRES_COMPATIBLE_SERVER_VERSION = "9.3";
+	public final static String POSTGRES_COMPATIBLE_SERVER_ENCODING = "UTF8";
+	public final static String POSTGRES_COMPATIBLE_SERVER_TIMEZONE = TimeZone.getDefault().getDisplayName();
+	
+	
 	private static Logger logger = LoggerFactory
 			.getLogger(PostgreSqlProtocolHandler.class);
 	private Properties connectionInfo;
 	private boolean autoCommit = true;
 	private Charset clientEncodingCharSet = Charset.defaultCharset();
 	private LocalJDBCSqlSession sqlSession = null;
-
-	private String preName = null;
 
 	public PostgreSqlProtocolHandler() {
 		connectionInfo = new Properties();
@@ -63,95 +81,187 @@ public class PostgreSqlProtocolHandler extends
 	protected void channelRead0(ChannelHandlerContext ctx,
 			PostgresMessage postgresMessage) throws Exception {
 
-		if (postgresMessage.getMessageType() == 0) {
-			handleStartupRequest(ctx, postgresMessage);
-		} else {
-			if (logger.isDebugEnabled())
-				logger.debug("Command Type:{}",
-						(char) postgresMessage.getMessageType());
-			switch (postgresMessage.getMessageType()) {
-			case 'p':
-				handleAuthentication(ctx, postgresMessage);
-				break;
-			case 'P':
-				handleParseRequest(ctx, postgresMessage);
-				break;
-
-			case 'B':
-				handleBindingRequest(ctx, postgresMessage);
-
-				break;
-
-			case 'D':
-				handleDescriptionRequest(ctx, postgresMessage);
-
-				break;
-			case 'E':
-				handleExecutionRequest(ctx, postgresMessage);
-
-				break;
-			case 'S':
+		try {
+			if (postgresMessage.getMessageType() == 0) {
+				handleStartupRequest(ctx, postgresMessage);
+			} else {
 				if (logger.isDebugEnabled())
-					logger.debug("Sync Command");
-				readyForQuery(ctx);
-				break;
-			case 'Q':
-				String query = postgresMessage.readString().trim();
-				if (logger.isDebugEnabled())
-					logger.debug("Simple Query:[{}]", query);
-				int queryStatus = processQuery(ctx, query);
-				switch (queryStatus) {
-				case SQLCommandType.PG_QUERY_GET_CLIENT_PROP:
-					if (logger.isDebugEnabled())
-						logger.debug("PG_QUERY_GET_CLIENT_PROP:[{}]", query);
+					logger.debug("Command Type:{}",
+							(char) postgresMessage.getMessageType());
+				switch (postgresMessage.getMessageType()) {
+				case 'p':
+					handleAuthentication(ctx, postgresMessage);
 					break;
-				case SQLCommandType.PG_QUERY_SHOW:
-					if (logger.isDebugEnabled())
-						logger.debug("PG_QUERY_SHOW:[{}]", query);
+				case 'P':
+					handleParsingRequest(ctx, postgresMessage);
 					break;
-				case SQLCommandType.PG_QUERY_SELECT:
-					if (logger.isDebugEnabled())
-						logger.debug("PG_QUERY_SELECT:[{}]", query);
+				case 'B':
+					handleBindingRequest(ctx, postgresMessage);
+					break;
+				case 'D':
+					handleDescriptionRequest(ctx, postgresMessage);
+					break;
+				case 'E':
+					handleExecutionRequest(ctx, postgresMessage);
+					break;
+				case 'S':
+					sendReadyForQuery(ctx);
+					break;
+				case 'Q':
+					handleSimpleQueryRequest(ctx, postgresMessage);
+					break;
+				case 'X':
+					close(ctx);
+					break;
+				case 'C':
+					handleStatementClose(ctx, postgresMessage);
 					break;
 				default:
-					sendNoData(ctx);
+					logger.warn("Unhandled command:{}", postgresMessage
+							.getMessage().toString(this.clientEncodingCharSet));
+					sendReadyForQuery(ctx);
 					break;
 				}
-				sendCommandCompleted(ctx, SQLCommandType.OTHER, 0);
-				readyForQuery(ctx);
-				break;
-			case 'X':
-				close(ctx);
-				break;
-			case 'C':
-				char ctype = (char) postgresMessage.getMessage().readByte();
-				String cname = postgresMessage.readString();
-				if (logger.isDebugEnabled())
-					logger.debug("Close command:[{}]{}", ctype, cname);
-				if (ctype == 'S') {
-					// Prepared p = prepared.remove(name);
-					// if (p != null) {
-					// /JdbcUtils.closeSilently(p.prep);
-					// }
-				} else if (ctype == 'P') {
-					// portals.remove(name);
-				} else {
-					logger.warn("Only S or P accepted, unknow close type:[{}]",
-							ctype);
-					sendErrorResponse(ctx, "expected S or P");
-					break;
-				}
-				sendCloseComplete(ctx);
-				break;
-			default:
-				logger.warn("Unhandled command:{}", postgresMessage
-						.getMessage().toString(CharsetUtil.US_ASCII));
-				readyForQuery(ctx);
-				break;
-			}
 
+			}
+		} catch (Exception t) {
+			logger.warn("Unexpected Error:", t);
+			sendErrorResponse(ctx, t);
 		}
 
+	}
+
+	protected void handleStatementClose(ChannelHandlerContext ctx,
+			PostgresMessage postgresMessage) throws Exception {
+		char ctype = (char) postgresMessage.getMessage().readByte();
+		String cname = postgresMessage.readString();
+		if (logger.isDebugEnabled())
+			logger.debug("Close command:[{}]{}", ctype, cname);
+		ExtendPreparedStatement exstmt = getSqlSession().getPreparedStatement(
+				cname);
+		if (ctype == 'S') {
+			if (logger.isDebugEnabled())
+				logger.debug("Request close preparestatement");
+			if (exstmt != null) {
+				exstmt.closeSilently();
+			}
+		} else if (ctype == 'P') {
+			if (logger.isDebugEnabled())
+				logger.debug("Request close Portal");
+			if (exstmt != null) {
+				exstmt.closeSilently();
+			}
+		} else {
+			logger.warn("Only S or P accepted, unknow close type:[{}]", ctype);
+			sendErrorResponse(ctx, "expected S or P");
+			return;
+		}
+		sendCloseComplete(ctx);
+
+	}
+
+	protected void handleSimpleQueryRequest(ChannelHandlerContext ctx,
+			PostgresMessage postgresMessage) throws Exception {
+
+		String sqlscript = postgresMessage.readString().trim();
+		SQLScriptReader reader = new SQLScriptReader(
+				new StringReader(sqlscript));
+		String sql = null;	
+		boolean hasError = false;
+		while ((sql = reader.readStatement()) != null) {			
+			if (logger.isDebugEnabled())
+				logger.debug("handleSimpleQueryRequest: [{}]", sql);
+			RewritedSqlStatement rstmt = SQLRewriteEngine.rewritePostgresParameter(sql);
+			if (rstmt.getType() == SQLCommandType.SET) {
+				Set setStmt = (Set) rstmt.getParsedStatement();
+				if (logger.isDebugEnabled())
+					logger.debug("SETTING: {} = {}", setStmt.getName(),
+							setStmt.getValue());
+				this.connectionInfo.put(setStmt.getName(), setStmt.getValue());
+				if (setStmt.getName().equalsIgnoreCase(CLIENT_ENCODING)) {
+					this.setClientEncodingCharSet(setStmt.getValue());
+				}
+				sendCommandCompleted(ctx, SQLCommandType.OTHER, 0);
+			} else if (rstmt.getType() == SQLCommandType.SHOW) {
+				Show show = (Show) rstmt.getParsedStatement();
+				if (logger.isDebugEnabled())
+					logger.debug("Showing setting: {}", show.getName());
+				handleShowCommand(ctx, show.getName());
+				sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+			} else {
+				PgSystemFunctionSearcher search = new PgSystemFunctionSearcher(
+						"pg_client_encoding");
+				if (rstmt.getType() == SQLCommandType.SELECT
+						&& search.search((Select) rstmt.getParsedStatement())) {
+					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
+					sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+				} else if (sql
+						.equalsIgnoreCase("SELECT oid, typbasetype FROM pg_type WHERE typname = 'lo'")) {
+					if (logger.isDebugEnabled())
+						logger.debug("ODBC start up:[{}]",
+								rstmt.getRewritedsql());
+					sendNoData(ctx);
+					sendCommandCompleted(ctx, SQLCommandType.SELECT, 0);
+				} else {
+					
+					if (rstmt.getType() == SQLCommandType.SELECT) {
+						if (logger.isDebugEnabled())
+							logger.debug("Simple Query SELECT:[{}]",
+									rstmt.getRewritedsql());
+						try {
+							java.sql.Statement stmt = getSqlSession()
+									.getConnection().createStatement();
+							ResultSet rs = stmt.executeQuery(sql);
+							try {
+								sendResultSet(ctx, rs, true, true);
+							} finally {
+								rs.close();
+								stmt.close();
+							}
+						} catch (Exception e) {
+							logger.warn("Failed to execute query", e);
+							sendErrorResponse(ctx, e);
+							hasError = true;
+						}
+					} else {
+						if (logger.isDebugEnabled())
+							logger.debug("Simple Non Query:[{}]",
+									rstmt.getRewritedsql());
+						java.sql.Statement stmt  = null;
+						try {
+							stmt = getSqlSession()
+									.getConnection().createStatement();
+							int rs = stmt.executeUpdate(sql);
+							
+							if (rstmt.getType() == SQLCommandType.INSERT) {
+								sendCommandCompleted(ctx,
+										SQLCommandType.INSERT, rs);
+							} else if (rstmt.getType() == SQLCommandType.DELETE) {
+								sendCommandCompleted(ctx,
+										SQLCommandType.DELETE, rs);
+							} else if (rstmt.getType() == SQLCommandType.UPDATE) {
+								sendCommandCompleted(ctx,
+										SQLCommandType.UPDATE, rs);
+							} else {
+								sendCommandCompleted(ctx, SQLCommandType.OTHER,
+										rs);
+							}
+						} catch (Exception e) {
+							logger.warn("Failed to execute update", e);
+							sendErrorResponse(ctx, e);
+							hasError = true;
+						}finally{
+							stmt.close();
+						}
+
+					}
+				}
+			}
+		}		
+		if(!hasError) sendReadyForQuery(ctx);
+		reader.close();
+		if (logger.isDebugEnabled())
+			logger.debug("Simple Query execute completed:[{}]", sqlscript);
 	}
 
 	protected void handleExecutionRequest(ChannelHandlerContext ctx,
@@ -160,40 +270,78 @@ public class PostgreSqlProtocolHandler extends
 		String ename = postgresMessage.readString();
 		if (logger.isDebugEnabled())
 			logger.debug("Execute command:[{}]", ename);
-		// send error response here is portal not exist;
 		int maxRows = postgresMessage.getMessage().readShort();
 		if (logger.isDebugEnabled())
 			logger.debug("Max Rows:[{}]", maxRows);
 		ExtendPreparedStatement exstmt = getSqlSession().getPreparedStatement(
 				ename);
-		try {
-			exstmt.setMaxRows(maxRows);
-			getSqlSession().setActiveExtendPreparedStatement(exstmt);
-			boolean result = exstmt.execute();
-			if (result) {
+		if (logger.isDebugEnabled())
+			logger.debug("Command Type:[{}]", exstmt.getCommandType());
+		if (exstmt.getCommandType() == SQLCommandType.SET) {
+			Set setStmt = (Set) exstmt.getRewritedStatement()
+					.getParsedStatement();
+			if (logger.isDebugEnabled())
+				logger.debug("SETTING: {} = {}", setStmt.getName(),
+						setStmt.getValue());
+			this.connectionInfo.put(setStmt.getName(), setStmt.getValue());
+			if (setStmt.getName().equalsIgnoreCase(CLIENT_ENCODING)) {
+				this.setClientEncodingCharSet(setStmt.getValue());
+			}
+			sendCommandCompleted(ctx, SQLCommandType.OTHER, 0);
+			sendReadyForQuery(ctx);
+			return;
+		} else if (exstmt.getCommandType() == SQLCommandType.SHOW) {
+			Show show = (Show) exstmt.getRewritedStatement()
+					.getParsedStatement();
+			handleShowCommand(ctx, show.getName());
+			return;
+		} else {
+			PgSystemFunctionSearcher search = new PgSystemFunctionSearcher(
+					"pg_client_encoding");
+			if (exstmt.getCommandType() == SQLCommandType.SELECT
+					&& search.search((Select) exstmt.getRewritedStatement()
+							.getParsedStatement())) {
+				sendSettingQueryResponse(ctx, CLIENT_ENCODING);
+			} else {
 				try {
-					ResultSet rs = exstmt.getResultSet();
-					// the meta-data is sent in the prior 'Describe'
-					sendResultSet(ctx, rs, false, true);
+					exstmt.setMaxRows(maxRows);
+					getSqlSession().setActiveExtendPreparedStatement(exstmt);
+					boolean result = exstmt.execute();
+					if (result) {
+						try {
+							ResultSet rs = exstmt.getResultSet();
+							// the meta-data is sent in the prior 'Describe'
+							sendResultSet(ctx, rs, false, true);
+						} catch (Exception e) {
+							logger.warn("Failed to get ResultSet", e);
+							sendErrorResponse(ctx, e);
+						}
+					} else {
+						if (exstmt.getCommandType() == SQLCommandType.INSERT) {
+							sendCommandCompleted(ctx, SQLCommandType.INSERT,
+									exstmt.getUpdateCount());
+						} else if (exstmt.getCommandType() == SQLCommandType.DELETE) {
+							sendCommandCompleted(ctx, SQLCommandType.DELETE,
+									exstmt.getUpdateCount());
+						} else if (exstmt.getCommandType() == SQLCommandType.UPDATE) {
+							sendCommandCompleted(ctx, SQLCommandType.UPDATE,
+									exstmt.getUpdateCount());
+						} else {
+							sendCommandCompleted(ctx, SQLCommandType.OTHER, 0);
+						}
+					}
 				} catch (Exception e) {
-					logger.warn("Failed to get ResultSet", e);
-					sendErrorResponse(ctx, e);
+					logger.warn("Failed to execute", e);
+					if (exstmt.wasCancelled()) {
+						sendCancelQueryResponse(ctx);
+					} else {
+						sendErrorResponse(ctx, e);
+					}
+
+				} finally {
+					getSqlSession().setActiveExtendPreparedStatement(null);
 				}
-			} else {
-				sendCommandCompleted(ctx, SQLCommandType.INSERT,
-						exstmt.getUpdateCount());
 			}
-
-		} catch (Exception e) {
-			logger.warn("Failed to execute", e);
-			if (exstmt.wasCancelled()) {
-				sendCancelQueryResponse(ctx);
-			} else {
-				sendErrorResponse(ctx, e);
-			}
-
-		} finally {
-			// setActiveRequest(null);
 		}
 	}
 
@@ -231,7 +379,6 @@ public class PostgreSqlProtocolHandler extends
 				}
 			}
 		} else {
-			// server.trace("expected S or P, got " + type);
 			sendErrorResponse(ctx, "expected S or P");
 		}
 	}
@@ -240,7 +387,8 @@ public class PostgreSqlProtocolHandler extends
 			PostgresMessage postgresMessage) throws Exception {
 		if (logger.isDebugEnabled())
 			logger.debug("PG_QUERY Binding");
-		String portalName = postgresMessage.readString();
+		// String portalName = //We do not use Portal concept,
+		postgresMessage.readString();
 		String prepName = postgresMessage.readString();
 		ExtendPreparedStatement exstmt = getSqlSession().getPreparedStatement(
 				prepName);
@@ -256,6 +404,8 @@ public class PostgreSqlProtocolHandler extends
 			formatCodes[i] = postgresMessage.getMessage().readShort();
 		}
 		int paramCount = postgresMessage.getMessage().readShort();
+		if (logger.isDebugEnabled())
+			logger.debug("PG_QUERY Binding Parameter count:[{}]", paramCount);
 		try {
 			for (int i = 0; i < paramCount; i++) {
 				int pgType = exstmt.getPostgreSQLParamTypes()[i];
@@ -267,6 +417,9 @@ public class PostgreSqlProtocolHandler extends
 			return;
 		}
 		int resultCodeCount = postgresMessage.getMessage().readShort();
+		if (logger.isDebugEnabled())
+			logger.debug("PG_QUERY Binding resultCode count:[{}]",
+					resultCodeCount);
 		int[] resultColumnFormat = new int[resultCodeCount];
 		for (int i = 0; i < resultCodeCount; i++) {
 			resultColumnFormat[i] = postgresMessage.getMessage().readShort();
@@ -277,12 +430,43 @@ public class PostgreSqlProtocolHandler extends
 			logger.debug("PG_QUERY Binding Completed");
 	}
 
+	protected void handleParsingRequest(ChannelHandlerContext ctx,
+			PostgresMessage postgresMessage) throws Exception {
+
+		String name = postgresMessage.readString();
+		String sql = postgresMessage.readString();
+		sql = PostgresSQLTranslator.translateSQL(sql, true);
+		if (logger.isDebugEnabled())
+			logger.debug("Parsing Query:[{}]/[{}]", name, sql);
+		RewritedSqlStatement rstmt = null;
+		rstmt = SQLRewriteEngine.rewritePostgresParameter(sql);
+
+		String nsql = rstmt.getRewritedsql() == null ? sql : rstmt
+				.getRewritedsql();
+		ExtendPreparedStatement exstmt = getSqlSession().prepare(name, nsql);
+		exstmt.setRewritedStatement(rstmt);
+
+		int count = postgresMessage.getMessage().readShort();
+		if (logger.isDebugEnabled())
+			logger.debug("Parsing Query Parameter count:[{}]", count);
+		int[] paramTypes = new int[count];
+		for (int i = 0; i < count; i++) {
+			int type = postgresMessage.getMessage().readInt();
+			paramTypes[i] = type;
+			if (logger.isDebugEnabled())
+				logger.debug("Parsing Query Parameter Type:[{}]", type);
+		}
+		exstmt.setPostgreSQLParamTypes(paramTypes);
+		sendParseComplete(ctx);
+		sendReadyForQuery(ctx);
+
+	}
+
 	protected void handleStartupRequest(ChannelHandlerContext ctx,
 			PostgresMessage postgresMessage) throws Exception {
 		PostgresMessage resp = new PostgresMessage();
 		ByteBuf in = postgresMessage.getMessage();
 		int val = in.readInt();
-		// byte[] keyValPairs = in.array();
 		int len = in.readableBytes();
 		byte[] data = new byte[len];
 		in.readBytes(data);
@@ -313,35 +497,8 @@ public class PostgreSqlProtocolHandler extends
 		ctx.writeAndFlush(resp);
 	}
 
-	protected void handleParseRequest(ChannelHandlerContext ctx,
-			PostgresMessage postgresMessage) throws Exception {
-		String name = postgresMessage.readString();
-		String sql = postgresMessage.readString();
-		preName = name;
-		sql = PostgresSQLTranslator.translateSQL(sql, true);
-		if (logger.isDebugEnabled())
-			logger.debug("Parsing Query:[{}]/[{}]", name, sql);
-		
-		ExtendPreparedStatement exstmt = getSqlSession().prepare(name, sql);
-		int count = postgresMessage.getMessage().readShort();
-		if (logger.isDebugEnabled())
-			logger.debug("Parsing Query Parameter count:[{}]", count);
-		int[] paramTypes = new int[count];
-		for (int i = 0; i < count; i++) {
-			int type = postgresMessage.getMessage().readInt();
-			paramTypes[i] = type;
-			if (logger.isDebugEnabled())
-				logger.debug("Parsing Query Parameter Type:[{}]", type);
-		}
-		exstmt.setPostgreSQLParamTypes(paramTypes);
-		try {
-			sendParseComplete(ctx);
-		} catch (Exception e) {
-			sendErrorResponse(ctx, e);
-		}
-		readyForQuery(ctx);
-	}
-
+	
+	
 	protected void handleAuthentication(ChannelHandlerContext ctx,
 			PostgresMessage postgresMessage) throws Exception {
 		if (logger.isDebugEnabled())
@@ -355,26 +512,22 @@ public class PostgreSqlProtocolHandler extends
 			this.sqlSession = (LocalJDBCSqlSession) SqlSessionFactory
 					.createSqlSession(connectionInfo.getProperty(DATABASE),
 							connectionInfo.getProperty(USER), password);
-
 			PostgresMessage authOk = new PostgresMessage('R', null);
 			authOk.createBuffer().writeInt(0);
 			ctx.writeAndFlush(authOk);
-			ctx.writeAndFlush(new NameValuePair("DateStyle", "ISO"));
-			ctx.writeAndFlush(new NameValuePair("integer_datetimes", "off"));
-			ctx.writeAndFlush(new NameValuePair("is_superuser", "off"));
-			ctx.writeAndFlush(new NameValuePair("server_encoding", "SQL_ASCII"));
-			ctx.writeAndFlush(new NameValuePair("server_version", "9.3"));
-			ctx.writeAndFlush(new NameValuePair("session_authorization",
-					connectionInfo.getProperty("user")));
-			ctx.writeAndFlush(new NameValuePair("standard_conforming_strings",
-					"off")); // TODO
-			ctx.writeAndFlush(new NameValuePair("TimeZone", java.util.TimeZone
-					.getDefault().getDisplayName()));
+			ctx.writeAndFlush(new NameValuePair(DATESTYLE, CONSTANT_VAL_ISO));			
+			ctx.writeAndFlush(new NameValuePair("integer_datetimes", CONSTANT_VAL_OFF));
+			ctx.writeAndFlush(new NameValuePair(IS_SUPERUSER, CONSTANT_VAL_OFF));
+			ctx.writeAndFlush(new NameValuePair(SERVER_ENCODING, POSTGRES_COMPATIBLE_SERVER_ENCODING));
+			ctx.writeAndFlush(new NameValuePair(SERVER_VERSION, POSTGRES_COMPATIBLE_SERVER_VERSION));
+			ctx.writeAndFlush(new NameValuePair(SESSION_AUTHORIZATION, connectionInfo.getProperty(USER)));
+			ctx.writeAndFlush(new NameValuePair(STANDARD_CONFORMING_STRINGS,	CONSTANT_VAL_OFF)); 
+			ctx.writeAndFlush(new NameValuePair(TIMEZONE, POSTGRES_COMPATIBLE_SERVER_TIMEZONE));
 			// authenticationOK Message;
 			PostgresMessage keyData = new PostgresMessage('K', null);
 			keyData.createBuffer().writeInt(1234).writeInt(4567);
 			ctx.writeAndFlush(keyData);
-			readyForQuery(ctx);
+			sendReadyForQuery(ctx);
 			if (logger.isDebugEnabled())
 				logger.debug("authenication....OK");
 		} catch (Exception ex) {
@@ -382,52 +535,6 @@ public class PostgreSqlProtocolHandler extends
 			ex.printStackTrace();
 			ctx.close(); // let kill the connection;
 		}
-	}
-
-	protected int processQuery(ChannelHandlerContext ctx, String query) {
-		int ret = 0;
-		try {
-			Statement stmt = CCJSqlParserUtil.parse(query);
-			if (stmt instanceof Set) {
-				Set set = (Set) stmt;
-				if (logger.isDebugEnabled())
-					logger.debug("SETTING: {} = {}", set.getName(),
-							set.getValue());
-				this.connectionInfo.put(set.getName(), set.getValue());
-				if (set.getName().equalsIgnoreCase(CLIENT_ENCODING)) {
-					this.setClientEncodingCharSet(set.getValue());
-				}
-				ret = SQLCommandType.PG_QUERY_SET_CLIENT_PROP;
-			} else if (stmt instanceof Select) {
-				PgSystemFunctionSearcher search = new PgSystemFunctionSearcher(
-						"pg_client_encoding");
-				if (search.search((Select) stmt)) {
-					sendSettingQueryResponse(ctx, CLIENT_ENCODING);
-					ret = SQLCommandType.PG_QUERY_GET_CLIENT_PROP;
-				} else {
-					sendResultSet(ctx, BogusResultSetProvider.newResultSet());
-					ret = SQLCommandType.PG_QUERY_SELECT;
-				}
-			} else if (stmt instanceof Insert) {
-				ret = SQLCommandType.PG_QUERY_INSERT;
-			} else if (stmt instanceof Insert) {
-				ret = SQLCommandType.PG_QUERY_DELETE;
-			} else if (stmt instanceof Insert) {
-				ret = SQLCommandType.PG_QUERY_UPDATE;
-			} else if (stmt instanceof Show) {
-				Show show = (Show) stmt;
-				handleShowCommand(ctx, show.getName());
-				ret = SQLCommandType.PG_QUERY_SHOW;
-			} else {
-				ret = SQLCommandType.PG_QUERY_OTHER;
-			}
-		} catch (Throwable t) {
-			ret = SQLCommandType.PG_QUERY_PARSER_ERROR;
-			logger.warn("Failed JSQLParser parsing", t);
-			;
-		}
-
-		return ret;
 	}
 
 	protected void handleShowCommand(ChannelHandlerContext ctx,
@@ -451,7 +558,8 @@ public class PostgreSqlProtocolHandler extends
 			throws SQLException, Exception {
 		boolean text = (i >= formatCodes.length) || (formatCodes[i] == 0);
 		int col = i + 1;
-		if(logger.isDebugEnabled()) logger.debug("setting parameter for parameter index [{}]", col);
+		if (logger.isDebugEnabled())
+			logger.debug("setting parameter for parameter index [{}]", col);
 		int paramLen = postgresMessage.getMessage().readInt();
 		if (paramLen == -1) {
 			prep.setNull(col, Types.NULL);
@@ -464,37 +572,29 @@ public class PostgreSqlProtocolHandler extends
 		} else {
 			// binary
 			switch (pgType) {
-			case PostgresTypes.PG_TYPE_INT2:
-				// checkParamLength(4, paramLen);
+			case PostgresTypes.PG_TYPE_INT2:				
 				prep.setShort(col, postgresMessage.getMessage().readShort());
 				break;
-			case PostgresTypes.PG_TYPE_INT4:
-				// checkParamLength(4, paramLen);
+			case PostgresTypes.PG_TYPE_INT4:				
 				prep.setInt(col, postgresMessage.getMessage().readInt());
 				break;
-			case PostgresTypes.PG_TYPE_INT8:
-				// checkParamLength(8, paramLen);
+			case PostgresTypes.PG_TYPE_INT8:				
 				prep.setLong(col, postgresMessage.getMessage().readLong());
 				break;
-			case PostgresTypes.PG_TYPE_FLOAT4:
-				// checkParamLength(4, paramLen);
+			case PostgresTypes.PG_TYPE_FLOAT4:				
 				prep.setFloat(col, postgresMessage.getMessage().readFloat());
 				break;
-			case PostgresTypes.PG_TYPE_FLOAT8:
-				// checkParamLength(8, paramLen);
+			case PostgresTypes.PG_TYPE_FLOAT8:				
 				prep.setDouble(col, postgresMessage.getMessage().readDouble());
 				break;
 			case PostgresTypes.PG_TYPE_BYTEA:
 				byte[] data1 = new byte[paramLen];
-				postgresMessage.getMessage().readBytes(data1);
-				// readFully(data);
+				postgresMessage.getMessage().readBytes(data1);				
 				prep.setBytes(col, data1);
 				break;
-			default:
-				// ("Binary format for type: "+pgType+" is unsupported");
+			default:				
 				byte[] data2 = new byte[paramLen];
-				postgresMessage.getMessage().readBytes(data2);
-				// readFully(data);
+				postgresMessage.getMessage().readBytes(data2);				
 				prep.setString(col, new String(data2,
 						getClientEncodingCharSet()));
 			}
@@ -547,6 +647,7 @@ public class PostgreSqlProtocolHandler extends
 		String setting = getConnectionInfo().getProperty(settingName,
 				DEFAULT_CLIENT_ENCODING);
 		sendSettingResponse(ctx, settingName, setting);
+
 	}
 
 	protected void sendSettingResponse(ChannelHandlerContext ctx,
@@ -771,7 +872,6 @@ public class PostgreSqlProtocolHandler extends
 
 	private void sendCancelQueryResponse(ChannelHandlerContext ctx)
 			throws Exception {
-
 		PostgresMessage errorMessage = new PostgresMessage('E');
 		errorMessage.initMessage().writeByte('S').writeString("ERROR")
 				.writeByte('C').writeString("57014").writeByte('M')
@@ -780,15 +880,14 @@ public class PostgreSqlProtocolHandler extends
 		ctx.writeAndFlush(errorMessage);
 	}
 
-	protected void sendErrorResponse(ChannelHandlerContext ctx, Exception re)
-			throws Exception {
+	protected void sendErrorResponse(ChannelHandlerContext ctx, Throwable re)
+			throws Exception {		
 		SQLException sex = new SQLException(re.toString(), "CDS999", 9999);
 		sendErrorResponse(ctx, sex);
-
 	}
 
 	protected void sendErrorResponse(ChannelHandlerContext ctx, SQLException re)
-			throws Exception {
+			throws Exception {		
 		PostgresMessage errorMessage = new PostgresMessage('E');
 		errorMessage.initMessage().writeByte('S').writeString("ERROR")
 				.writeByte('C').writeString(re.getSQLState()).writeByte('M')
@@ -799,6 +898,7 @@ public class PostgreSqlProtocolHandler extends
 
 	protected void sendErrorResponse(ChannelHandlerContext ctx, String message)
 			throws Exception {
+		logger.error(message);
 		PostgresMessage errorMessage = new PostgresMessage('E');
 		errorMessage.initMessage().writeByte('S').writeString("ERROR")
 				.writeByte('C').writeString("08P01").writeByte('M')
@@ -807,7 +907,10 @@ public class PostgreSqlProtocolHandler extends
 
 	}
 
-	protected void readyForQuery(ChannelHandlerContext ctx) throws Exception {
+	protected void sendReadyForQuery(ChannelHandlerContext ctx)
+			throws Exception {
+		if (logger.isDebugEnabled())
+			logger.debug("sendReadyForQuery");
 		PostgresMessage readyForQuery = new PostgresMessage('Z', null);
 		if (this.autoCommit) {
 			readyForQuery.createBuffer().writeByte('I');
@@ -819,13 +922,9 @@ public class PostgreSqlProtocolHandler extends
 
 	protected void sendCommandCompleted(ChannelHandlerContext ctx,
 			SQLCommandType type, int updateCount) throws Exception {
-		// traceUsage(this.getClass(), "sendCommandCompleted");
-
-		if (logger.isDebugEnabled()) {
-			logger.debug(StackTraceUtils.buildStackTrace(getClass(),
-					"sendCommandCompleted", SimpleChannelInboundHandler.class));
-		}
-
+		if (logger.isDebugEnabled())
+			logger.debug("sendCommandCompleted:Type[{}]/count[{}]", type,
+					updateCount);
 		PostgresMessage cmdCompleted = new PostgresMessage('C', null);
 		cmdCompleted.createBuffer();
 		if (type == SQLCommandType.INSERT) {
@@ -845,23 +944,20 @@ public class PostgreSqlProtocolHandler extends
 	}
 
 	protected void close(ChannelHandlerContext ctx) throws Exception {
-		// Release all resource
+		if (getSqlSession() != null) {
+			getSqlSession().close();
+		}
 	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
 			throws Exception {
-		super.exceptionCaught(ctx, cause);
-	}
+		logger.error("Network Error:", cause);
+		if (getSqlSession() != null) {
+			getSqlSession().close();
+		}
+		ctx.close();
 
-	@Override
-	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		super.handlerRemoved(ctx);
-	}
-
-	@Override
-	public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-		super.channelUnregistered(ctx);
 	}
 
 	public Properties getConnectionInfo() {
