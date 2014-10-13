@@ -1,12 +1,10 @@
 package com.asksunny.netty.openssl;
 
-import java.io.File;
-
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslProvider;
 
-import io.netty.handler.ssl.SslContext;
-
-
+import java.io.File;
 
 public class NettyOpenSSLServer {
 
@@ -15,7 +13,9 @@ public class NettyOpenSSLServer {
 	}
 
 	public static void main(String[] args) throws Exception {
-		  SslContext sslCtx = SslContext.newServerContext(SslProvider.OPENSSL, new File("Path_to_Pem"), new File("path_to_key"), "password");
-		
+		SslContext sslCtx = SslContext.newServerContext(SslProvider.OPENSSL,
+				new File("D:/temp/server.crt"), new File("D:/temp/server_private_key.PEM"), null);
+		SocketChannel ch = null; //fix here;
+		sslCtx.newHandler(ch.alloc());
 	}
 }
