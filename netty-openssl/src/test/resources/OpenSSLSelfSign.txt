@@ -1,7 +1,7 @@
 OpenSSL Selfsigned Cert: How to
 
-openssl req  -new -newkey rsa:2048 -nodes -keyout server_private.key -out server_cert.csr
-openssl x509 -req -days 3650 -in server_cert.csr -signkey server_private.key -out server.crt
+openssl req  -new -newkey rsa:2048 -nodes -keyform PEM -keyout server_private_key.PEM -out server_cert.csr
+openssl x509 -req -days 3650 -in server_cert.csr -signkey server_private_key.PEM -outform PEM -out server.crt
 
 
 OpenSSL> req -h
