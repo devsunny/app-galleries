@@ -13,7 +13,7 @@ public class NettyOpenSSLServer {
 	}
 
 	public static void main(String[] args) throws Exception {
-		SslContext sslCtx = SslContext.newServerContext(SslProvider.OPENSSL,
+		SslContext sslCtx = SslContext.newServerContext(SslProvider.JDK,
 				new File("D:/temp/server.crt"), new File("D:/temp/server_private_key.PEM"), null);
 		SocketChannel ch = null; //fix here;
 		sslCtx.newHandler(ch.alloc());
