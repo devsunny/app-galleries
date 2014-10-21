@@ -1,0 +1,4 @@
+ 05  LINE-ITEMS OCCURS 25 TIMES.
+       10  QUANTITY            PIC 9999.
+       10  DESCRIPTION         PIC X(30).
+       10  UNIT-PRICE          PIC S9(5)V99.
