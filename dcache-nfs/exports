@@ -1,2 +1,6 @@
 /exports *(rw)
 #/ localhost(rw,no_root_squash,acl)
+
+#[root@bigdata opt]# umount /opt/exports/
+#[root@bigdata opt]# mount -t nfs4 -o rsize=32768,wsize=32768,intr,hard,proto=tcp,sync,fsc 192.168.1.168:/exports /opt/exports
+
