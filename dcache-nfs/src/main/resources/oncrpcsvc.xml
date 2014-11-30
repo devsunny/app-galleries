@@ -59,13 +59,13 @@
          <property name="contexts" value="production" />
      </bean>
 
-     <bean id="fileSystem" class="org.dcache.chimera.JdbcFs" depends-on="liquibase">
+     <bean id="fileSystem" class="org.dcache.chimera.JdbcFs1" depends-on="liquibase">
         <description>Chimera Filesystem</description>
         <constructor-arg ref="dataSource" />
         <constructor-arg value="${chimera.db.dialect}" />
     </bean>
 
-    <bean id="vfs-intern" class="org.dcache.nfs.vfs.ChimeraVfs">
+    <bean id="vfs-intern" class="org.dcache.chimera.ChimeraVfs">
         <description>Chimera Filesystem</description>
         <constructor-arg ref="fileSystem"/>
         <constructor-arg ref="idmapd"/>

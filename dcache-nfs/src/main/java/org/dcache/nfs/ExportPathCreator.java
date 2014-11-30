@@ -41,22 +41,21 @@ public class ExportPathCreator {
         this.exportFile = exportFile;
     }
 
-    public void init()  throws IOException {
-        Inode root = vfs.getRootInode();
+    public void init()  throws IOException {      
+    	Inode root = vfs.getRootInode();       
         for (FsExport export : exportFile.getExports()) {
             String path = export.getPath();
             Splitter splitter = Splitter.on('/').omitEmptyStrings();
             Inode inode = root;
             for (String s : splitter.split(path)) {
-
                 Inode child;
                 try {
-                    child = vfs.lookup(inode, s);
+                	child = vfs.lookup(inode, s);
                 } catch(ChimeraNFSException e) {
                     if (e.getStatus() == nfsstat.NFSERR_NOENT)
                         child = vfs.create(inode, Stat.Type.DIRECTORY, s, 0, 0, 0777);
                 }
             }
-        }
+        }       
     }
 }

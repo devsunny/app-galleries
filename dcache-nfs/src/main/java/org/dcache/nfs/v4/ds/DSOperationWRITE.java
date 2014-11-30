@@ -62,6 +62,7 @@ public class DSOperationWRITE extends AbstractNFSv4Operation {
         long offset = _args.opwrite.offset.value;
 
         Inode inode = context.currentInode();
+        
         Stat stat = context.getFs().getattr(inode);
 
         if (stat.type() == Stat.Type.DIRECTORY) {
@@ -85,6 +86,10 @@ public class DSOperationWRITE extends AbstractNFSv4Operation {
         FileChannel out = _fsCache.get(inode);
 
         _args.opwrite.data.rewind();
+        
+        if (_log.isInfoEnabled())
+			_log.info("create and write data: {}", _args.opwrite.data.remaining() );
+        
         int bytesWritten = out.write(_args.opwrite.data, offset);
 
         if (bytesWritten < 0) {
