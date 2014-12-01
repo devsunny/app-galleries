@@ -77,6 +77,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public Inode getRootInode() throws IOException {
+		
 		return toInode(FsInode.getRoot(_fs));
 	}
 

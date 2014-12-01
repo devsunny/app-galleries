@@ -51,10 +51,12 @@ import org.dcache.nfs.status.TooManyOpsException;
 
 public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 
-	private final VirtualFileSystem _fs;
-	private final ExportFile _exportFile;
+	
 	private static final Logger _log = LoggerFactory
 			.getLogger(NFSServerV41.class);
+
+	private final VirtualFileSystem _fs;
+	private final ExportFile _exportFile;
 	private final NFSv4OperationFactory _operationFactory;
 	private final NFSv41DeviceManager _deviceManager;
 	private final NFSv4StateHandler _statHandler = new NFSv4StateHandler();
@@ -83,7 +85,8 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 
 	@Override
 	public COMPOUND4res NFSPROC4_COMPOUND_4(RpcCall call$, COMPOUND4args arg1) {
-
+		if(_log.isInfoEnabled()) _log.info("NFSPROC4_COMPOUND_4: {}", call$.getXdr().toString());
+		
 		COMPOUND4res res = new COMPOUND4res();
 
 		try {
@@ -154,8 +157,14 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 						}
 					}
 					long t0 = System.nanoTime();
-					_operationFactory.getOperation(op).process(context,
+					if(_log.isInfoEnabled()) _log.info("_operationFactory:{}", _operationFactory.getClass().getName());
+					AbstractNFSv4Operation nfsOp = _operationFactory.getOperation(op);
+					if(_log.isInfoEnabled()) _log.info("nfsOp class:{}", nfsOp.getClass().getName());
+					
+					nfsOp.process(context,
 							opResult);
+					
+					
 					GAUGES.update(nfs_opnum4.toString(op.argop),
 							System.nanoTime() - t0);
 

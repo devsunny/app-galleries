@@ -25,30 +25,36 @@ import org.dcache.nfs.v4.ds.DSOperationWRITE;
 import org.dcache.nfs.v4.xdr.nfs_argop4;
 import org.dcache.nfs.v4.xdr.nfs_opnum4;
 import org.dcache.nfs.vfs.FsCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * NFS operation factory which uses Proxy IO adapter for read requests
  */
 public class LocalIoOperationFactory extends MDSOperationFactory {
 
-    private final FsCache _fs;
+	 private static final Logger _log = LoggerFactory.getLogger(LocalIoOperationFactory.class);
+	   
+	private final FsCache _fs;
 
-    public LocalIoOperationFactory(FsCache fs) {
-	_fs = fs;
-    }
-
-    @Override
-    public AbstractNFSv4Operation getOperation(nfs_argop4 op) {
-	switch (op.argop) {
-	    case nfs_opnum4.OP_READ:
-		return new DSOperationREAD(op, _fs);
-	    case nfs_opnum4.OP_COMMIT:
-		return new DSOperationCOMMIT(op, _fs);
-	    case nfs_opnum4.OP_WRITE:
-		return new DSOperationWRITE(op, _fs);
-	    default:
-		return super.getOperation(op);
+	public LocalIoOperationFactory(FsCache fs) {
+		_fs = fs;
 	}
-    }
+
+	@Override
+	public AbstractNFSv4Operation getOperation(nfs_argop4 op) {
+		if (_log.isInfoEnabled())
+			_log.info("getOperation:{}", op.toString());
+		switch (op.argop) {
+		case nfs_opnum4.OP_READ:
+			return new DSOperationREAD(op, _fs);
+		case nfs_opnum4.OP_COMMIT:
+			return new DSOperationCOMMIT(op, _fs);
+		case nfs_opnum4.OP_WRITE:
+			return new DSOperationWRITE(op, _fs);
+		default:
+			return super.getOperation(op);
+		}
+	}
 
 }

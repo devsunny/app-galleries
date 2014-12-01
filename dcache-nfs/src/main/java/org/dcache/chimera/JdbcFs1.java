@@ -24,7 +24,7 @@ import com.jolbox.bonecp.BoneCPDataSource;
 
 public class JdbcFs1 implements FileSystemProvider {
 	private static final Logger _log = LoggerFactory
-			.getLogger(JdbcFs.class);
+			.getLogger(JdbcFs1.class);
 
 	private static final int LEVELS_NUMBER = 7;
 
@@ -34,7 +34,7 @@ public class JdbcFs1 implements FileSystemProvider {
 
 	private static final int MIN_HANDLE_LEN = 4;
 
-	private final FsSqlDriver _sqlDriver;
+	private final FsSqlDriver1 _sqlDriver;
 
 	private final DataSource _dbConnectionsPool;
 
@@ -56,7 +56,7 @@ public class JdbcFs1 implements FileSystemProvider {
 		this._dbConnectionsPool = dataSource;
 		this._fsId = id;
 
-		this._sqlDriver = FsSqlDriver.getDriverInstance(dialect);
+		this._sqlDriver = FsSqlDriver1.getDriverInstance(dialect);
 
 		this._rootInode = new FsInode(this,
 				"000000000000000000000000000000000000");
@@ -651,6 +651,7 @@ public class JdbcFs1 implements FileSystemProvider {
 	}
 
 	public FsInode path2inode(String path) throws ChimeraFsException {
+		if(_log.isInfoEnabled()) _log.info("PATH:{}", path);
 		return path2inode(path, this._rootInode);
 	}
 
@@ -2256,7 +2257,7 @@ public class JdbcFs1 implements FileSystemProvider {
 		}
 
 		public synchronized FsStat getFsStat(DataSource dbConnectionsPool,
-				FsSqlDriver driver) throws ChimeraFsException {
+				FsSqlDriver1 driver) throws ChimeraFsException {
 			if ((this._fsStatLastUpdate == 0L)
 					|| (this._fsStatLastUpdate + this._fsStateLifetime < System
 							.currentTimeMillis())) {

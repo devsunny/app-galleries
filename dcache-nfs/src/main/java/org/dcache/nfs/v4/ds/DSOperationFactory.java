@@ -19,26 +19,29 @@
  */
 package org.dcache.nfs.v4.ds;
 
-import org.dcache.nfs.v4.OperationGETATTR;
-import org.dcache.nfs.v4.OperationBIND_CONN_TO_SESSION;
-import org.dcache.nfs.v4.OperationPUTROOTFH;
-import org.dcache.nfs.v4.NFSv4OperationFactory;
-import org.dcache.nfs.v4.OperationDESTROY_SESSION;
-import org.dcache.nfs.v4.OperationDESTROY_CLIENTID;
-import org.dcache.nfs.v4.OperationSEQUENCE;
-import org.dcache.nfs.v4.OperationRECLAIM_COMPLETE;
-import org.dcache.nfs.v4.OperationILLEGAL;
-import org.dcache.nfs.v4.OperationCREATE_SESSION;
-import org.dcache.nfs.v4.OperationPUTFH;
 import org.dcache.nfs.v4.AbstractNFSv4Operation;
+import org.dcache.nfs.v4.NFSv4OperationFactory;
+import org.dcache.nfs.v4.OperationBIND_CONN_TO_SESSION;
+import org.dcache.nfs.v4.OperationCREATE_SESSION;
+import org.dcache.nfs.v4.OperationDESTROY_CLIENTID;
+import org.dcache.nfs.v4.OperationDESTROY_SESSION;
 import org.dcache.nfs.v4.OperationEXCHANGE_ID;
+import org.dcache.nfs.v4.OperationGETATTR;
+import org.dcache.nfs.v4.OperationILLEGAL;
+import org.dcache.nfs.v4.OperationPUTFH;
+import org.dcache.nfs.v4.OperationPUTROOTFH;
+import org.dcache.nfs.v4.OperationRECLAIM_COMPLETE;
+import org.dcache.nfs.v4.OperationSEQUENCE;
 import org.dcache.nfs.v4.xdr.nfs4_prot;
 import org.dcache.nfs.v4.xdr.nfs_argop4;
 import org.dcache.nfs.v4.xdr.nfs_opnum4;
 import org.dcache.nfs.vfs.FsCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DSOperationFactory implements NFSv4OperationFactory {
-
+	private static final Logger _log = LoggerFactory
+			.getLogger(DSOperationFactory.class);
     private final FsCache _fs;
 
     public DSOperationFactory(FsCache fs) {
@@ -47,7 +50,8 @@ public class DSOperationFactory implements NFSv4OperationFactory {
 
     @Override
     public AbstractNFSv4Operation getOperation(nfs_argop4 op) {
-
+    	if (_log.isInfoEnabled())
+			_log.info("AbstractNFSv4Operation:{}", op.toString());
         switch (op.argop) {
             case nfs_opnum4.OP_COMMIT:
                 return new DSOperationCOMMIT(op, _fs);

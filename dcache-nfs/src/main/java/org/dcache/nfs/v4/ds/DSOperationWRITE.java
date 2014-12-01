@@ -22,6 +22,7 @@ package org.dcache.nfs.v4.ds;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+import org.dcache.chimera.PathTraceUtility;
 import org.dcache.nfs.v4.AbstractNFSv4Operation;
 import org.dcache.nfs.v4.CompoundContext;
 import org.dcache.nfs.v4.xdr.WRITE4res;
@@ -57,7 +58,9 @@ public class DSOperationWRITE extends AbstractNFSv4Operation {
     @Override
     public void process(CompoundContext context, nfs_resop4 result) throws IOException {
 
-        final WRITE4res res = result.opwrite;
+    	//PathTraceUtility.trace();
+    	
+    	final WRITE4res res = result.opwrite;
 
         long offset = _args.opwrite.offset.value;
 
