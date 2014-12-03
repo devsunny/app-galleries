@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import com.jolbox.bonecp.BoneCPDataSource;
 
-public class JdbcFs1 implements FileSystemProvider {
+public class HdfsJdbcFs implements FileSystemProvider {
 	private static final Logger _log = LoggerFactory
-			.getLogger(JdbcFs1.class);
+			.getLogger(HdfsJdbcFs.class);
 
 	private static final int LEVELS_NUMBER = 7;
 
@@ -34,7 +34,7 @@ public class JdbcFs1 implements FileSystemProvider {
 
 	private static final int MIN_HANDLE_LEN = 4;
 
-	private final FsSqlDriver1 _sqlDriver;
+	private final HdfsSqlDriver _sqlDriver;
 
 	private final DataSource _dbConnectionsPool;
 
@@ -48,15 +48,15 @@ public class JdbcFs1 implements FileSystemProvider {
 
 	private static final int MAX_NAME_LEN = 255;
 
-	public JdbcFs1(DataSource dataSource, String dialect) {
+	public HdfsJdbcFs(DataSource dataSource, String dialect) {
 		this(dataSource, dialect, 0);
 	}
 
-	public JdbcFs1(DataSource dataSource, String dialect, int id) {
+	public HdfsJdbcFs(DataSource dataSource, String dialect, int id) {
 		this._dbConnectionsPool = dataSource;
 		this._fsId = id;
 
-		this._sqlDriver = FsSqlDriver1.getDriverInstance(dialect);
+		this._sqlDriver = HdfsSqlDriver.getDriverInstance(dialect);
 
 		this._rootInode = new FsInode(this,
 				"000000000000000000000000000000000000");
@@ -196,6 +196,7 @@ public class JdbcFs1 implements FileSystemProvider {
 
 	public FsInode createFile(FsInode parent, String name, int owner,
 			int group, int mode, int type) throws ChimeraFsException {
+		
 		Connection dbConnection;
 		try {
 			dbConnection = this._dbConnectionsPool.getConnection();
@@ -2250,14 +2251,14 @@ public class JdbcFs1 implements FileSystemProvider {
 		private long _fsStatLastUpdate;
 
 		private long _fsStateLifetime = 3600000L;
-		private final JdbcFs1 _fs;
+		private final HdfsJdbcFs _fs;
 
-		FsStatCache(JdbcFs1 fs) {
+		FsStatCache(HdfsJdbcFs fs) {
 			this._fs = fs;
 		}
 
 		public synchronized FsStat getFsStat(DataSource dbConnectionsPool,
-				FsSqlDriver1 driver) throws ChimeraFsException {
+				HdfsSqlDriver driver) throws ChimeraFsException {
 			if ((this._fsStatLastUpdate == 0L)
 					|| (this._fsStatLastUpdate + this._fsStateLifetime < System
 							.currentTimeMillis())) {
@@ -2271,10 +2272,10 @@ public class JdbcFs1 implements FileSystemProvider {
 				} finally {
 					SqlHelper.tryToClose(dbConnection);
 				}
-				JdbcFs1._log.debug("updateing cached value of FsStat");
+				HdfsJdbcFs._log.debug("updateing cached value of FsStat");
 				this._fsStatLastUpdate = System.currentTimeMillis();
 			} else {
-				JdbcFs1._log.debug("using cached value of FsStat");
+				HdfsJdbcFs._log.debug("using cached value of FsStat");
 			}
 
 			return this._fsStatCached;
@@ -2383,13 +2384,15 @@ public class JdbcFs1 implements FileSystemProvider {
 			throw new FileNotFoundHimeraFsException(
 					"File handle too short");
 		}
-
+		if(_log.isInfoEnabled()) _log.info("inodeFromBytesNew:....");
+		
 		ByteBuffer b = ByteBuffer.wrap(handle);
 		int fsid = b.get();
 		int type = b.get();
 		int idLen = b.get();
 		byte[] id = new byte[idLen];
 		b.get(id);
+		
 		int opaqueLen = b.get();
 		if (opaqueLen > b.remaining()) {
 			throw new FileNotFoundHimeraFsException("Bad Opaque len");
@@ -2450,20 +2453,19 @@ public class JdbcFs1 implements FileSystemProvider {
 	}
 
 	FsInode inodeFromBytesOld(byte[] handle) throws ChimeraFsException {
+		
 		FsInode inode = null;
-
 		String strHandle = new String(handle);
-
+		
+		if(_log.isInfoEnabled()) _log.info("inodeFromBytesOld:{}....", strHandle);
+		
 		StringTokenizer st = new StringTokenizer(strHandle, "[:]");
-
 		if (st.countTokens() < 3) {
 			throw new IllegalArgumentException(
 					"Invalid HimeraNFS handler.(" + strHandle + ")");
 		}
-
 		int fsId = Integer.parseInt(st.nextToken());
 		String type = st.nextToken();
-
 		try {
 			FsInodeType inodeType = FsInodeType.valueOf(type);
 			String id;

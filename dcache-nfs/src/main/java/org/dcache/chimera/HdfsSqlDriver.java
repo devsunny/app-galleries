@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
-class FsSqlDriver1 {
+class HdfsSqlDriver {
 	private static final Logger _log = LoggerFactory
-			.getLogger(FsSqlDriver1.class);
+			.getLogger(HdfsSqlDriver.class);
 
 	private static final int IOMODE_ENABLE = 1;
 
@@ -70,7 +70,7 @@ class FsSqlDriver1 {
 
 	
 	
-	protected FsSqlDriver1() {
+	protected HdfsSqlDriver() {
 		if (Boolean.valueOf(System.getProperty("chimera.inodeIoMode"))
 				.booleanValue()) {
 			this._ioMode = 1;
@@ -352,6 +352,8 @@ class FsSqlDriver1 {
 
 	FsInode inodeOf(Connection dbConnection, FsInode parent, String name)
 			throws SQLException {
+		
+		//PathTraceUtility.trace();
 		FsInode inode = null;
 		String id = null;
 		PreparedStatement stGetInodeByName = null;
@@ -364,9 +366,10 @@ class FsSqlDriver1 {
 			stGetInodeByName.setString(2, parent.toString());
 
 			result = stGetInodeByName.executeQuery();
-
+			if(_log.isInfoEnabled()) _log.info("name:{}; parent:{}", name, parent.toString());
 			if (result.next()) {
 				id = result.getString("ipnfsid");
+				if(_log.isInfoEnabled()) _log.info("ipnfsid id:{}", id);
 			}
 		} finally {
 			SqlHelper.tryToClose(result);
@@ -1785,8 +1788,9 @@ class FsSqlDriver1 {
 			throws SQLException, IOHimeraFsException {
 		File pathFile = new File(path);
 		
+		if(_log.isInfoEnabled()) _log.info("path2inode PATH:{}", path);
+		
 		List<String> pathElemts = new ArrayList();
-
 		do {
 			String fileName = pathFile.getName();
 			if (fileName.length() != 0) {
@@ -1821,7 +1825,7 @@ class FsSqlDriver1 {
 			}
 			parentInode = inode;
 		}
-
+		if(_log.isInfoEnabled()) _log.info("inode :{}", inode.toString());
 		return inode;
 	}
 
@@ -1954,19 +1958,18 @@ class FsSqlDriver1 {
 		return sqlState.equals("23503");
 	}
 
-	static FsSqlDriver1 getDriverInstance(String dialect) {
-		FsSqlDriver1 driver = null;
+	static HdfsSqlDriver getDriverInstance(String dialect) {
+		HdfsSqlDriver driver = null;
 
-		String dialectDriverClass = "org.dcache.chimera." + dialect
-				+ "FsSqlDriver1";
+		String dialectDriverClass = "org.dcache.chimera." + dialect  + "FsSqlDriver1";
 		try {
-			driver = (FsSqlDriver1) Class.forName(dialectDriverClass)
+			driver = (HdfsSqlDriver) Class.forName(dialectDriverClass)
 					.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 		} catch (ClassNotFoundException e) {
 			_log.info(dialectDriverClass
 					+ " not found, using default FsSqlDriver1.");
-			driver = new FsSqlDriver1();
+			driver = new HdfsSqlDriver();
 		}
 
 		return driver;

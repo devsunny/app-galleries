@@ -85,7 +85,7 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 
 	@Override
 	public COMPOUND4res NFSPROC4_COMPOUND_4(RpcCall call$, COMPOUND4args arg1) {
-		if(_log.isInfoEnabled()) _log.info("NFSPROC4_COMPOUND_4: {}", call$.getXdr().toString());
+		if(_log.isDebugEnabled()) _log.debug("NFSPROC4_COMPOUND_4: {}", call$.getXdr().toString());
 		
 		COMPOUND4res res = new COMPOUND4res();
 
@@ -157,9 +157,9 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 						}
 					}
 					long t0 = System.nanoTime();
-					if(_log.isInfoEnabled()) _log.info("_operationFactory:{}", _operationFactory.getClass().getName());
+					if(_log.isDebugEnabled()) _log.debug("_operationFactory:{}", _operationFactory.getClass().getName());
 					AbstractNFSv4Operation nfsOp = _operationFactory.getOperation(op);
-					if(_log.isInfoEnabled()) _log.info("nfsOp class:{}", nfsOp.getClass().getName());
+					if(_log.isDebugEnabled()) _log.debug("nfsOp class:{}", nfsOp.getClass().getName());
 					
 					nfsOp.process(context,
 							opResult);

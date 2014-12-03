@@ -85,6 +85,8 @@ public class DSOperationWRITE extends AbstractNFSv4Operation {
              */
             context.getStateHandler().updateClientLeaseTime(_args.opwrite.stateid);
         }
+        
+       
 
         FileChannel out = _fsCache.get(inode);
 

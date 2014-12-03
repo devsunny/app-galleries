@@ -344,7 +344,6 @@ public class RpcCall {
         } else {
             _log.info("reply not succeeded {}", reply);
             // FIXME: error handling here
-
             if( reply.isAccepted() ) {
                 throw new OncRpcAcceptedException(reply.getAcceptStatus());
             }

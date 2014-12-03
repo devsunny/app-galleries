@@ -19,31 +19,32 @@
  */
 package org.dcache.nfs.v4;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import java.io.IOException;
-import org.dcache.nfs.nfsstat;
-import org.dcache.nfs.v4.xdr.nfs_ftype4;
-import org.dcache.nfs.v4.xdr.fattr4;
-import org.dcache.nfs.v4.xdr.nfs_argop4;
-import org.dcache.nfs.v4.xdr.change_info4;
-import org.dcache.nfs.v4.xdr.changeid4;
-import org.dcache.nfs.v4.xdr.nfs_opnum4;
-import org.dcache.nfs.v4.xdr.CREATE4res;
-import org.dcache.nfs.v4.xdr.CREATE4resok;
+
 import org.dcache.nfs.ChimeraNFSException;
+import org.dcache.nfs.nfsstat;
 import org.dcache.nfs.status.BadTypeException;
 import org.dcache.nfs.status.NotDirException;
 import org.dcache.nfs.status.NotSuppException;
+import org.dcache.nfs.v4.xdr.CREATE4res;
+import org.dcache.nfs.v4.xdr.CREATE4resok;
 import org.dcache.nfs.v4.xdr.bitmap4;
+import org.dcache.nfs.v4.xdr.change_info4;
+import org.dcache.nfs.v4.xdr.changeid4;
+import org.dcache.nfs.v4.xdr.fattr4;
 import org.dcache.nfs.v4.xdr.mode4;
 import org.dcache.nfs.v4.xdr.nfs4_prot;
+import org.dcache.nfs.v4.xdr.nfs_argop4;
+import org.dcache.nfs.v4.xdr.nfs_ftype4;
+import org.dcache.nfs.v4.xdr.nfs_opnum4;
 import org.dcache.nfs.v4.xdr.nfs_resop4;
 import org.dcache.nfs.vfs.Inode;
 import org.dcache.nfs.vfs.Stat;
 import org.dcache.xdr.OncRpcException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Optional;
 
 public class OperationCREATE extends AbstractNFSv4Operation {
 
@@ -77,8 +78,7 @@ public class OperationCREATE extends AbstractNFSv4Operation {
             mode = createMode.get().value;
             appliedAttribytes.set(nfs4_prot.FATTR4_MODE);
         }
-
-
+        
         switch (type) {
 
             case nfs_ftype4.NF4DIR:

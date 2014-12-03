@@ -354,7 +354,7 @@ public class OperationFactoryMXBeanImpl implements OperationFactoryMXBean, NFSv4
         if (counter != null) {
             counter.incrementAndGet();
         }
-        if(_log.isInfoEnabled()) _log.info("_inner _operationFactory:{}", _inner.getClass().getName());
+      //  if(_log.isInfoEnabled()) _log.info("_inner _operationFactory:{}", _inner.getClass().getName());
 		
         return _inner.getOperation(op);
     }

@@ -67,24 +67,22 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	private final static Logger _log = LoggerFactory
 			.getLogger(ChimeraVfs.class);
-	private final JdbcFs1 _fs;
+	private final JdbcFs _fs;
 	private final NfsIdMapping _idMapping;
 
-	public ChimeraVfs(JdbcFs1 fs, NfsIdMapping idMapping) {
+	public ChimeraVfs(JdbcFs fs, NfsIdMapping idMapping) {
 		_fs = fs;
 		_idMapping = idMapping;
 	}
 
 	@Override
-	public Inode getRootInode() throws IOException {
-		
+	public Inode getRootInode() throws IOException {		
 		return toInode(FsInode.getRoot(_fs));
 	}
 
 	@Override
 	public Inode lookup(Inode parent, String path) throws IOException {
-		if (_log.isInfoEnabled())
-			_log.info("lookup");
+		if (_log.isInfoEnabled()) _log.info("lookup:{}, parant:{}", path, parent.toString());
 		try {
 			FsInode parentFsInode = toFsInode(parent);
 			FsInode fsInode = parentFsInode.inodeOf(path);
@@ -249,19 +247,19 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public FsStat getFsStat() throws IOException {
-		if(_log.isInfoEnabled()) _log.info("getFsStat");
+		
 		org.dcache.chimera.FsStat fsStat = _fs.getFsStat();
 		return new FsStat(fsStat.getTotalSpace(), fsStat.getTotalFiles(),
 				fsStat.getUsedSpace(), fsStat.getUsedFiles());
 	}
 
 	private FsInode toFsInode(Inode inode) throws IOException {
-		if(_log.isInfoEnabled()) _log.info("toFsInode");
+		
 		return _fs.inodeFromBytes(inode.getFileId());
 	}
 
 	private Inode toInode(final FsInode inode) {
-		if(_log.isInfoEnabled()) _log.info("toInode");
+		
 		try {
 			return Inode.forFile(_fs.inodeToBytes(inode));
 		} catch (ChimeraFsException e) {
@@ -271,7 +269,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public Stat getattr(Inode inode) throws IOException {
-		if(_log.isInfoEnabled()) _log.info("getattr");
+		if(_log.isDebugEnabled()) _log.debug("getattr");
 		FsInode fsInode = toFsInode(inode);
 		try {
 			return fromChimeraStat(fsInode.stat(), fsInode.id());

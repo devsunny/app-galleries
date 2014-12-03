@@ -43,8 +43,8 @@ public class LocalIoOperationFactory extends MDSOperationFactory {
 
 	@Override
 	public AbstractNFSv4Operation getOperation(nfs_argop4 op) {
-		if (_log.isInfoEnabled())
-			_log.info("getOperation:{}", op.toString());
+		if (_log.isDebugEnabled())
+			_log.debug("getOperation:{}", op.toString());
 		switch (op.argop) {
 		case nfs_opnum4.OP_READ:
 			return new DSOperationREAD(op, _fs);
