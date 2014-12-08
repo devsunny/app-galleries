@@ -63,14 +63,14 @@ import com.google.common.collect.Lists;
 /**
  * Interface to a virtual file system.
  */
-public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
+public class HDFSVfs implements VirtualFileSystem, AclCheckable {
 
 	private final static Logger _log = LoggerFactory
-			.getLogger(ChimeraVfs.class);
+			.getLogger(HDFSVfs.class);
 	private final HdfsJdbcFs _fs;
 	private final NfsIdMapping _idMapping;
 
-	public ChimeraVfs(HdfsJdbcFs fs, NfsIdMapping idMapping) {
+	public HDFSVfs(HdfsJdbcFs fs, NfsIdMapping idMapping) {
 		_fs = fs;
 		_idMapping = idMapping;
 	}
@@ -81,10 +81,10 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	@Override
-	public Inode lookup(Inode parent, String path) throws IOException {		
-		if (_log.isDebugEnabled()) _log.debug("lookup:{} in parant:{}", path, parent.toString());
+	public Inode lookup(Inode parent, String path) throws IOException {
+		if (_log.isInfoEnabled()) _log.info("lookup:{}, parant:{}", path, parent.toString());
 		try {
-			FsInode parentFsInode = toFsInode(parent);	
+			FsInode parentFsInode = toFsInode(parent);
 			FsInode fsInode = parentFsInode.inodeOf(path);
 			return toInode(fsInode);
 		} catch (FileNotFoundHimeraFsException e) {
@@ -95,10 +95,10 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode create(Inode parent, Stat.Type type, String path, int uid,
 			int gid, int mode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("create:{}", path);
+		if (_log.isInfoEnabled())
+			_log.info("create");
 		try {
 			FsInode parentFsInode = toFsInode(parent);
-			if (_log.isDebugEnabled()) _log.debug("ParentFNode:{}", parentFsInode.toString());
 			FsInode fsInode = _fs.createFile(parentFsInode, path, uid, gid,
 					mode | typeToChimera(type), typeToChimera(type));
 			return toInode(fsInode);
@@ -110,7 +110,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode mkdir(Inode parent, String path, int uid, int gid, int mode)
 			throws IOException {
-		if (_log.isDebugEnabled()) _log.debug ("mkdir:{}", path);
+		if (_log.isInfoEnabled())
+			_log.info("mkdir:{}", path);
 		try {
 			FsInode parentFsInode = toFsInode(parent);
 			FsInode fsInode = parentFsInode.mkdir(path, uid, gid, mode);
@@ -140,7 +141,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode symlink(Inode parent, String path, String link, int uid,
 			int gid, int mode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("symlink");
+		if (_log.isInfoEnabled())
+			_log.info("symlink");
 		try {
 			FsInode parentFsInode = toFsInode(parent);
 			FsInode fsInode = _fs.createLink(parentFsInode, path, uid, gid,
@@ -154,7 +156,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public int read(Inode inode, byte[] data, long offset, int count)
 			throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("read");
+		if (_log.isInfoEnabled())
+			_log.info("read");
 		FsInode fsInode = toFsInode(inode);
 		return fsInode.read(offset, data, 0, count);
 	}
@@ -162,7 +165,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public boolean move(Inode src, String oldName, Inode dest, String newName)
 			throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("move");
+		if (_log.isInfoEnabled())
+			_log.info("move");
 		FsInode from = toFsInode(src);
 		FsInode to = toFsInode(dest);
 		try {
@@ -180,7 +184,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public String readlink(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("readlink");
+		if (_log.isInfoEnabled())
+			_log.info("readlink");
 		FsInode fsInode = toFsInode(inode);
 		int count = (int) fsInode.statCache().getSize();
 		byte[] data = new byte[count];
@@ -193,7 +198,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public void remove(Inode parent, String path) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("remove");
+		if (_log.isInfoEnabled())
+			_log.info("remove");
 		FsInode parentFsInode = toFsInode(parent);
 		try {
 			_fs.remove(parentFsInode, path);
@@ -207,7 +213,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public WriteResult write(Inode inode, byte[] data, long offset, int count,
 			StabilityLevel stabilityLevel) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("write:length[{}] offset[{}] count[{}]", data.length, offset, count);
+		if (_log.isInfoEnabled())
+			_log.info("write:length[{}] offset[{}] count[{}]", data.length, offset, count);
 		FsInode fsInode = toFsInode(inode);
 		int bytesWritten = fsInode.write(offset, data, 0, count);
 		return new WriteResult(StabilityLevel.FILE_SYNC, bytesWritten);
@@ -220,9 +227,9 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public List<DirectoryEntry> list(Inode inode) throws IOException {
-		
+		if (_log.isInfoEnabled())
+			_log.info("list");
 		FsInode parentFsInode = toFsInode(inode);
-		if (_log.isDebugEnabled()) _log.debug("list inode:{}", parentFsInode.toString());
 		List<HimeraDirectoryEntry> list = DirectoryStreamHelper
 				.listOf(parentFsInode);
 		return Lists.transform(list, new ChimeraDirectoryEntryToVfs());
@@ -230,7 +237,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public Inode parentOf(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("parentOf");
+		if(_log.isInfoEnabled()) _log.info("parentOf");
 		FsInode parent = toFsInode(inode).getParent();
 		if (parent == null) {
 			throw new NoEntException("no parent");
@@ -239,7 +246,8 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	@Override
-	public FsStat getFsStat() throws IOException {		
+	public FsStat getFsStat() throws IOException {
+		
 		org.dcache.chimera.FsStat fsStat = _fs.getFsStat();
 		return new FsStat(fsStat.getTotalSpace(), fsStat.getTotalFiles(),
 				fsStat.getUsedSpace(), fsStat.getUsedFiles());
@@ -272,14 +280,14 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public void setattr(Inode inode, Stat stat) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("setattr");
+		if(_log.isInfoEnabled()) _log.info("setattr");
 		FsInode fsInode = toFsInode(inode);
 		fsInode.setStat(toChimeraStat(stat));
 	}
 
 	@Override
 	public nfsace4[] getAcl(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("getAcl");
+		if(_log.isInfoEnabled()) _log.info("getAcl");
 		FsInode fsInode = toFsInode(inode);
 		nfsace4[] aces;
 		List<ACE> dacl = _fs.getACL(fsInode);
@@ -298,7 +306,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public void setAcl(Inode inode, nfsace4[] acl) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("setAcl");
+		if(_log.isInfoEnabled()) _log.info("setAcl");
 		FsInode fsInode = toFsInode(inode);
 		List<ACE> dacl = new ArrayList<>();
 		for (nfsace4 ace : acl) {
@@ -309,12 +317,13 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	private static Stat fromChimeraStat(org.dcache.chimera.posix.Stat pStat,
 			long fileid) {
-		if (_log.isDebugEnabled()) _log.debug("fromChimeraStat");
+		if(_log.isInfoEnabled()) _log.info("fromChimeraStat");
 		Stat stat = new Stat();
 
 		stat.setATime(pStat.getATime());
 		stat.setCTime(pStat.getCTime());
 		stat.setMTime(pStat.getMTime());
+
 		stat.setGid(pStat.getGid());
 		stat.setUid(pStat.getUid());
 		stat.setDev(pStat.getDev());
@@ -330,7 +339,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	private static org.dcache.chimera.posix.Stat toChimeraStat(Stat stat) {
-		if (_log.isDebugEnabled()) _log.debug("toChimeraStat");
+		if(_log.isInfoEnabled()) _log.info("toChimeraStat");
 		org.dcache.chimera.posix.Stat pStat = new org.dcache.chimera.posix.Stat();
 		pStat.setATime(stat.getATime());
 		pStat.setCTime(stat.getCTime());
@@ -350,7 +359,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public int access(Inode inode, int mode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("access");
+		if(_log.isInfoEnabled()) _log.info("access");
 		int accessmask = mode;
 		if ((mode & (ACCESS4_MODIFY | ACCESS4_EXTEND)) != 0) {
 
@@ -365,7 +374,7 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	private boolean shouldRejectUpdates(FsInode fsInode)
 			throws ChimeraFsException {
-		if (_log.isDebugEnabled()) _log.debug("shouldRejectUpdates");
+		if(_log.isInfoEnabled()) _log.info("shouldRejectUpdates");
 		return fsInode.type() == FsInodeType.INODE
 				&& fsInode.getLevel() == 0
 				&& !fsInode.isDirectory()
@@ -376,22 +385,23 @@ public class ChimeraVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public boolean hasIOLayout(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("hasIOLayout");
+		if(_log.isInfoEnabled()) _log.info("hasIOLayout");
 		FsInode fsInode = toFsInode(inode);
 		return fsInode.type() == FsInodeType.INODE && fsInode.getLevel() == 0;
 	}
 
 	@Override
 	public AclCheckable getAclCheckable() {
-		if (_log.isDebugEnabled()) _log.debug("AclCheckable");
+		if(_log.isInfoEnabled()) _log.info("AclCheckable");
 		return this;
 	}
 
 	private class ChimeraDirectoryEntryToVfs implements
 			Function<HimeraDirectoryEntry, DirectoryEntry> {
+
 		@Override
 		public DirectoryEntry apply(HimeraDirectoryEntry e) {
-			if (_log.isDebugEnabled()) _log.debug("transform HimeraDirectoryEntry to DirectoryEntry:{}", e.getName());			
+			if(_log.isInfoEnabled()) _log.info("apply");
 			return new DirectoryEntry(e.getName(), toInode(e.getInode()),
 					fromChimeraStat(e.getStat(), e.getInode().id()));
 		}

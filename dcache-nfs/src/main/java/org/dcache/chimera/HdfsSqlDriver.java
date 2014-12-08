@@ -633,7 +633,7 @@ class HdfsSqlDriver {
 			stGetParentId = dbConnection
 					.prepareStatement("SELECT iparent FROM t_dirs WHERE ipnfsid=? AND iname != '.' and iname != '..'");
 			stGetParentId.setString(1, inode.toString());
-
+			System.out.println(inode.toString());
 			result = stGetParentId.executeQuery();
 
 			if (result.next()) {

@@ -42,6 +42,7 @@ public class ExportPathCreator {
     }
 
     public void init()  throws IOException {      
+    	try{
     	Inode root = vfs.getRootInode();       
         for (FsExport export : exportFile.getExports()) {
             String path = export.getPath();
@@ -56,6 +57,10 @@ public class ExportPathCreator {
                         child = vfs.create(inode, Stat.Type.DIRECTORY, s, 0, 0, 0777);
                 }
             }
-        }       
+        } 
+    	}catch(Exception ex){
+    		ex.printStackTrace();
+    		throw new IOException(ex);
+    	}
     }
 }

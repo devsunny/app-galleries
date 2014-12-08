@@ -41,10 +41,8 @@ public class OperationPUTFH extends AbstractNFSv4Operation {
     @Override
     public void process(CompoundContext context, nfs_resop4 result) throws ChimeraNFSException, IOException {
         final PUTFH4res res = result.opputfh;
-
-        try {
-            context.currentInode(new Inode(_args.opputfh.object.value));
-            _log.debug("NFS Request  PUTFH4 current: {}", context.currentInode());
+        try {        	
+        	context.currentInode(new Inode(_args.opputfh.object.value));   
             res.status = nfsstat.NFS_OK;
         } catch (IllegalArgumentException iae) {
             res.status = nfsstat.NFSERR_BADHANDLE;

@@ -73,11 +73,10 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
        
 
         FileChannel out = _fsCache.get(inode);
-
         _args.opwrite.data.rewind();
         
         if (_log.isInfoEnabled())
-			_log.info("create and write data: {}", _args.opwrite.data.remaining() );
+			_log.info("create and write data size: {} at offset {} ", _args.opwrite.data.remaining(), offset );
         
         int bytesWritten = out.write(_args.opwrite.data, offset);
 

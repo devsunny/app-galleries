@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -720,7 +721,9 @@ public class HdfsJdbcFs implements FileSystemProvider {
 	public FsInode inodeOf(FsInode parent, String name)
 			throws ChimeraFsException {
 		FsInode inode = null;
-
+		if(_log.isDebugEnabled()) {
+			_log.debug("inodeOf:{}", name);
+		}
 		if (name.startsWith(".(")) {
 			if (name.startsWith(".(id)(")) {
 				String[] cmd = PnfsCommandProcessor.process(name);
@@ -2384,13 +2387,12 @@ public class HdfsJdbcFs implements FileSystemProvider {
 			throw new FileNotFoundHimeraFsException(
 					"File handle too short");
 		}
-		if(_log.isInfoEnabled()) _log.info("inodeFromBytesNew:....");
 		
 		ByteBuffer b = ByteBuffer.wrap(handle);
 		int fsid = b.get();
 		int type = b.get();
 		int idLen = b.get();
-		byte[] id = new byte[idLen];
+		byte[] id = new byte[idLen]; 
 		b.get(id);
 		
 		int opaqueLen = b.get();
@@ -2400,12 +2402,13 @@ public class HdfsJdbcFs implements FileSystemProvider {
 
 		byte[] opaque = new byte[opaqueLen];
 		b.get(opaque);
-
 		FsInodeType inodeType = FsInodeType.valueOf(type);
 		String inodeId = toHexString(id);
+		if(_log.isDebugEnabled()) _log.debug("inodeId:{}", inodeId);
 		FsInode inode;
 		switch (inodeType) {
 		case INODE:
+			if(_log.isDebugEnabled()) _log.debug("INODE opaque:{}",  new String(opaque));
 			int level = Integer.parseInt(new String(opaque));
 			inode = new FsInode(this, inodeId, level);
 			break;
@@ -2419,6 +2422,7 @@ public class HdfsJdbcFs implements FileSystemProvider {
 			break;
 
 		case TAG:
+			if(_log.isDebugEnabled()) _log.debug("TAG opaque:{}",  new String(opaque));
 			String tag = new String(opaque);
 			inode = new FsInode_TAG(this, inodeId, tag);
 			break;
@@ -2443,6 +2447,7 @@ public class HdfsJdbcFs implements FileSystemProvider {
 			break;
 
 		case PGET:
+			if(_log.isDebugEnabled()) _log.debug("PGET opaque:{}",  Arrays.asList(getArgs(opaque)));
 			inode = getPGET(inodeId, getArgs(opaque));
 			break;
 		default:

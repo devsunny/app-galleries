@@ -65,7 +65,9 @@ public class OperationCREATE extends AbstractNFSv4Operation {
 
         Stat stat = context.getFs().getattr(context.currentInode());
         String name = NameFilter.convertName(_args.opcreate.objname.value);
-
+        if(_log.isDebugEnabled()){
+        	_log.debug("Directory name:{}", name);
+        }
         if (stat.type() != Stat.Type.DIRECTORY) {
             throw new NotDirException();
         }

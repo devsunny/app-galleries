@@ -82,7 +82,7 @@ public class OperationOPEN extends AbstractNFSv4Operation {
 
             client.updateLeaseTime();
             _log.debug("open request form clientid: {}, owner: {}",
-                    client, new String(_args.opopen.owner.value.owner));
+                    client, new String(_args.opopen.owner.value.owner, "UTF-8"));
         }
 
         res.resok4 = new OPEN4resok();

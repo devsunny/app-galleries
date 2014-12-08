@@ -79,13 +79,12 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 
 	@Override
 	public void NFSPROC4_NULL_4(RpcCall call$) {
-		_log.debug("NFS PING client: {}", call$.getTransport()
-				.getRemoteSocketAddress());
+		//_log.debug("NFS PING client: {}", call$.getTransport()
+		//		.getRemoteSocketAddress());
 	}
 
 	@Override
-	public COMPOUND4res NFSPROC4_COMPOUND_4(RpcCall call$, COMPOUND4args arg1) {
-		if(_log.isDebugEnabled()) _log.debug("NFSPROC4_COMPOUND_4: {}", call$.getXdr().toString());
+	public COMPOUND4res NFSPROC4_COMPOUND_4(RpcCall call$, COMPOUND4args arg1) {		
 		
 		COMPOUND4res res = new COMPOUND4res();
 
@@ -101,9 +100,9 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 			MDC.put(NfsMdc.CLIENT, call$.getTransport()
 					.getRemoteSocketAddress().toString());
 
-			_log.debug("NFS COMPOUND client: {}, tag: [{}]", call$
+			if(_log.isDebugEnabled()) _log.debug("NFS COMPOUND client: {}, tag: [{}]", call$
 					.getTransport().getRemoteSocketAddress(), tag);
-
+			if(_log.isDebugEnabled()) _log.debug("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 			int minorversion = arg1.minorversion.value;
 			if (minorversion > 1) {
 				throw new MinorVersMismatchException(String.format(
@@ -119,6 +118,7 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 				throw new ResourceException(String.format("Too many ops [%d]",
 						arg1.argarray.length));
 			}
+			if(_log.isDebugEnabled()) _log.debug("ARGARRAY Length:[{}]", arg1.argarray.length);
 			res.resarray = new ArrayList<>(arg1.argarray.length);
 
 			VirtualFileSystem fs = new PseudoFs(_fs, call$, _exportFile);
@@ -129,7 +129,7 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 			boolean retransmit = false;
 			for (nfs_argop4 op : arg1.argarray) {
 				context.nextOperation();
-				int position = context.getOperationPosition();
+				int position = context.getOperationPosition();				
 				nfs_resop4 opResult = nfs_resop4.resopFor(op.argop);
 				try {
 					if (minorversion != 0) {
@@ -156,8 +156,7 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 							}
 						}
 					}
-					long t0 = System.nanoTime();
-					if(_log.isDebugEnabled()) _log.debug("_operationFactory:{}", _operationFactory.getClass().getName());
+					long t0 = System.nanoTime();					
 					AbstractNFSv4Operation nfsOp = _operationFactory.getOperation(op);
 					if(_log.isDebugEnabled()) _log.debug("nfsOp class:{}", nfsOp.getClass().getName());
 					
@@ -212,7 +211,7 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 			MDC.remove(NfsMdc.CLIENT);
 			MDC.remove(NfsMdc.SESSION);
 		}
-
+		if(_log.isDebugEnabled()) _log.debug("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 		return res;
 	}
 
