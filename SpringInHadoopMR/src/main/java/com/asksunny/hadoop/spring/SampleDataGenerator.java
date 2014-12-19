@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class SampleDataGenerator {
+	
 
 	public final static char[] ALPHA_NUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_- "
 			.toCharArray();

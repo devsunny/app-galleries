@@ -3,6 +3,8 @@ LZO format:
 LZO format support hadoop-lzo package which is installed:
 
 
+
+
 CREATE EXTERNAL TABLE LZOTestTable (
          columnA string,
          columnB string )
