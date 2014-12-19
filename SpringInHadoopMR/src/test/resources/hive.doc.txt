@@ -1,0 +1,29 @@
+LZO format:
+
+LZO format support hadoop-lzo package which is installed:
+
+
+CREATE EXTERNAL TABLE LZOTestTable (
+         columnA string,
+         columnB string )
+    PARTITIONED BY (date string)
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY "\t"
+    STORED AS INPUTFORMAT "com.hadoop.mapred.DeprecatedLzoTextInputFormat"
+    OUTPUTFORMAT "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+    LOCATION '/user/sliu/lzoTest';
+
+ALTER TABLE LZOTestTable
+SET FILEFORMAT
+INPUTFORMAT "com.hadoop.mapred.DeprecatedLzoTextInputFormat"
+OUTPUTFORMAT "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat";
+
+
+
+
+ALTER TABLE log_messages ADD PARTITION(year = 2012, month = 1, day = 2)
+LOCATION '/user/sliu/data/log_messages/2012/01/02';
+ALTER TABLE log_messages ADD IF NOT EXISTS
+PARTITION (year = 2011, month = 1, day = 1) LOCATION '/logs/2011/01/01'
+PARTITION (year = 2011, month = 1, day = 2) LOCATION '/logs/2011/01/02'
+PARTITION (year = 2011, month = 1, day = 3) LOCATION '/logs/2011/01/03'
+
