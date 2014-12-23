@@ -1,0 +1,8 @@
+05  STREET-ADDRESS.
+       10  ADDRESS-LINE-1         PIC X(20).
+       10  ADDRESS-LINE-2         PIC X(20).
+   05  RURAL-ADDRESS REDEFINES STREET-ADDRESS.
+       10  RURAL-ROUTE            PIC 9(3).
+       10  RR-BOX-NUMBER          PIC X(10).
+       10  FILLER                 PIC X(27).
+       

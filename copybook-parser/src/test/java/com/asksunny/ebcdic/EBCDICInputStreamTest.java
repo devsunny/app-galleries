@@ -24,7 +24,7 @@ public class EBCDICInputStreamTest {
 	@Test
 	public void test() throws Exception {
 		String hexData = "F0F0F1F2D3";
-		EBCDICInputStream cin = new EBCDICInputStream(new ByteArrayInputStream(hexToBinary(hexData)));
+		EBCDICInputStreamReader cin = new EBCDICInputStreamReader(new ByteArrayInputStream(hexToBinary(hexData)));
 		assertEquals("-00123", cin.readPicDecimal(5));
 	}
 
@@ -34,7 +34,7 @@ public class EBCDICInputStreamTest {
 	@Test
 	public void test2() throws Exception {
 		String hexData = "F0F0F1F2C3";
-		EBCDICInputStream cin = new EBCDICInputStream(new ByteArrayInputStream(hexToBinary(hexData)));
+		EBCDICInputStreamReader cin = new EBCDICInputStreamReader(new ByteArrayInputStream(hexToBinary(hexData)));
 		assertEquals("00123", cin.readPicDecimal(5));
 	}
 
@@ -45,7 +45,7 @@ public class EBCDICInputStreamTest {
 	@Test
 	public void test3() throws Exception {
 		String hexData = "C5848781994040404040D1969585A24040404040001602250C";
-		EBCDICInputStream cin = new EBCDICInputStream(new ByteArrayInputStream(hexToBinary(hexData)));
+		EBCDICInputStreamReader cin = new EBCDICInputStreamReader(new ByteArrayInputStream(hexToBinary(hexData)));
 		assertEquals("Edgar     ", cin.readString(10));
 		assertEquals("Jones     ", cin.readString(10));
 		//assertEquals("Jones     ", cin.readString(10));

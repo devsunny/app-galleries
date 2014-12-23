@@ -8,6 +8,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+
+
 public class CopyBookParserTest {
 
 	@Before
@@ -20,8 +22,8 @@ public class CopyBookParserTest {
 
 	@Test
 	public void test() throws Exception{
-		CopyBookParser parser = new CopyBookParser(URLDecoder.decode(getClass().getResource("/SimpleCopyBook.cb").getFile().trim(), "UTF-8"));
-		parser.parse();
+		//CobolParser parser = new CobolParser(getClass().getResourceAsStream("/GroupCopyBook.cb"));
+		
 	}
 
 }

@@ -1,0 +1,6 @@
+01  INVENTORY-RECORD.
+       05  INVENTORY-ITEM OCCURS 10 TIMES.
+           10  ITEM-DESCRIPTION               PIC X(30).
+           10  MONTHLY-SALES OCCURS 12 TIMES.
+               15  QUANTITY-SOLD              PIC 999.
+               15  UNIT-PRICE                 PIC 9(5)V99.

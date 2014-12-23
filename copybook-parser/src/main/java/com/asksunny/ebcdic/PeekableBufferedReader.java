@@ -19,7 +19,8 @@ public class PeekableBufferedReader implements Closeable {
 				: new BufferedReader(breader);
 	}
 
-	public String peekLine() throws IOException {
+	public String peekLine() throws IOException 
+	{
 		if (line == null) {
 			line = bufferedReader.readLine();
 			return line;

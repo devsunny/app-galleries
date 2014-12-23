@@ -1,0 +1,244 @@
+options {
+  IGNORE_CASE = true;
+  //FORCE_LA_CHECK = true;
+  LOOKAHEAD = 4;
+  //DEBUG_PARSER = true;
+  //DEBUG_LOOKAHEAD = true;
+}
+
+/**
+ * The parser class.
+ */
+
+PARSER_BEGIN(CopyBookParser)
+package com.asksunny.copybook;
+
+import com.asksunny.copybook.elements.*;
+
+public class CopyBookParser {
+
+}
+PARSER_END(CopyBookParser)
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Lexical structure
+////////////////////////////////////////////////////////////////////////////////
+
+SPECIAL_TOKEN :
+{
+  <EOL: "\n" >
+| <SPACECHAR: ( " " | "\t" | "\f" | ";" | "\r" )+ >
+}
+
+SPECIAL_TOKEN :
+{
+  <COMMENT: "*>" (~["\n","\r"])* >
+| < SPACE_SEPARATOR : ( <SPACECHAR> | <EOL> )+ >
+| < COMMA_SEPARATOR : "," <SPACE_SEPARATOR> >
+}
+
+TOKEN :
+{
+  <DOT : <DOTCHAR> <SPACE_SEPARATOR> >
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// RESERVED WORDS. Looks like an excerpt of the dictionary of data processing.
+// It is very hard to find significative identifiers in COBOL that are not
+// reserved...
+////////////////////////////////////////////////////////////////////////////////
+
+TOKEN :
+{
+< BINARY: "binary" >
+| < BY: "by" >
+| < COMP: "comp" >
+| < COMP_1: "comp-1" > // extension in many dialects
+| < COMP_2: "comp-2" > // extension in many dialects
+| < COMP_3: "comp-3" > // extension in many dialects
+| < COMP_4: "comp-4" > // extension in many dialects
+| < COMP_5: "comp-5" > // extension in many dialects
+| < COMPUTATIONAL: "computational" >
+| < COMPUTATIONAL_1: "computational-1" > // extension
+| < COMPUTATIONAL_2: "computational-2" > // extension
+| < COMPUTATIONAL_3: "computational-3" > // extension
+| < COMPUTATIONAL_4: "computational-4" > // extension
+| < COMPUTATIONAL_5: "computational-5" > // extension
+| < DEPENDING: "depending" >
+| < DISPLAY: "display" >
+| < DISPLAY_1: "display-1" > // extension
+| < INDEX: "index" >
+| < INDEXED: "indexed" >
+| < IS: "is" >
+| < LEADING: "leading" >
+| < OCCURS: "occurs" >
+| < PACKED_DECIMAL: "packed-decimal" >
+| < RECORD: "record" >
+| < REDEFINES: "redefines" >
+| < USAGE: "usage" >
+| < VALUE: "value" >
+| < THROUGH: "THROUGH" >
+| < TIMES: "TIMES" >
+}
+
+TOKEN :
+{
+  < HEXNUMBER: ( "X\"" ( ["0"-"9","a"-"f"] )+ "\""
+               | "X'" (  ["0"-"9","a"-"f"] )+ "'"
+               )
+  >
+| < LEVEL_66: "66" >
+| < LEVEL_77: "77" >
+| < LEVEL_88: "88" >
+| < LEVEL_NUMBER: ( ("0" ["1"-"9"]) | (["1"-"4"]["0"-"9"]) )>
+| < DATATYPE:  ("9" | "A" | "X")+>
+| < INTEGER: (["0"-"9"])+ >
+| < IMPLICIT_DECIMAL: "V" >
+| < SIGN_INDICATOR: "S" >
+| < MINUSCHAR: "-" > 
+| < LPARENCHAR: "(" >
+| < RPARENCHAR: ")" >
+| < COLONCHAR: ":" >
+| < DOTCHAR: "." >
+| < COMMACHAR: "," >
+| < DOUBLEDQUOTECHAR: "\"\"" >
+| < QUOTECHAR: "\"" >
+| < DOUBLEDAPOSTROPHE: "''" >
+| < APOSTROPHE: "'" >
+| < PLUSCHAR: "+" >
+| < ASTERISKCHAR: "*" >
+| < SLASHCHAR: "/" >
+| < DOLLARCHAR: "$" >
+| < QUOTEDSTRING: ( <QUOTECHAR> (~["\""] | <DOUBLEDQUOTECHAR> )* <QUOTECHAR>
+                  | <APOSTROPHE> (~["'"] | <DOUBLEDAPOSTROPHE> )* <APOSTROPHE>
+                  )
+  >
+| <COBOL_WORD: ((["0"-"9"])+ (<MINUSCHAR>)*)*
+    (["0"-"9"])* ["a"-"z"] ( ["a"-"z","0"-"9"] )*
+    ( (<MINUSCHAR>)+ (["a"-"z","0"-"9"])+)*
+  >
+}
+
+
+
+
+
+FieldDetail FieldDetail():
+{
+	FieldDetail fd = new FieldDetail();
+	DataLevel  dataLevel = null;
+	DataTypeDetail detail = null;
+	DataUsage usage = null;
+}
+{
+	dataLevel = DataLevel() <COBOL_WORD> (detail=DataTypeDetail())? (usage=DataUsage())? (DataValue())? <DOTCHAR>	
+	{
+		fd.setDataLevel(dataLevel);
+		fd.setUsage(usage);
+		fd.setDetail(detail);
+		return fd;
+	}
+
+}
+
+
+int Occurs():
+{
+  int t = 0;
+}
+{
+	<OCCURS> <INTEGER>{t=Integer.valueOf(token.image);} <TIMES>
+	{
+		return t;
+	}
+}
+
+String Redefines():
+{
+  String name = null;
+}
+{
+	<REDEFINES> <COBOL_WORD>{name=token.image;}
+	{
+		return name;
+	}
+}
+
+
+
+void DataValue():
+{}
+{
+	<VALUE> ( ( (<INTEGER>|  <QUOTEDSTRING>) (<COMMACHAR> (<INTEGER>|  <QUOTEDSTRING>))* )
+			  | (<INTEGER> 	<THROUGH> <INTEGER>)	
+	)		
+}
+
+
+
+DataTypeDetail DataTypeDetail():
+{DataTypeDetail detail = null;
+detail = new DataTypeDetail();
+}
+{
+	(<SIGN_INDICATOR>{detail.setSigned(true);})? <DATATYPE> <LPARENCHAR> <INTEGER> <RPARENCHAR> ((<DOTCHAR> | <IMPLICIT_DECIMAL>) <DATATYPE> <LPARENCHAR> <INTEGER> <RPARENCHAR>)?
+	{
+		return detail;
+	}
+}
+
+
+DataUsage DataUsage():
+{
+	DataUsage datausage = new DataUsage();
+	int usage = 0;
+}
+{
+	(<USAGE> (<IS>)?)? usage=Usage()
+	{
+		datausage.setUsage(usage);
+		
+		return datausage;
+	}
+
+}
+
+int Usage():
+{
+}{
+	<BINARY> { return DataUsage.BINARY; }
+	| < COMP> { return DataUsage.COMP_0; }
+	| < COMP_1> { return DataUsage.COMP_1; }
+	| < COMP_2> { return DataUsage.COMP_2; }
+	| < COMP_3> { return DataUsage.COMP_3; }
+	| < COMP_4> { return DataUsage.COMP_4; }
+	| < COMP_5> { return DataUsage.COMP_5; }
+	| < COMPUTATIONAL> { return DataUsage.COMP_0; }
+	| < COMPUTATIONAL_1> { return DataUsage.COMP_1; }
+	| < COMPUTATIONAL_2> { return DataUsage.COMP_2; }
+	| < COMPUTATIONAL_3> { return DataUsage.COMP_3; }
+	| < COMPUTATIONAL_4> { return DataUsage.COMP_4; }
+	| < COMPUTATIONAL_5>  { return DataUsage.COMP_5; }
+	| <DISPLAY>  { return DataUsage.PIC9; }
+	
+}
+
+
+DataLevel DataLevel():
+{DataLevel level = null;}
+{
+	(<LEVEL_66> | <LEVEL_77> | <LEVEL_88> | <LEVEL_NUMBER>)
+	{
+		level = new DataLevel();
+		level.setImage(token.image);
+		level.setLevel(Integer.valueOf(token.image));
+		return level;
+	}
+}
+
+
+
+
+
+

@@ -1,0 +1,22 @@
+01 ACCOUNT-GROUP                                               .
+  02 ACCOUNT                                              .
+   03 DFND                                 PIC  9(4)             .
+   03 DCTB                                                       .
+    04 DUPD                                PIC  9(8)             .
+    04 DNUMCTB                                                   .
+     05 DCTB-12                            PIC  9(12)            .
+     05 DCTB-04                            PIC  9(4)             .
+     05 DFMT                               PIC  9(2)             .
+    04 DCDRCTB                                                   .
+     05 DRGOCDRCTB                         PIC  9(1)             .
+     05 DROFCMCCDRCTB                      PIC  9(3)             .
+     05 DBRACMCCDRCTB                                            .
+      06 DBRACMCCDRCTB                     PIC  9(6)             .
+      06 GBRACDRCTB                                               
+             REDEFINES DBRACMCCDRCTB                             .
+       07 DROFCDRCTB                       PIC  9(3)             .
+       07 DBRACDRCTB                       PIC  9(3)             .
+    04 DBLK                                PIC  9(2)              
+             OCCURS 5                                            .
+    04 DBLK2                               PIC  9(3)              
+             OCCURS 5                                            .

@@ -1,0 +1,14 @@
+ 01  CUSTOMER-RECORD.
+       05  TYPE-OF-NAME            PIC X.
+           88 PERSON               VALUE 0.
+           88 CORPORATION          VALUE 1.
+       05  CUSTOMER-NAME.
+           10  LAST-NAME           PIC X(15).
+           10  FIRST-NAME          PIC X(8).
+       05  COMPANY-NAME REDEFINES CUSTOMER-NAME
+                                   PIC X(23).
+       05  STREET-ADDRESS          PIC X(20).
+       05  CITY                    PIC X(17).
+       05  STATE                   PIC XX.
+       05  ZIP-CODE                PIC 9(5).
+       05  FILLER                  PIC X(10).

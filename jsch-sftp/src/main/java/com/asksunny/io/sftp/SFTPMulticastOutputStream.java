@@ -97,6 +97,7 @@ public class SFTPMulticastOutputStream extends OutputStream {
 				t = iOException;
 			}
 		}
+		
 		if (t != null)
 			throw t;
 	}

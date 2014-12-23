@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>User Accounts</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" media="all"
+	href="../../static/css/keyman.css" th:href="@{~/static/css/userman.css}" />
+</head>
+<body>
+ <h1>User list</h1>  
+    <table>
+      <tr>
+        <th>USER ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+      </tr>
+      <tr th:each="user : ${users}">
+        <td><a href="user/guest" th:href="@{user/{id}(id=${user.userid})}" th:text="${user.userid}">Guest</a></td>
+        <td th:text="${user.firstName}">Allen</td>
+        <td th:text="${user.lastName}">Smith</td>
+      </tr>
+    </table>   
+    <p><a href="user/new" th:href="@{/user/{id}(id='new')}">Add New User</a></p>  
+</body>
+</html>
