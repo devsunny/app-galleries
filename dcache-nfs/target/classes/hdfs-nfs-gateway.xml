@@ -145,13 +145,12 @@
 
     <!--
         NFSv4.1 Operation factory
-    -->
-    <bean id="ds-factory" class="org.dcache.nfs.v4.ds.DSOperationFactory"
+    -->   
+    <bean id="ds-factory" class="org.dcache.chimera.HdfsIoOperationFactory"
         depends-on="ds-data-pool">
         <description>DS operation factory</description>
         <constructor-arg ref="ds-data-pool" />
-    </bean>
-
+    </bean>   
     <bean id="idmapd" class="org.dcache.nfs.v4.SimpleIdMap" />
 
     <!--
@@ -188,7 +187,6 @@
 
     <!--
         Embeded RPCBIND.
-
         It will autodetect if there a system one already enabled.
     -->
     <bean id="rpcbind" class="org.dcache.xdr.portmap.OncRpcEmbeddedPortmap" />
