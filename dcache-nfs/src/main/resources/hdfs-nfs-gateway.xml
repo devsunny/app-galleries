@@ -8,7 +8,7 @@
         <property name="locations">
             <list>
                 <value>nfs.properties</value>
-                <value>chimera.properties</value>
+                <value>vfs-jdbc.properties</value>
             </list>
         </property>
     </bean>

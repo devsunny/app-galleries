@@ -28,6 +28,8 @@ public class HdfsIoOperationFactory extends MDSOperationFactory {
 			return new HdfsOperationCOMMIT(op, _fs);
 		case nfs_opnum4.OP_WRITE:
 			return new HdfsOperationWRITE(op, _fs);
+		case nfs_opnum4.OP_CLOSE:
+			return new HdfsOperationCLOSE(op, _fs);
 		default:
 			return super.getOperation(op);
 		}
