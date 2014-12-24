@@ -69,15 +69,15 @@
  	<!-- 
  	<bean id="hdfscfg" class="org.apache.hadoop.conf.Configuration">
 	</bean>
- 	<bean id="vfs-intern" class="com.asksunny.hdfs.HadoopFS">
+ 	<bean id="vfs-intern" class="com.asksunny.hdfs.ChimeraVfs">
  		<constructor-arg ref="idmapd"/>
  		<constructor-arg ref="hdfscfg"/>
  	</bean>
  	 -->
  	 
 	
-    <bean id="vfs-intern" class="org.dcache.chimera.ChimeraVfs">
-        <description>Chimera Filesystem</description>
+    <bean id="vfs-intern" class="org.dcache.chimera.HadoopHdfsVfs">
+        <description>Hadoop HDFS Filesystem</description>
         <constructor-arg ref="fileSystem"/>
         <constructor-arg ref="idmapd"/>
     </bean>

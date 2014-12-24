@@ -366,10 +366,10 @@ class HdfsSqlDriver {
 			stGetInodeByName.setString(2, parent.toString());
 
 			result = stGetInodeByName.executeQuery();
-			if(_log.isInfoEnabled()) _log.info("name:{}; parent:{}", name, parent.toString());
+			if(_log.isDebugEnabled()) _log.debug("name:{}; parent:{}", name, parent.toString());
 			if (result.next()) {
 				id = result.getString("ipnfsid");
-				if(_log.isInfoEnabled()) _log.info("ipnfsid id:{}", id);
+				if(_log.isDebugEnabled()) _log.debug("ipnfsid id:{}", id);
 			}
 		} finally {
 			SqlHelper.tryToClose(result);
@@ -389,12 +389,15 @@ class HdfsSqlDriver {
 
 		try {
 			List<String> pList = new ArrayList();
+			
 			String parentId = getParentOf(dbConnection, inode)
 					.toString();
 			String elementId = inode.toString();
-
+			
 			boolean done = false;
 			do {
+				
+				if(_log.isDebugEnabled()) _log.debug("inode2path SELECT iname FROM t_dirs WHERE ipnfsid={} AND iparent={} and iname !='.' and iname != '..'", elementId, parentId);
 				ps = dbConnection
 						.prepareStatement("SELECT iname FROM t_dirs WHERE ipnfsid=? AND iparent=? and iname !='.' and iname != '..'");
 				ps.setString(1, elementId);
@@ -630,6 +633,9 @@ class HdfsSqlDriver {
 		ResultSet result = null;
 		PreparedStatement stGetParentId = null;
 		try {
+			
+			if(_log.isDebugEnabled()) _log.debug("getParentOf SELECT iparent FROM t_dirs WHERE ipnfsid={} AND iname != '.' and iname != '..'", inode.toString());
+			
 			stGetParentId = dbConnection
 					.prepareStatement("SELECT iparent FROM t_dirs WHERE ipnfsid=? AND iname != '.' and iname != '..'");
 			stGetParentId.setString(1, inode.toString());
