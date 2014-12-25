@@ -28,6 +28,13 @@
         <property name="statementsCacheSize" value="100"/>
         <property name="releaseHelperThreads" value="3"/>
     </bean>
+    
+    
+    
+     <bean id="ddl_generator" class="com.asksunny.migrators.DDLGenerator" init-method="init">
+        <description>Device manager</description>
+        <property name="dataSource" ref="dataSource" />
+    </bean>
 
     <!--
         Convert protperies with multiple values separated by comma into an array of strings:

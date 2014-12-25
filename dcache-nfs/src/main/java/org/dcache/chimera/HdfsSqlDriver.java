@@ -32,8 +32,8 @@ class HdfsSqlDriver {
 			.getLogger(HdfsSqlDriver.class);
 
 	private static final int IOMODE_ENABLE = 1;
-
 	private static final int IOMODE_DISABLE = 0;
+	
 	private final int _ioMode;
 	private static final String sqlGetFsStat = "SELECT count(ipnfsid) AS usedFiles, SUM(isize) AS usedSpace FROM t_inodes WHERE itype=32768";
 	private static final String sqlListDir = "SELECT * FROM t_dirs WHERE iparent=?";
@@ -68,14 +68,30 @@ class HdfsSqlDriver {
 	private static final String sqlGetInodeLocations = "SELECT ilocation,ipriority,ictime,iatime  FROM t_locationinfo WHERE itype=? AND ipnfsid=? AND istate=1 ORDER BY ipriority DESC";
 	private static final String sqlAddInodeLocation = "INSERT INTO t_locationinfo VALUES(?,?,?,?,?,?,?)";
 
-	
+	private static final String sqlClearInodeLocation = "DELETE FROM t_locationinfo WHERE ipnfsid=? AND itype=? AND ilocation=?";
+	private static final String sqlClearInodeLocations = "DELETE FROM t_locationinfo WHERE ipnfsid=?";
+	private static final String sqlTags = "SELECT itagname FROM t_tags where ipnfsid=?";
+	private static final String sqlGetTagId = "SELECT itagid FROM t_tags WHERE ipnfsid=? AND itagname=?";
+	private static final String sqlCreateTagInode = "INSERT INTO t_tags_inodes VALUES(?,?,1,?,?,0,?,?,?,NULL)";
+	private static final String sqlAssignTagToDir_update = "UPDATE t_tags SET itagid=?,isorign=? WHERE ipnfsid=? AND itagname=?";
+	private static final String sqlAssignTagToDir_add = "INSERT INTO t_tags VALUES(?,?,?,1)";
+	private static final String sqlSetTag = "UPDATE t_tags_inodes SET ivalue=?, isize=?, imtime=? WHERE itagid=?";
+	private static final String sqlRemoveSingleTag = "DELETE FROM t_tags WHERE ipnfsid=? AND itagname=?";
+	private static final String sqlRemoveTag = "DELETE FROM t_tags WHERE ipnfsid=?";
+	private static final String sqlGetTag = "SELECT ivalue,isize FROM t_tags_inodes WHERE itagid=?";
+	private static final String sqlStatTag = "SELECT isize,inlink,imode,iuid,igid,iatime,ictime,imtime FROM t_tags_inodes WHERE itagid=?";
+	private static final String sqlIsTagOwner = "SELECT isorign FROM t_tags WHERE ipnfsid=? AND itagname=?";
+	private static final String sqlCopyTag = "INSERT INTO t_tags ( SELECT ?, itagname, itagid, 0 from t_tags WHERE ipnfsid=?)";
+	private static final String sqlSetTagOwner = "UPDATE t_tags_inodes SET iuid=?, ictime=? WHERE itagid=?";
+	private static final String sqlSetTagOwnerGroup = "UPDATE t_tags_inodes SET igid=?, ictime=? WHERE itagid=?";
+	private static final String sqlSetTagMode = "UPDATE t_tags_inodes SET imode=?, ictime=? WHERE itagid=?";
 	
 	protected HdfsSqlDriver() {
 		if (Boolean.valueOf(System.getProperty("chimera.inodeIoMode"))
 				.booleanValue()) {
-			this._ioMode = 1;
+			this._ioMode = IOMODE_ENABLE;
 		} else {
-			this._ioMode = 0;
+			this._ioMode = IOMODE_DISABLE;
 		}
 	}
 
@@ -87,7 +103,7 @@ class HdfsSqlDriver {
 		ResultSet rs = null;
 		try {
 			stFsStat = dbConnection
-					.prepareStatement("SELECT count(ipnfsid) AS usedFiles, SUM(isize) AS usedSpace FROM t_inodes WHERE itype=32768");
+					.prepareStatement(sqlGetFsStat);
 			rs = stFsStat.executeQuery();
 			if (rs.next()) {
 				usedFiles = rs.getLong("usedFiles");
@@ -129,12 +145,12 @@ class HdfsSqlDriver {
 
 		try {
 			stListDirectory = dbConnection
-					.prepareStatement("SELECT * FROM t_dirs WHERE iparent=?");
+					.prepareStatement(sqlListDir);
 			stListDirectory.setString(1, dir.toString());
 			stListDirectory.setFetchSize(1000);
 			result = stListDirectory.executeQuery();
 
-			List<String> directoryList = new ArrayList();
+			List<String> directoryList = new ArrayList<String>();
 			while (result.next()) {
 				directoryList.add(result.getString("iname"));
 			}
@@ -152,7 +168,7 @@ class HdfsSqlDriver {
 	DirectoryStreamB<HimeraDirectoryEntry> newDirectoryStream(
 			Connection dbConnection, FsInode dir) throws SQLException {
 		PreparedStatement stListDirectoryFull = dbConnection
-				.prepareStatement("SELECT t_inodes.ipnfsid, t_dirs.iname, t_inodes.isize,t_inodes.inlink,t_inodes.imode,t_inodes.itype,t_inodes.iuid,t_inodes.igid,t_inodes.iatime,t_inodes.ictime,t_inodes.imtime  FROM t_inodes, t_dirs WHERE iparent=? AND t_inodes.ipnfsid = t_dirs.ipnfsid");
+				.prepareStatement(sqlListDirFull);
 		stListDirectoryFull.setFetchSize(50);
 		stListDirectoryFull.setString(1, dir.toString());
 
@@ -249,7 +265,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				stStatInode = dbConnection
-						.prepareStatement("SELECT isize,inlink,itype,imode,iuid,igid,iatime,ictime,imtime,icrtime,igeneration FROM t_inodes WHERE ipnfsid=?");
+						.prepareStatement(sqlStat);
 			} else {
 				stStatInode = dbConnection
 						.prepareStatement("SELECT isize,inlink,imode,iuid,igid,iatime,ictime,imtime FROM t_level_"
@@ -328,7 +344,7 @@ class HdfsSqlDriver {
 		try {
 			FsInode srcInode = inodeOf(dbConnection, srcDir, source);
 			stMove = dbConnection
-					.prepareStatement("UPDATE t_dirs SET iparent=?, iname=? WHERE iparent=? AND iname=?");
+					.prepareStatement(sqlMove);
 
 			stMove.setString(1, destDir.toString());
 			stMove.setString(2, dest);
@@ -339,7 +355,7 @@ class HdfsSqlDriver {
 			Stat stat = stat(dbConnection, srcInode);
 			if ((stat.getMode() & 0xF000) == 16384) {
 				stParentMove = dbConnection
-						.prepareStatement("UPDATE t_dirs SET ipnfsid=? WHERE iparent=? AND iname='..'");
+						.prepareStatement(sqlSetParent);
 				stParentMove.setString(1, destDir.toString());
 				stParentMove.setString(2, srcInode.toString());
 				stParentMove.executeUpdate();
@@ -361,7 +377,7 @@ class HdfsSqlDriver {
 		ResultSet result = null;
 		try {
 			stGetInodeByName = dbConnection
-					.prepareStatement("SELECT ipnfsid FROM t_dirs WHERE iname=? AND iparent=?");
+					.prepareStatement(sqlInodeOf);
 			stGetInodeByName.setString(1, name);
 			stGetInodeByName.setString(2, parent.toString());
 
@@ -399,7 +415,7 @@ class HdfsSqlDriver {
 				
 				if(_log.isDebugEnabled()) _log.debug("inode2path SELECT iname FROM t_dirs WHERE ipnfsid={} AND iparent={} and iname !='.' and iname != '..'", elementId, parentId);
 				ps = dbConnection
-						.prepareStatement("SELECT iname FROM t_dirs WHERE ipnfsid=? AND iparent=? and iname !='.' and iname != '..'");
+						.prepareStatement(sqlInode2Path_name);
 				ps.setString(1, elementId);
 				ps.setString(2, parentId);
 
@@ -416,7 +432,7 @@ class HdfsSqlDriver {
 				}
 
 				ps = dbConnection
-						.prepareStatement("SELECT iparent FROM t_dirs WHERE ipnfsid=?  and iname != '.' and iname != '..'");
+						.prepareStatement(sqlInode2Path_inode);
 				ps.setString(1, parentId);
 
 				pSearch = ps.executeQuery();
@@ -452,7 +468,7 @@ class HdfsSqlDriver {
 
 		try {
 			stCreateInode = dbConnection
-					.prepareStatement("INSERT INTO t_inodes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					.prepareStatement(sqlCreateInode);
 
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 
@@ -508,7 +524,7 @@ class HdfsSqlDriver {
 
 		try {
 			stRemoveInode = dbConnection
-					.prepareStatement("DELETE FROM t_inodes WHERE ipnfsid=? AND inlink = 0");
+					.prepareStatement(sqlRemoveInode);
 
 			stRemoveInode.setString(1, inode.toString());
 
@@ -547,7 +563,7 @@ class HdfsSqlDriver {
 		Timestamp now = new Timestamp(System.currentTimeMillis());
 		try {
 			stIncNlinkCount = dbConnection
-					.prepareStatement("UPDATE t_inodes SET inlink=inlink +?,imtime=?,ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+					.prepareStatement(sqlIncNlink);
 
 			stIncNlinkCount.setInt(1, delta);
 			stIncNlinkCount.setTimestamp(2, now);
@@ -570,7 +586,7 @@ class HdfsSqlDriver {
 		Timestamp now = new Timestamp(System.currentTimeMillis());
 		try {
 			stDecNlinkCount = dbConnection
-					.prepareStatement("UPDATE t_inodes SET inlink=inlink -?,imtime=?,ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+					.prepareStatement(sqlDecNlink);
 			stDecNlinkCount.setInt(1, delta);
 			stDecNlinkCount.setTimestamp(2, now);
 			stDecNlinkCount.setTimestamp(3, now);
@@ -587,7 +603,7 @@ class HdfsSqlDriver {
 		PreparedStatement stInserIntoParent = null;
 		try {
 			stInserIntoParent = dbConnection
-					.prepareStatement("INSERT INTO t_dirs VALUES(?,?,?)");
+					.prepareStatement(sqlCreateEntryInParent);
 			stInserIntoParent.setString(1, parent.toString());
 			stInserIntoParent.setString(2, name);
 			stInserIntoParent.setString(3, inode.toString());
@@ -602,7 +618,7 @@ class HdfsSqlDriver {
 		PreparedStatement stRemoveFromParentById = null;
 		try {
 			stRemoveFromParentById = dbConnection
-					.prepareStatement("DELETE FROM t_dirs WHERE ipnfsid=? AND iparent=?");
+					.prepareStatement(sqlRemoveEntryInParentByID);
 			stRemoveFromParentById.setString(1, inode.toString());
 			stRemoveFromParentById.setString(2, parent.toString());
 
@@ -617,7 +633,7 @@ class HdfsSqlDriver {
 		PreparedStatement stRemoveFromParentByName = null;
 		try {
 			stRemoveFromParentByName = dbConnection
-					.prepareStatement("DELETE FROM t_dirs WHERE iname=? AND iparent=?");
+					.prepareStatement(sqlRemoveEntryInParentByName);
 			stRemoveFromParentByName.setString(1, name);
 			stRemoveFromParentByName.setString(2, parent.toString());
 
@@ -637,7 +653,7 @@ class HdfsSqlDriver {
 			if(_log.isDebugEnabled()) _log.debug("getParentOf SELECT iparent FROM t_dirs WHERE ipnfsid={} AND iname != '.' and iname != '..'", inode.toString());
 			
 			stGetParentId = dbConnection
-					.prepareStatement("SELECT iparent FROM t_dirs WHERE ipnfsid=? AND iname != '.' and iname != '..'");
+					.prepareStatement(sqlGetParentOf);
 			stGetParentId.setString(1, inode.toString());
 			System.out.println(inode.toString());
 			result = stGetParentId.executeQuery();
@@ -661,7 +677,7 @@ class HdfsSqlDriver {
 		PreparedStatement stGetParentId = null;
 		try {
 			stGetParentId = dbConnection
-					.prepareStatement("SELECT iparent FROM t_dirs WHERE ipnfsid=? AND iname!='..' AND iname !='.'");
+					.prepareStatement(sqlGetParentOfDirectory);
 			stGetParentId.setString(1, inode.toString());
 
 			result = stGetParentId.executeQuery();
@@ -685,7 +701,7 @@ class HdfsSqlDriver {
 		String name = null;
 		try {
 			stGetName = dbConnection
-					.prepareStatement("SELECT iname FROM t_dirs WHERE ipnfsid=? AND iparent=?");
+					.prepareStatement(sqlGetNameOf);
 			stGetName.setString(1, inode.toString());
 			stGetName.setString(2, parent.toString());
 
@@ -708,8 +724,7 @@ class HdfsSqlDriver {
 
 		try {
 			ps = dbConnection
-					.prepareStatement("UPDATE t_inodes SET isize=?,imtime=?,ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
-
+					.prepareStatement(sqlSetFileSize);
 			ps.setLong(1, newSize);
 			ps.setTimestamp(2,
 					new Timestamp(System.currentTimeMillis()));
@@ -730,7 +745,7 @@ class HdfsSqlDriver {
 			String fileSetModeQuery;
 
 			if (level == 0) {
-				fileSetModeQuery = "UPDATE t_inodes SET iuid=?,ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?";
+				fileSetModeQuery = sqlSetFileOwner;
 			} else {
 				fileSetModeQuery = "UPDATE t_level_" + level
 						+ " SET iuid=?,ictime=? WHERE ipnfsid=?";
@@ -753,7 +768,7 @@ class HdfsSqlDriver {
 
 		try {
 			ps = dbConnection
-					.prepareStatement("UPDATE t_dirs SET iname=? WHERE iname=? AND iparent=?");
+					.prepareStatement(sqlSetFileName);
 
 			ps.setString(1, newName);
 			ps.setString(2, oldName);
@@ -771,7 +786,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_inodes SET iatime=?, imtime=?, ictime=?, isize=?, iuid=?, igid=?, imode=?, itype=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+						.prepareStatement(sqlSetInodeAttributes);
 
 				ps.setTimestamp(1, new Timestamp(stat.getATime()));
 				ps.setTimestamp(2, new Timestamp(stat.getMTime()));
@@ -810,7 +825,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_inodes SET iatime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+						.prepareStatement(sqlSetFileATime);
 			} else {
 				String fileSetModeQuery = "UPDATE t_level_" + level
 						+ " SET iatime=? WHERE ipnfsid=?";
@@ -832,7 +847,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_inodes SET ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+						.prepareStatement(sqlSetFileCTime);
 			} else {
 				String fileSetModeQuery = "UPDATE t_level_" + level
 						+ " SET ictime=? WHERE ipnfsid=?";
@@ -854,7 +869,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_inodes SET imtime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+						.prepareStatement(sqlSetFileMTime);
 			} else {
 				String fileSetModeQuery = "UPDATE t_level_" + level
 						+ " SET imtime=? WHERE ipnfsid=?";
@@ -874,7 +889,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_inodes SET igid=?,ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+						.prepareStatement(sqlSetFileGroup);
 			} else {
 				String fileSetModeQuery = "UPDATE t_level_" + level
 						+ " SET igid=?,ictime=? WHERE ipnfsid=?";
@@ -895,7 +910,7 @@ class HdfsSqlDriver {
 		try {
 			if (level == 0) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_inodes SET imode=?,ictime=?,igeneration=igeneration+1 WHERE ipnfsid=?");
+						.prepareStatement(sqlSetFileMode);
 			} else {
 				String fileSetModeQuery = "UPDATE t_level_" + level
 						+ " SET imode=?,ictime=? WHERE ipnfsid=?";
@@ -910,14 +925,14 @@ class HdfsSqlDriver {
 		}
 	}
 
-	boolean isIoEnabled(Connection dbConnection, FsInode inode)
+	public boolean isIoEnabled(Connection dbConnection, FsInode inode)
 			throws SQLException {
 		boolean ioEnabled = false;
 		ResultSet rs = null;
 		PreparedStatement stIsIoEnabled = null;
 		try {
 			stIsIoEnabled = dbConnection
-					.prepareStatement("SELECT iio FROM t_inodes WHERE ipnfsid=?");
+					.prepareStatement(sqlIsIoEnabled);
 			stIsIoEnabled.setString(1, inode.toString());
 
 			rs = stIsIoEnabled.executeQuery();
@@ -937,7 +952,7 @@ class HdfsSqlDriver {
 
 		try {
 			ps = dbConnection
-					.prepareStatement("UPDATE t_inodes SET iio=? WHERE ipnfsid=?");
+					.prepareStatement(sqlSetInodeIo);
 			ps.setInt(1, enable ? 1 : 0);
 			ps.setString(2, inode.toString());
 
@@ -1063,23 +1078,7 @@ class HdfsSqlDriver {
 		return count;
 	}
 
-	private static final String sqlClearInodeLocation = "DELETE FROM t_locationinfo WHERE ipnfsid=? AND itype=? AND ilocation=?";
-	private static final String sqlClearInodeLocations = "DELETE FROM t_locationinfo WHERE ipnfsid=?";
-	private static final String sqlTags = "SELECT itagname FROM t_tags where ipnfsid=?";
-	private static final String sqlGetTagId = "SELECT itagid FROM t_tags WHERE ipnfsid=? AND itagname=?";
-	private static final String sqlCreateTagInode = "INSERT INTO t_tags_inodes VALUES(?,?,1,?,?,0,?,?,?,NULL)";
-	private static final String sqlAssignTagToDir_update = "UPDATE t_tags SET itagid=?,isorign=? WHERE ipnfsid=? AND itagname=?";
-	private static final String sqlAssignTagToDir_add = "INSERT INTO t_tags VALUES(?,?,?,1)";
-	private static final String sqlSetTag = "UPDATE t_tags_inodes SET ivalue=?, isize=?, imtime=? WHERE itagid=?";
-	private static final String sqlRemoveSingleTag = "DELETE FROM t_tags WHERE ipnfsid=? AND itagname=?";
-	private static final String sqlRemoveTag = "DELETE FROM t_tags WHERE ipnfsid=?";
-	private static final String sqlGetTag = "SELECT ivalue,isize FROM t_tags_inodes WHERE itagid=?";
-	private static final String sqlStatTag = "SELECT isize,inlink,imode,iuid,igid,iatime,ictime,imtime FROM t_tags_inodes WHERE itagid=?";
-	private static final String sqlIsTagOwner = "SELECT isorign FROM t_tags WHERE ipnfsid=? AND itagname=?";
-	private static final String sqlCopyTag = "INSERT INTO t_tags ( SELECT ?, itagname, itagid, 0 from t_tags WHERE ipnfsid=?)";
-	private static final String sqlSetTagOwner = "UPDATE t_tags_inodes SET iuid=?, ictime=? WHERE itagid=?";
-	private static final String sqlSetTagOwnerGroup = "UPDATE t_tags_inodes SET igid=?, ictime=? WHERE itagid=?";
-	private static final String sqlSetTagMode = "UPDATE t_tags_inodes SET imode=?, ictime=? WHERE itagid=?";
+	
 
 	List<StorageLocatable> getInodeLocations(Connection dbConnection,
 			FsInode inode, int type) throws SQLException {
@@ -1088,7 +1087,7 @@ class HdfsSqlDriver {
 		PreparedStatement stGetInodeLocations = null;
 		try {
 			stGetInodeLocations = dbConnection
-					.prepareStatement("SELECT ilocation,ipriority,ictime,iatime  FROM t_locationinfo WHERE itype=? AND ipnfsid=? AND istate=1 ORDER BY ipriority DESC");
+					.prepareStatement(sqlGetInodeLocations);
 
 			stGetInodeLocations.setInt(1, type);
 			stGetInodeLocations.setString(2, inode.toString());
@@ -1118,7 +1117,7 @@ class HdfsSqlDriver {
 		PreparedStatement stAddInodeLocation = null;
 		try {
 			stAddInodeLocation = dbConnection
-					.prepareStatement("INSERT INTO t_locationinfo VALUES(?,?,?,?,?,?,?)");
+					.prepareStatement(sqlAddInodeLocation);
 
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 			stAddInodeLocation.setString(1, inode.toString());
@@ -1140,7 +1139,7 @@ class HdfsSqlDriver {
 		PreparedStatement stClearInodeLocation = null;
 		try {
 			stClearInodeLocation = dbConnection
-					.prepareStatement("DELETE FROM t_locationinfo WHERE ipnfsid=? AND itype=? AND ilocation=?");
+					.prepareStatement(sqlClearInodeLocation);
 			stClearInodeLocation.setString(1, inode.toString());
 			stClearInodeLocation.setInt(2, type);
 			stClearInodeLocation.setString(3, location);
@@ -1156,7 +1155,7 @@ class HdfsSqlDriver {
 		PreparedStatement stClearInodeLocations = null;
 		try {
 			stClearInodeLocations = dbConnection
-					.prepareStatement("DELETE FROM t_locationinfo WHERE ipnfsid=?");
+					.prepareStatement(sqlClearInodeLocations);
 			stClearInodeLocations.setString(1, inode.toString());
 
 			stClearInodeLocations.executeUpdate();
@@ -1171,7 +1170,7 @@ class HdfsSqlDriver {
 		PreparedStatement stGetTags = null;
 		try {
 			stGetTags = dbConnection
-					.prepareStatement("SELECT itagname FROM t_tags where ipnfsid=?");
+					.prepareStatement(sqlTags);
 			stGetTags.setString(1, inode.toString());
 			rs = stGetTags.executeQuery();
 
@@ -1204,7 +1203,7 @@ class HdfsSqlDriver {
 		PreparedStatement stGetTagId = null;
 		try {
 			stGetTagId = dbConnection
-					.prepareStatement("SELECT itagid FROM t_tags WHERE ipnfsid=? AND itagname=?");
+					.prepareStatement(sqlGetTagId);
 
 			stGetTagId.setString(1, dir.toString());
 			stGetTagId.setString(2, tag);
@@ -1226,7 +1225,7 @@ class HdfsSqlDriver {
 		PreparedStatement stCreateTagInode = null;
 		try {
 			stCreateTagInode = dbConnection
-					.prepareStatement("INSERT INTO t_tags_inodes VALUES(?,?,1,?,?,0,?,?,?,NULL)");
+					.prepareStatement(sqlCreateTagInode);
 
 			Timestamp now = new Timestamp(System.currentTimeMillis());
 
@@ -1251,7 +1250,7 @@ class HdfsSqlDriver {
 		try {
 			if (isUpdate) {
 				ps = dbConnection
-						.prepareStatement("UPDATE t_tags SET itagid=?,isorign=? WHERE ipnfsid=? AND itagname=?");
+						.prepareStatement(sqlAssignTagToDir_update);
 
 				ps.setString(1, tagId);
 				ps.setInt(2, isOrign ? 1 : 0);
@@ -1259,7 +1258,7 @@ class HdfsSqlDriver {
 				ps.setString(4, tagName);
 			} else {
 				ps = dbConnection
-						.prepareStatement("INSERT INTO t_tags VALUES(?,?,?,1)");
+						.prepareStatement(sqlAssignTagToDir_add);
 
 				ps.setString(1, dir.toString());
 				ps.setString(2, tagName);
@@ -1288,7 +1287,7 @@ class HdfsSqlDriver {
 			}
 
 			stSetTag = dbConnection
-					.prepareStatement("UPDATE t_tags_inodes SET ivalue=?, isize=?, imtime=? WHERE itagid=?");
+					.prepareStatement(sqlSetTag);
 			stSetTag.setBinaryStream(1, new ByteArrayInputStream(data, offset,
 					len), len);
 			stSetTag.setLong(2, len);
@@ -1307,7 +1306,7 @@ class HdfsSqlDriver {
 		PreparedStatement ps = null;
 		try {
 			ps = dbConnection
-					.prepareStatement("DELETE FROM t_tags WHERE ipnfsid=? AND itagname=?");
+					.prepareStatement(sqlRemoveSingleTag);
 			ps.setString(1, dir.toString());
 			ps.setString(2, tag);
 
@@ -1321,7 +1320,7 @@ class HdfsSqlDriver {
 		PreparedStatement ps = null;
 		try {
 			ps = dbConnection
-					.prepareStatement("DELETE FROM t_tags WHERE ipnfsid=?");
+					.prepareStatement(sqlRemoveTag);
 			ps.setString(1, dir.toString());
 
 			ps.executeUpdate();
@@ -1339,7 +1338,7 @@ class HdfsSqlDriver {
 			String tagId = getTagId(dbConnection, inode, tagName);
 
 			stGetTag = dbConnection
-					.prepareStatement("SELECT ivalue,isize FROM t_tags_inodes WHERE itagid=?");
+					.prepareStatement(sqlGetTag);
 			stGetTag.setString(1, tagId);
 			rs = stGetTag.executeQuery();
 
@@ -1379,7 +1378,7 @@ class HdfsSqlDriver {
 			}
 
 			stStatTag = dbConnection
-					.prepareStatement("SELECT isize,inlink,imode,iuid,igid,iatime,ictime,imtime FROM t_tags_inodes WHERE itagid=?");
+					.prepareStatement(sqlStatTag);
 			stStatTag.setString(1, tagId);
 			ResultSet statResult = stStatTag.executeQuery();
 
@@ -1412,7 +1411,7 @@ class HdfsSqlDriver {
 
 		try {
 			stTagOwner = dbConnection
-					.prepareStatement("SELECT isorign FROM t_tags WHERE ipnfsid=? AND itagname=?");
+					.prepareStatement(sqlIsTagOwner);
 			stTagOwner.setString(1, dir.toString());
 			stTagOwner.setString(2, tagName);
 
@@ -1436,7 +1435,7 @@ class HdfsSqlDriver {
 		PreparedStatement stCopyTags = null;
 		try {
 			stCopyTags = dbConnection
-					.prepareStatement("INSERT INTO t_tags ( SELECT ?, itagname, itagid, 0 from t_tags WHERE ipnfsid=?)");
+					.prepareStatement(sqlCopyTag);
 			stCopyTags.setString(1, destination.toString());
 			stCopyTags.setString(2, orign.toString());
 			stCopyTags.executeUpdate();
@@ -1452,7 +1451,7 @@ class HdfsSqlDriver {
 
 		try {
 			ps = dbConnection
-					.prepareStatement("UPDATE t_tags_inodes SET iuid=?, ictime=? WHERE itagid=?");
+					.prepareStatement(sqlSetTagOwner);
 
 			ps.setInt(1, newOwner);
 			ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
@@ -1470,7 +1469,7 @@ class HdfsSqlDriver {
 
 		try {
 			ps = dbConnection
-					.prepareStatement("UPDATE t_tags_inodes SET igid=?, ictime=? WHERE itagid=?");
+					.prepareStatement(sqlSetTagOwnerGroup);
 
 			ps.setInt(1, newOwner);
 			ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
@@ -1488,7 +1487,7 @@ class HdfsSqlDriver {
 
 		try {
 			ps = dbConnection
-					.prepareStatement("UPDATE t_tags_inodes SET imode=?, ictime=? WHERE itagid=?");
+					.prepareStatement(sqlSetTagMode);
 
 			ps.setInt(1, mode & 0xFFF);
 			ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
@@ -1524,7 +1523,7 @@ class HdfsSqlDriver {
 
 		try {
 			stSetStorageInfo = dbConnection
-					.prepareStatement("INSERT INTO t_storageinfo VALUES(?,?,?,?)");
+					.prepareStatement(sqlSetStorageInfo);
 			stSetStorageInfo.setString(1, inode.toString());
 			stSetStorageInfo.setString(2, storageInfo.hsmName());
 			stSetStorageInfo.setString(3, storageInfo.storageGroup());
@@ -1544,7 +1543,7 @@ class HdfsSqlDriver {
 
 		try {
 			stGetAccessLatency = dbConnection
-					.prepareStatement("SELECT iaccessLatency FROM t_access_latency WHERE ipnfsid=?");
+					.prepareStatement(sqlGetAccessLatency);
 			stGetAccessLatency.setString(1, inode.toString());
 
 			alResultSet = stGetAccessLatency.executeQuery();
@@ -1568,7 +1567,7 @@ class HdfsSqlDriver {
 
 		try {
 			stRetentionPolicy = dbConnection
-					.prepareStatement("SELECT iretentionPolicy FROM t_retention_policy WHERE ipnfsid=?");
+					.prepareStatement(sqlGetRetentionPolicy);
 			stRetentionPolicy.setString(1, inode.toString());
 
 			rpResultSet = stRetentionPolicy.executeQuery();
@@ -1590,14 +1589,14 @@ class HdfsSqlDriver {
 		PreparedStatement stUpdateAccessLatency = null;
 		try {
 			stUpdateAccessLatency = dbConnection
-					.prepareStatement("UPDATE t_access_latency SET iaccessLatency=? WHERE ipnfsid=?");
+					.prepareStatement(sqlUpdateAccessLatency);
 			stUpdateAccessLatency.setInt(1, accessLatency.getId());
 			stUpdateAccessLatency.setString(2, inode.toString());
 
 			if (stUpdateAccessLatency.executeUpdate() == 0) {
 
 				stSetAccessLatency = dbConnection
-						.prepareStatement("INSERT INTO t_access_latency VALUES(?,?)");
+						.prepareStatement(sqlSetAccessLatency);
 				stSetAccessLatency.setString(1, inode.toString());
 				stSetAccessLatency.setInt(2, accessLatency.getId());
 
@@ -1615,14 +1614,14 @@ class HdfsSqlDriver {
 		PreparedStatement stUpdateRetentionPolicy = null;
 		try {
 			stUpdateRetentionPolicy = dbConnection
-					.prepareStatement("UPDATE t_retention_policy SET iretentionPolicy=? WHERE ipnfsid=?");
+					.prepareStatement(sqlUpdateRetentionPolicy);
 			stUpdateRetentionPolicy.setInt(1, accessLatency.getId());
 			stUpdateRetentionPolicy.setString(2, inode.toString());
 
 			if (stUpdateRetentionPolicy.executeUpdate() == 0) {
 
 				stSetRetentionPolicy = dbConnection
-						.prepareStatement("INSERT INTO t_retention_policy VALUES(?,?)");
+						.prepareStatement(sqlSetRetentionPolicy);
 				stSetRetentionPolicy.setString(1, inode.toString());
 				stSetRetentionPolicy.setInt(2, accessLatency.getId());
 
@@ -1639,7 +1638,7 @@ class HdfsSqlDriver {
 		PreparedStatement stRemoveStorageInfo = null;
 		try {
 			stRemoveStorageInfo = dbConnection
-					.prepareStatement("DELETE FROM t_storageinfo WHERE ipnfsid=?");
+					.prepareStatement(sqlRemoveStorageInfo);
 			stRemoveStorageInfo.setString(1, inode.toString());
 			stRemoveStorageInfo.executeUpdate();
 		} finally {
@@ -1655,7 +1654,7 @@ class HdfsSqlDriver {
 		PreparedStatement stGetStorageInfo = null;
 		try {
 			stGetStorageInfo = dbConnection
-					.prepareStatement("SELECT ihsmName, istorageGroup, istorageSubGroup FROM t_storageinfo WHERE t_storageinfo.ipnfsid=?");
+					.prepareStatement(sqlGetStorageInfo);
 			stGetStorageInfo.setString(1, inode.toString());
 			storageInfoResult = stGetStorageInfo.executeQuery();
 
@@ -1686,7 +1685,7 @@ class HdfsSqlDriver {
 		ResultSet getInodeFromCacheResultSet = null;
 		try {
 			stGetInodeFromCache = dbConnection
-					.prepareStatement("SELECT ipnfsid FROM t_dir_cache WHERE ipath=?");
+					.prepareStatement(sqlGetInodeFromCache);
 
 			stGetInodeFromCache.setString(1, path);
 
@@ -1709,7 +1708,7 @@ class HdfsSqlDriver {
 		ResultSet getPathFromCacheResultSet = null;
 		try {
 			stGetPathFromCache = dbConnection
-					.prepareStatement("SELECT ipath FROM t_dir_cache WHERE ipnfsid=?");
+					.prepareStatement(sqlGetPathFromCache);
 
 			stGetPathFromCache.setString(1, inode.toString());
 
@@ -1731,7 +1730,7 @@ class HdfsSqlDriver {
 
 		try {
 			stSetInodeChecksum = dbConnection
-					.prepareStatement("INSERT INTO t_inodes_checksum VALUES(?,?,?)");
+					.prepareStatement(sqlSetInodeChecksum);
 			stSetInodeChecksum.setString(1, inode.toString());
 			stSetInodeChecksum.setInt(2, type);
 			stSetInodeChecksum.setString(3, value);
@@ -1751,7 +1750,7 @@ class HdfsSqlDriver {
 
 		try {
 			stGetInodeChecksum = dbConnection
-					.prepareStatement("SELECT isum FROM t_inodes_checksum WHERE ipnfsid=? AND itype=?");
+					.prepareStatement(sqlGetInodeChecksum);
 			stGetInodeChecksum.setString(1, inode.toString());
 			stGetInodeChecksum.setInt(2, type);
 
@@ -1775,11 +1774,11 @@ class HdfsSqlDriver {
 		try {
 			if (type >= 0) {
 				stRemoveInodeChecksum = dbConnection
-						.prepareStatement("DELETE FROM t_inodes_checksum WHERE ipnfsid=? AND itype=?");
+						.prepareStatement(sqlRemoveInodeChecksum);
 				stRemoveInodeChecksum.setInt(2, type);
 			} else {
 				stRemoveInodeChecksum = dbConnection
-						.prepareStatement("DELETE FROM t_inodes_checksum WHERE ipnfsid=?");
+						.prepareStatement(sqlRemoveInodeAllChecksum);
 			}
 
 			stRemoveInodeChecksum.setString(1, inode.toString());
@@ -1796,7 +1795,7 @@ class HdfsSqlDriver {
 		
 		if(_log.isInfoEnabled()) _log.info("path2inode PATH:{}", path);
 		
-		List<String> pathElemts = new ArrayList();
+		List<String> pathElemts = new ArrayList<String>();
 		do {
 			String fileName = pathFile.getName();
 			if (fileName.length() != 0) {
@@ -1890,12 +1889,12 @@ class HdfsSqlDriver {
 
 	List<ACE> getACL(Connection dbConnection, FsInode inode)
 			throws SQLException {
-		List<ACE> acl = new ArrayList();
+		List<ACE> acl = new ArrayList<ACE>();
 		PreparedStatement stGetAcl = null;
 		ResultSet rs = null;
 		try {
 			stGetAcl = dbConnection
-					.prepareStatement("SELECT * FROM t_acl WHERE rs_id =  ? ORDER BY ace_order");
+					.prepareStatement(sqlGetACL);
 			stGetAcl.setString(1, inode.toString());
 
 			rs = stGetAcl.executeQuery();
@@ -1922,7 +1921,7 @@ class HdfsSqlDriver {
 		PreparedStatement stAddACL = null;
 		try {
 			stDeleteACL = dbConnection
-					.prepareStatement("DELETE FROM t_acl WHERE rs_id = ?");
+					.prepareStatement(sqlDeleteACL);
 			stDeleteACL.setString(1, inode.toString());
 			stDeleteACL.executeUpdate();
 
@@ -1930,7 +1929,7 @@ class HdfsSqlDriver {
 				return;
 			}
 			stAddACL = dbConnection
-					.prepareStatement("INSERT INTO t_acl VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					.prepareStatement(sqlAddACL);
 
 			int type = inode.isDirectory() ? 0 : 1;
 			int order = 0;

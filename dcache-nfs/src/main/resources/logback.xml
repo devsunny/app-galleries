@@ -12,7 +12,7 @@
 
 	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
 		<file>c:/tmp/nfs-gateway.log</file>
-		<append>true</append>
+		<append>false</append>
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
 			by default -->
 		<encoder>
@@ -20,17 +20,7 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.dcache.nfs.v4" level="DEBUG" additivity="false">
-		<appender-ref ref="STDOUT" />
-		<appender-ref ref="FILE" />
-	</logger>
-	<logger name="org.dcache.chimera" level="DEBUG" additivity="false">
-		<appender-ref ref="STDOUT" />
-		<appender-ref ref="FILE" />
-	</logger>
-
-
-	<root level="WARN">
+	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>
