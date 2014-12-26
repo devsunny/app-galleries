@@ -3,6 +3,7 @@ package org.dcache.chimera;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.dcache.nfs.ChimeraNFSException;
 import org.dcache.nfs.nfsstat;
 import org.dcache.nfs.status.InvalException;
@@ -32,9 +33,9 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
 
 	private static final Logger _log = LoggerFactory
 			.getLogger(HdfsOperationWRITE.class);
-	private final FsCache _fsCache;
+	private final HadoopHdfsDriver _fsCache;
 
-	public HdfsOperationWRITE(nfs_argop4 args, FsCache fsCache) {
+	public HdfsOperationWRITE(nfs_argop4 args, HadoopHdfsDriver fsCache) {
 		super(args, nfs_opnum4.OP_WRITE);
 		_fsCache = fsCache;
 	}
@@ -72,14 +73,17 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
         
        
 
-        FileChannel out = _fsCache.get(inode);
+        FSDataOutputStream out = _fsCache.getFSDataOutputStream(inode);
         _args.opwrite.data.rewind();
         
         if (_log.isInfoEnabled())
 			_log.info("create and write data size: {} at offset {} ", _args.opwrite.data.remaining(), offset );
         
-        int bytesWritten = out.write(_args.opwrite.data, offset);
-
+        int bytesWritten =  _args.opwrite.data.remaining();
+        byte[] b = new byte[bytesWritten];
+        _args.opwrite.data.get(b);
+         out.write(b);
+         
         if (bytesWritten < 0) {
             throw new NfsIoException("IO not allowd");
         }

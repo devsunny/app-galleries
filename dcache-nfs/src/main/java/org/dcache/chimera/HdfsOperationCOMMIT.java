@@ -3,6 +3,7 @@ package org.dcache.chimera;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.dcache.nfs.ChimeraNFSException;
 import org.dcache.nfs.nfsstat;
 import org.dcache.nfs.status.InvalException;
@@ -27,9 +28,9 @@ public class HdfsOperationCOMMIT extends AbstractNFSv4Operation {
 
 	private static final Logger _log = LoggerFactory
 			.getLogger(HdfsOperationREAD.class);
-	private final FsCache _fsCache;
+	private final HadoopHdfsDriver _fsCache;
 
-	public HdfsOperationCOMMIT(nfs_argop4 args, FsCache fsCache) {
+	public HdfsOperationCOMMIT(nfs_argop4 args, HadoopHdfsDriver fsCache) {
 		super(args, nfs_opnum4.OP_COMMIT);
 		_fsCache = fsCache;
 	}
@@ -51,9 +52,8 @@ public class HdfsOperationCOMMIT extends AbstractNFSv4Operation {
 			if (stat.type() != Stat.Type.REGULAR) {
 				throw new InvalException("Invalid object type");
 			}
-
-			FileChannel out = _fsCache.get(inode);
-
+			FSDataOutputStream out = _fsCache.getFSDataOutputStream(inode);	
+			
 			stat.setSize(out.size());
 			context.getFs().setattr(context.currentInode(), stat);
 		}

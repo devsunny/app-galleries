@@ -12,8 +12,9 @@ public class HdfsIoOperationFactory extends MDSOperationFactory {
 
 	private static final Logger _log = LoggerFactory
 			.getLogger(HdfsIoOperationFactory.class);
-	private final FsCache _fs;
-	public HdfsIoOperationFactory(FsCache fs) {
+	private final HadoopHdfsDriver _fs;
+	
+	public HdfsIoOperationFactory(HadoopHdfsDriver fs) {
 		_fs = fs;
 	}
 

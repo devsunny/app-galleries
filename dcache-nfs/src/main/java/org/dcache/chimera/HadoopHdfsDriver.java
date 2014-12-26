@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -91,10 +92,19 @@ public class HadoopHdfsDriver {
 	public void setBase(Path base) {
 		this.base = base;
 	}
-	
-	public FSDataOutputStream getFSDataOutputStream(Inode inode) throws IOException
-	{
+
+	public FSDataOutputStream getFSDataOutputStream(Inode inode)
+			throws IOException {
 		return this.cache.getUnchecked(inode);
+	}
+	
+	public FSDataInputStream getFSDataInputStream(Inode inode)
+			throws IOException {
+		throw new IOException("Read is not allowed");
+	}
+
+	public void remove(Inode inode) {
+		this.cache.invalidate(inode);
 	}
 
 	public Path inode2path(Inode inode) throws IOException {
@@ -118,23 +128,17 @@ public class HadoopHdfsDriver {
 		this.cache = CacheBuilder.newBuilder().maximumSize(this.maxCacheSize)
 				.expireAfterAccess(this.lastAccess, TimeUnit.SECONDS)
 				.removalListener(new InodeGarbageCollector())
-				.build(new HdfsOutputStreamSupplier(this, this.base));
+				.build(new HdfsOutputStreamSupplier(this));
 	}
 
 	private static class HdfsOutputStreamSupplier extends
 			CacheLoader<Inode, FSDataOutputStream> {
 
-		private final Path _base;
 		private final HadoopHdfsDriver hdfsDriver;
 
-		HdfsOutputStreamSupplier(HadoopHdfsDriver hdfsDriver, Path base1)
+		HdfsOutputStreamSupplier(HadoopHdfsDriver hdfsDriver)
 				throws IOException {
-			_base = base1;
 			this.hdfsDriver = hdfsDriver;
-			if (!this.hdfsDriver.isDirectory(base1)) {
-				throw new IllegalArgumentException(base1
-						+ " : not exist or not a directory");
-			}
 		}
 
 		@Override
@@ -151,7 +155,9 @@ public class HadoopHdfsDriver {
 		public void onRemoval(
 				RemovalNotification<Inode, FSDataOutputStream> notification) {
 			try {
-				notification.getValue().close();
+				FSDataOutputStream fout = notification.getValue();
+				fout.flush();
+				fout.close();
 			} catch (IOException e) {
 				LOG.error("Failed to close file channel of {} : {}",
 						notification.getKey(), e.getMessage());

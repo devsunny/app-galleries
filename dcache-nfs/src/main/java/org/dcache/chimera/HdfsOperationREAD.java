@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.dcache.nfs.ChimeraNFSException;
 import org.dcache.nfs.nfsstat;
 import org.dcache.nfs.status.InvalException;
@@ -27,8 +28,8 @@ public class HdfsOperationREAD extends AbstractNFSv4Operation{
 
 	private static final Logger _log = LoggerFactory
 			.getLogger(HdfsOperationREAD.class);
-	private final FsCache _fsCache;
-	public HdfsOperationREAD(nfs_argop4 args, FsCache fsCache) {
+	private final HadoopHdfsDriver _fsCache;
+	public HdfsOperationREAD(nfs_argop4 args, HadoopHdfsDriver fsCache) {
 		 super(args, nfs_opnum4.OP_READ);
 		 _fsCache = fsCache;
 	}
@@ -65,14 +66,15 @@ public class HdfsOperationREAD extends AbstractNFSv4Operation{
 	        int count = _args.opread.count.value;
 
 	        ByteBuffer bb = ByteBuffer.allocateDirect(count);
-	        FileChannel in = _fsCache.get(inode);
-
-	        int bytesReaded = in.read(bb, offset);
+	        FSDataInputStream in = _fsCache.getFSDataInputStream(inode);	       
+	        byte[] b = new byte[count];
+	        int bytesReaded = in.read(b);
 	        if (bytesReaded < 0) {
 	            eof = true;
 	            bytesReaded = 0;
 	        }
-
+	        bb.put(b);
+	        
 	        res.status = nfsstat.NFS_OK;
 	        res.resok4 = new READ4resok();
 	        res.resok4.data = bb;
