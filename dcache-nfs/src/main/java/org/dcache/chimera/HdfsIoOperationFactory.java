@@ -15,9 +15,9 @@ public class HdfsIoOperationFactory extends MDSOperationFactory {
 
 	private static final Logger _log = LoggerFactory
 			.getLogger(HdfsIoOperationFactory.class);
-	private final HadoopHdfsDriver _fs;
+	private final HadoopHdfsVfs _fs;
 	
-	public HdfsIoOperationFactory(HadoopHdfsDriver fs) {
+	public HdfsIoOperationFactory(HadoopHdfsVfs fs) {
 		_fs = fs;
 	}
 
@@ -27,8 +27,8 @@ public class HdfsIoOperationFactory extends MDSOperationFactory {
 			_log.info("getOperation:{}", getOpName(op.argop));
 		AbstractNFSv4Operation operationImpl = null;
 		switch (op.argop) {
-		case nfs_opnum4.OP_READ:
-			return new HdfsOperationREAD(op, _fs);
+//		case nfs_opnum4.OP_READ:
+//			return new HdfsOperationREAD(op, _fs);
 		case nfs_opnum4.OP_COMMIT:
 			return new HdfsOperationCOMMIT(op, _fs);
 		case nfs_opnum4.OP_WRITE:

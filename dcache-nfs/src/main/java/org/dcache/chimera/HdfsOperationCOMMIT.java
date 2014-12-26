@@ -27,10 +27,10 @@ import org.slf4j.LoggerFactory;
 public class HdfsOperationCOMMIT extends AbstractNFSv4Operation {
 
 	private static final Logger _log = LoggerFactory
-			.getLogger(HdfsOperationREAD.class);
-	private final HadoopHdfsDriver _fsCache;
+			.getLogger(HdfsOperationCOMMIT.class);
+	private final HadoopHdfsVfs _fsCache;
 
-	public HdfsOperationCOMMIT(nfs_argop4 args, HadoopHdfsDriver fsCache) {
+	public HdfsOperationCOMMIT(nfs_argop4 args, HadoopHdfsVfs fsCache) {
 		super(args, nfs_opnum4.OP_COMMIT);
 		_fsCache = fsCache;
 	}

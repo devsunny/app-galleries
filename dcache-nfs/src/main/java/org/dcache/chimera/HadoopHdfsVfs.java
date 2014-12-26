@@ -1,22 +1,3 @@
-/*
- * Copyright (c) 2009 - 2014 Deutsches Elektronen-Synchroton,
- * Member of the Helmholtz Association, (DESY), HAMBURG, GERMANY
- *
- * This library is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Library General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Library General Public License for more details.
- *
- * You should have received a copy of the GNU Library General Public
- * License along with this program (see the file COPYING.LIB for more
- * details); if not, write to the Free Software Foundation, Inc.,
- * 675 Mass Ave, Cambridge, MA 02139, USA.
- */
 package org.dcache.chimera;
 
 import static org.dcache.nfs.v4.xdr.nfs4_prot.ACCESS4_EXTEND;
@@ -27,9 +8,16 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.dcache.acl.ACE;
 import org.dcache.acl.enums.AceFlags;
 import org.dcache.acl.enums.AceType;
@@ -58,33 +46,90 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 
-/**
- * Interface to a virtual file system.
- */
 public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
-	private final static Logger _log = LoggerFactory
+	private final static Logger LOG = LoggerFactory
 			.getLogger(HadoopHdfsVfs.class);
-	private final HdfsJdbcFileSystemProvider _fs;
-	private final NfsIdMapping _idMapping;
 
-	public HadoopHdfsVfs(HdfsJdbcFileSystemProvider fs, NfsIdMapping idMapping) {
-		_fs = fs;
-		_idMapping = idMapping;
+	private Configuration hdfsConfig = null;
+	private FileSystem hdfs = null;
+	private LoadingCache<Inode, FSDataOutputStream> hdfsFSoutCache;
+
+	private int maxCacheSize = 250;
+	private int lastAccess = 30;
+	private Path base;
+
+	private final NfsIdMapping idMapping;
+	private final HdfsJdbcFileSystemProvider jdbcFsProvider;
+
+	public HadoopHdfsVfs(HdfsJdbcFileSystemProvider jdbcFsProvider,
+			NfsIdMapping idMapping) throws IOException {
+		this.jdbcFsProvider = jdbcFsProvider;
+		this.idMapping = idMapping;
+		init(null);
+	}
+
+	public HadoopHdfsVfs(HdfsJdbcFileSystemProvider jdbcFsProvider,
+			NfsIdMapping idMapping, Path base) throws IOException {
+		this.jdbcFsProvider = jdbcFsProvider;
+		this.idMapping = idMapping;
+		this.base = base;
+		init(null);
+	}
+
+	public HadoopHdfsVfs(HdfsJdbcFileSystemProvider jdbcFsProvider,
+			NfsIdMapping idMapping, Path base, Path configDir)
+			throws IOException {
+		this.jdbcFsProvider = jdbcFsProvider;
+		this.idMapping = idMapping;
+		this.base = base;		
+		init(configDir);
+	}
+
+	public HadoopHdfsVfs(HdfsJdbcFileSystemProvider jdbcFsProvider,
+			NfsIdMapping idMapping, Path base, Path configDir,
+			int maxCacheSize, int lastAccess) throws IOException {
+		this.jdbcFsProvider = jdbcFsProvider;
+		this.idMapping = idMapping;
+		this.base = base;
+		this.maxCacheSize = maxCacheSize;
+		this.lastAccess = lastAccess;
+		init(configDir);
+	}
+
+	protected void init(Path configDir) throws IOException {
+		this.hdfsConfig = new Configuration();
+		if (configDir != null) {
+			this.hdfsConfig.addResource(new Path(configDir, "core-site.xml"));
+			this.hdfsConfig.addResource(new Path(configDir, "hdfs-site.xml"));
+			this.hdfsConfig.addResource(new Path(configDir, "yarn-site.xml"));
+			this.hdfs = FileSystem.get(this.hdfsConfig);
+		}
+		this.hdfsFSoutCache = CacheBuilder.newBuilder()
+				.maximumSize(this.maxCacheSize)
+				.expireAfterAccess(this.lastAccess, TimeUnit.SECONDS)
+				.removalListener(new InodeGarbageCollector())
+				.build(new HdfsOutputStreamSupplier(this));
 	}
 
 	@Override
-	public Inode getRootInode() throws IOException {		
-		return toInode(FsInode.getRoot(_fs));
+	public Inode getRootInode() throws IOException {
+		return toInode(FsInode.getRoot(jdbcFsProvider));
 	}
 
 	@Override
-	public Inode lookup(Inode parent, String path) throws IOException {		
-		if (_log.isDebugEnabled()) _log.debug("lookup:{} in parant:{}", path, parent.toString());
+	public Inode lookup(Inode parent, String path) throws IOException {
+		if (LOG.isDebugEnabled())
+			LOG.debug("lookup:{} in parant:{}", path, parent.toString());
 		try {
-			FsInode parentFsInode = toFsInode(parent);	
+			FsInode parentFsInode = toFsInode(parent);
 			FsInode fsInode = parentFsInode.inodeOf(path);
 			return toInode(fsInode);
 		} catch (FileNotFoundHimeraFsException e) {
@@ -95,12 +140,14 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode create(Inode parent, Stat.Type type, String path, int uid,
 			int gid, int mode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("create:{}", path);
+		if (LOG.isDebugEnabled())
+			LOG.debug("create:{}", path);
 		try {
 			FsInode parentFsInode = toFsInode(parent);
-			if (_log.isDebugEnabled()) _log.debug("ParentFNode:{}", parentFsInode.toString());
-			FsInode fsInode = _fs.createFile(parentFsInode, path, uid, gid,
-					mode | typeToChimera(type), typeToChimera(type));
+			if (LOG.isDebugEnabled())
+				LOG.debug("ParentFNode:{}", parentFsInode.toString());
+			FsInode fsInode = jdbcFsProvider.createFile(parentFsInode, path,
+					uid, gid, mode | typeToChimera(type), typeToChimera(type));
 			return toInode(fsInode);
 		} catch (FileExistsChimeraFsException e) {
 			throw new ExistException("path already exists");
@@ -110,7 +157,8 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode mkdir(Inode parent, String path, int uid, int gid, int mode)
 			throws IOException {
-		if (_log.isDebugEnabled()) _log.debug ("mkdir:{}", path);
+		if (LOG.isDebugEnabled())
+			LOG.debug("mkdir:{}", path);
 		try {
 			FsInode parentFsInode = toFsInode(parent);
 			FsInode fsInode = parentFsInode.mkdir(path, uid, gid, mode);
@@ -123,12 +171,13 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode link(Inode parent, Inode link, String path, int uid, int gid)
 			throws IOException {
-		if (_log.isInfoEnabled())
-			_log.info("link");
+		if (LOG.isInfoEnabled())
+			LOG.info("link");
 		FsInode parentFsInode = toFsInode(parent);
 		FsInode linkInode = toFsInode(link);
 		try {
-			FsInode fsInode = _fs.createHLink(parentFsInode, linkInode, path);
+			FsInode fsInode = jdbcFsProvider.createHLink(parentFsInode,
+					linkInode, path);
 			return toInode(fsInode);
 		} catch (NotDirChimeraException e) {
 			throw new NotDirException("parent not a directory");
@@ -140,11 +189,12 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public Inode symlink(Inode parent, String path, String link, int uid,
 			int gid, int mode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("symlink");
+		if (LOG.isDebugEnabled())
+			LOG.debug("symlink");
 		try {
 			FsInode parentFsInode = toFsInode(parent);
-			FsInode fsInode = _fs.createLink(parentFsInode, path, uid, gid,
-					mode, link.getBytes(StandardCharsets.UTF_8));
+			FsInode fsInode = jdbcFsProvider.createLink(parentFsInode, path,
+					uid, gid, mode, link.getBytes(StandardCharsets.UTF_8));
 			return toInode(fsInode);
 		} catch (FileExistsChimeraFsException e) {
 			throw new ExistException("path already exists");
@@ -154,19 +204,25 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public int read(Inode inode, byte[] data, long offset, int count)
 			throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("read");
-		FsInode fsInode = toFsInode(inode);
-		return fsInode.read(offset, data, 0, count);
+		
+		Path path = inode2path(inode);
+		FSDataInputStream fin = this.hdfs.open(new Path(this.base, path));
+		int ret = fin.read(offset, data, 0, count);
+		fin.close();
+		if (LOG.isDebugEnabled())
+			LOG.debug("Path, {}, readed {}, offset, {}, count, {}", path, ret, offset, count);		
+		return ret;
 	}
 
 	@Override
 	public boolean move(Inode src, String oldName, Inode dest, String newName)
 			throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("move");
+		if (LOG.isDebugEnabled())
+			LOG.debug("move");
 		FsInode from = toFsInode(src);
 		FsInode to = toFsInode(dest);
 		try {
-			return _fs.move(from, oldName, to, newName);
+			return jdbcFsProvider.move(from, oldName, to, newName);
 		} catch (NotDirChimeraException e) {
 			throw new NotDirException("not a directory");
 		} catch (FileExistsChimeraFsException e) {
@@ -180,11 +236,12 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public String readlink(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("readlink");
+		if (LOG.isDebugEnabled())
+			LOG.debug("readlink");
 		FsInode fsInode = toFsInode(inode);
 		int count = (int) fsInode.statCache().getSize();
 		byte[] data = new byte[count];
-		int n = _fs.read(fsInode, 0, data, 0, count);
+		int n = jdbcFsProvider.read(fsInode, 0, data, 0, count);
 		if (n < 0) {
 			throw new NfsIoException("Can't read symlink");
 		}
@@ -193,10 +250,11 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public void remove(Inode parent, String path) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("remove");
+		if (LOG.isDebugEnabled())
+			LOG.debug("remove");
 		FsInode parentFsInode = toFsInode(parent);
 		try {
-			_fs.remove(parentFsInode, path);
+			jdbcFsProvider.remove(parentFsInode, path);
 		} catch (FileNotFoundHimeraFsException e) {
 			throw new NoEntException("path not found");
 		} catch (DirNotEmptyHimeraFsException e) {
@@ -207,7 +265,9 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public WriteResult write(Inode inode, byte[] data, long offset, int count,
 			StabilityLevel stabilityLevel) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("write:length[{}] offset[{}] count[{}]", data.length, offset, count);
+		if (LOG.isDebugEnabled())
+			LOG.debug("write:length[{}] offset[{}] count[{}]", data.length,
+					offset, count);
 		FsInode fsInode = toFsInode(inode);
 		int bytesWritten = fsInode.write(offset, data, 0, count);
 		return new WriteResult(StabilityLevel.FILE_SYNC, bytesWritten);
@@ -218,11 +278,28 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 		// nop (all IO is FILE_SYNC so no commits expected)
 	}
 
+	public void close(Inode inode) {
+		if (this.hdfsFSoutCache.getIfPresent(inode) != null) {
+			this.hdfsFSoutCache.invalidate(inode);
+		}
+	}
+
+	public FSDataOutputStream getFSDataOutputStream(Inode inode)
+			throws IOException {
+		FSDataOutputStream fout = null;
+		try {
+			fout = this.hdfsFSoutCache.get(inode);
+		} catch (ExecutionException e) {
+			throw new IOException("Failed to open HDFS output stream", e);
+		}
+		return fout;
+	}
+
 	@Override
 	public List<DirectoryEntry> list(Inode inode) throws IOException {
-		
 		FsInode parentFsInode = toFsInode(inode);
-		if (_log.isDebugEnabled()) _log.debug("list inode:{}", parentFsInode.toString());
+		if (LOG.isDebugEnabled())
+			LOG.debug("list inode:{}", parentFsInode.toString());
 		List<HimeraDirectoryEntry> list = DirectoryStreamHelper
 				.listOf(parentFsInode);
 		return Lists.transform(list, new ChimeraDirectoryEntryToVfs());
@@ -230,7 +307,8 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public Inode parentOf(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("parentOf");
+		if (LOG.isDebugEnabled())
+			LOG.debug("parentOf");
 		FsInode parent = toFsInode(inode).getParent();
 		if (parent == null) {
 			throw new NoEntException("no parent");
@@ -239,29 +317,16 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	@Override
-	public FsStat getFsStat() throws IOException {		
-		org.dcache.chimera.FsStat fsStat = _fs.getFsStat();
+	public FsStat getFsStat() throws IOException {
+		org.dcache.chimera.FsStat fsStat = jdbcFsProvider.getFsStat();
 		return new FsStat(fsStat.getTotalSpace(), fsStat.getTotalFiles(),
 				fsStat.getUsedSpace(), fsStat.getUsedFiles());
 	}
 
-	public FsInode toFsInode(Inode inode) throws IOException {
-		
-		return _fs.inodeFromBytes(inode.getFileId());
-	}
-
-	private Inode toInode(final FsInode inode) {
-		
-		try {
-			return Inode.forFile(_fs.inodeToBytes(inode));
-		} catch (ChimeraFsException e) {
-			throw new RuntimeException("bug found", e);
-		}
-	}
-
 	@Override
 	public Stat getattr(Inode inode) throws IOException {
-		if(_log.isDebugEnabled()) _log.debug("getattr");
+		if (LOG.isDebugEnabled())
+			LOG.debug("getattr");
 		FsInode fsInode = toFsInode(inode);
 		try {
 			return fromChimeraStat(fsInode.stat(), fsInode.id());
@@ -272,24 +337,26 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public void setattr(Inode inode, Stat stat) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("setattr");
+		if (LOG.isDebugEnabled())
+			LOG.debug("setattr");
 		FsInode fsInode = toFsInode(inode);
 		fsInode.setStat(toChimeraStat(stat));
 	}
 
 	@Override
 	public nfsace4[] getAcl(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("getAcl");
+		if (LOG.isDebugEnabled())
+			LOG.debug("getAcl");
 		FsInode fsInode = toFsInode(inode);
 		nfsace4[] aces;
-		List<ACE> dacl = _fs.getACL(fsInode);
+		List<ACE> dacl = jdbcFsProvider.getACL(fsInode);
 		org.dcache.chimera.posix.Stat stat = fsInode.statCache();
 
 		nfsace4[] unixAcl = Acls.of(stat.getMode(), fsInode.isDirectory());
 		aces = new nfsace4[dacl.size() + unixAcl.length];
 		int i = 0;
 		for (ACE ace : dacl) {
-			aces[i] = valueOf(ace, _idMapping);
+			aces[i] = valueOf(ace, this.idMapping);
 			i++;
 		}
 		System.arraycopy(unixAcl, 0, aces, i, unixAcl.length);
@@ -298,18 +365,20 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public void setAcl(Inode inode, nfsace4[] acl) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("setAcl");
+		if (LOG.isDebugEnabled())
+			LOG.debug("setAcl");
 		FsInode fsInode = toFsInode(inode);
 		List<ACE> dacl = new ArrayList<>();
 		for (nfsace4 ace : acl) {
-			dacl.add(valueOf(ace, _idMapping));
+			dacl.add(valueOf(ace, this.idMapping));
 		}
-		_fs.setACL(fsInode, dacl);
+		jdbcFsProvider.setACL(fsInode, dacl);
 	}
 
 	private static Stat fromChimeraStat(org.dcache.chimera.posix.Stat pStat,
 			long fileid) {
-		if (_log.isDebugEnabled()) _log.debug("fromChimeraStat");
+		if (LOG.isDebugEnabled())
+			LOG.debug("fromChimeraStat");
 		Stat stat = new Stat();
 
 		stat.setATime(pStat.getATime());
@@ -330,7 +399,8 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	private static org.dcache.chimera.posix.Stat toChimeraStat(Stat stat) {
-		if (_log.isDebugEnabled()) _log.debug("toChimeraStat");
+		if (LOG.isDebugEnabled())
+			LOG.debug("toChimeraStat");
 		org.dcache.chimera.posix.Stat pStat = new org.dcache.chimera.posix.Stat();
 		pStat.setATime(stat.getATime());
 		pStat.setCTime(stat.getCTime());
@@ -350,7 +420,8 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	@Override
 	public int access(Inode inode, int mode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("access");
+		if (LOG.isDebugEnabled())
+			LOG.debug("access");
 		int accessmask = mode;
 		if ((mode & (ACCESS4_MODIFY | ACCESS4_EXTEND)) != 0) {
 
@@ -365,35 +436,74 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	private boolean shouldRejectUpdates(FsInode fsInode)
 			throws ChimeraFsException {
-		if (_log.isDebugEnabled()) _log.debug("shouldRejectUpdates");
+		if (LOG.isDebugEnabled())
+			LOG.debug("shouldRejectUpdates");
 		return fsInode.type() == FsInodeType.INODE
 				&& fsInode.getLevel() == 0
 				&& !fsInode.isDirectory()
-				&& (!_fs.getInodeLocations(fsInode, StorageGenericLocation.TAPE)
-						.isEmpty() || !_fs.getInodeLocations(fsInode,
-						StorageGenericLocation.DISK).isEmpty());
+				&& (!jdbcFsProvider.getInodeLocations(fsInode,
+						StorageGenericLocation.TAPE).isEmpty() || !jdbcFsProvider
+						.getInodeLocations(fsInode, StorageGenericLocation.DISK)
+						.isEmpty());
 	}
 
 	@Override
 	public boolean hasIOLayout(Inode inode) throws IOException {
-		if (_log.isDebugEnabled()) _log.debug("hasIOLayout");
+		if (LOG.isDebugEnabled())
+			LOG.debug("hasIOLayout");
 		FsInode fsInode = toFsInode(inode);
 		return fsInode.type() == FsInodeType.INODE && fsInode.getLevel() == 0;
 	}
 
 	@Override
 	public AclCheckable getAclCheckable() {
-		if (_log.isDebugEnabled()) _log.debug("AclCheckable");
+		if (LOG.isDebugEnabled())
+			LOG.debug("AclCheckable");
 		return this;
 	}
 
-	private class ChimeraDirectoryEntryToVfs implements
-			Function<HimeraDirectoryEntry, DirectoryEntry> {
-		@Override
-		public DirectoryEntry apply(HimeraDirectoryEntry e) {
-			if (_log.isDebugEnabled()) _log.debug("transform HimeraDirectoryEntry to DirectoryEntry:{}", e.getName());			
-			return new DirectoryEntry(e.getName(), toInode(e.getInode()),
-					fromChimeraStat(e.getStat(), e.getInode().id()));
+	protected Path inode2path(Inode inode) throws IOException {
+		String path = null;
+		FsInode fsInode = toFsInode(inode);
+		path = fsInode.getFs().inode2path(fsInode);
+		return new Path(path);
+	}
+
+	protected FSDataOutputStream inode2FSDataOutputStream(Inode inode)
+			throws IOException {
+		FSDataOutputStream ret = null;
+		try {
+			Path path = inode2path(inode);
+			if (LOG.isDebugEnabled())
+				LOG.debug("Request path:{}", path);
+			Path hdfsFile = new Path(this.base, path);
+			if (LOG.isDebugEnabled())
+				LOG.debug("Request file path :{}", hdfsFile);
+			if (!this.hdfs.exists(hdfsFile.getParent())) {
+				this.hdfs.mkdirs(hdfsFile.getParent());
+			}
+			ret = this.hdfs.create(hdfsFile, Boolean.TRUE);
+		} catch (Exception e) {
+			LOG.error("Failed to create FSDataOutputStream", e);
+		}
+		return ret;
+	}
+
+	protected FSDataInputStream inode2FSDataInputStream(Inode inode)
+			throws IOException {
+		Path path = inode2path(inode);
+		return this.hdfs.open(new Path(this.base, path));
+	}
+
+	protected FsInode toFsInode(Inode inode) throws IOException {
+		return this.jdbcFsProvider.inodeFromBytes(inode.getFileId());
+	}
+
+	protected Inode toInode(final FsInode inode) {
+		try {
+			return Inode.forFile(this.jdbcFsProvider.inodeToBytes(inode));
+		} catch (ChimeraFsException e) {
+			throw new RuntimeException("bug found", e);
 		}
 	}
 
@@ -466,8 +576,8 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	public Access checkAcl(Subject subject, Inode inode, int access)
 			throws IOException {
 		FsInode fsInode = toFsInode(inode);
-		List<ACE> acl = _fs.getACL(fsInode);
-		org.dcache.chimera.posix.Stat stat = _fs.stat(fsInode);
+		List<ACE> acl = jdbcFsProvider.getACL(fsInode);
+		org.dcache.chimera.posix.Stat stat = jdbcFsProvider.stat(fsInode);
 		return checkAcl(subject, acl, stat.getUid(), stat.getGid(), access);
 	}
 
@@ -512,4 +622,53 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 		return Access.UNDEFINED;
 	}
+
+	private class ChimeraDirectoryEntryToVfs implements
+			Function<HimeraDirectoryEntry, DirectoryEntry> {
+		@Override
+		public DirectoryEntry apply(HimeraDirectoryEntry e) {
+			if (LOG.isDebugEnabled())
+				LOG.debug(
+						"transform HimeraDirectoryEntry to DirectoryEntry:{}",
+						e.getName());
+			return new DirectoryEntry(e.getName(), toInode(e.getInode()),
+					fromChimeraStat(e.getStat(), e.getInode().id()));
+		}
+	}
+
+	private static class InodeGarbageCollector implements
+			RemovalListener<Inode, FSDataOutputStream> {
+
+		@Override
+		public void onRemoval(
+				RemovalNotification<Inode, FSDataOutputStream> notification) {
+			try {
+				FSDataOutputStream fout = notification.getValue();
+				fout.flush();
+				fout.close();
+				if (LOG.isDebugEnabled())
+					LOG.debug("FSDataOutputStream Closed.");
+			} catch (IOException e) {
+				LOG.error("Failed to close file channel of {} : {}",
+						notification.getKey(), e.getMessage());
+			}
+		}
+	}
+
+	private static class HdfsOutputStreamSupplier extends
+			CacheLoader<Inode, FSDataOutputStream> {
+
+		private final HadoopHdfsVfs hdfsDriver;
+
+		HdfsOutputStreamSupplier(HadoopHdfsVfs hdfsDriver) throws IOException {
+			this.hdfsDriver = hdfsDriver;
+		}
+
+		@Override
+		public FSDataOutputStream load(Inode inode) throws IOException {
+			return this.hdfsDriver.inode2FSDataOutputStream(inode);
+		}
+
+	}
+
 }

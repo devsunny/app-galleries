@@ -33,9 +33,9 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(HdfsOperationWRITE.class);
-	private final HadoopHdfsDriver _fsCache;
+	private final HadoopHdfsVfs _fsCache;
 
-	public HdfsOperationWRITE(nfs_argop4 args, HadoopHdfsDriver fsCache) {
+	public HdfsOperationWRITE(nfs_argop4 args, HadoopHdfsVfs fsCache) {
 		super(args, nfs_opnum4.OP_WRITE);
 		_fsCache = fsCache;
 	}

@@ -41,9 +41,9 @@ public class HdfsOperationCLOSE extends AbstractNFSv4Operation {
 	private static final Logger _log = LoggerFactory
 			.getLogger(HdfsOperationCLOSE.class);
 
-	private final HadoopHdfsDriver _fsCache;
+	private final HadoopHdfsVfs _fsCache;
 
-	HdfsOperationCLOSE(nfs_argop4 args, HadoopHdfsDriver fsCache) {
+	HdfsOperationCLOSE(nfs_argop4 args, HadoopHdfsVfs fsCache) {
 		super(args, nfs_opnum4.OP_CLOSE);
 		_fsCache = fsCache;
 	}

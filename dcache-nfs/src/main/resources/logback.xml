@@ -22,7 +22,7 @@
 	
 	
 	
-	<logger name="org.dcache.chimera" level="DEBUG"/>
+	<logger name="org.dcache" level="DEBUG"/>
 	
 
 	<root level="WARN">
