@@ -1,5 +1,8 @@
 package org.dcache.chimera;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 import org.dcache.nfs.v4.AbstractNFSv4Operation;
 import org.dcache.nfs.v4.MDSOperationFactory;
 import org.dcache.nfs.v4.xdr.nfs_argop4;
@@ -21,7 +24,8 @@ public class HdfsIoOperationFactory extends MDSOperationFactory {
 	@Override
 	public AbstractNFSv4Operation getOperation(nfs_argop4 op) {
 		if (_log.isInfoEnabled())
-			_log.info("getOperation:{}", op.toString());
+			_log.info("getOperation:{}", getOpName(op.argop));
+		AbstractNFSv4Operation operationImpl = null;
 		switch (op.argop) {
 		case nfs_opnum4.OP_READ:
 			return new HdfsOperationREAD(op, _fs);
@@ -35,5 +39,29 @@ public class HdfsIoOperationFactory extends MDSOperationFactory {
 			return super.getOperation(op);
 		}
 	}
+	
+	private static String getOpName(int opv)
+	{
+		String name = "OP_Unknown";
+		
+		Field[] flds = nfs_opnum4.class.getFields();
+		for (Field field : flds) {
+			if((field.getModifiers() & Modifier.STATIC) >0 ){
+				try {
+					int val = field.getInt(null);
+					if(val == opv){
+						name = field.getName();
+						return name;
+					}
+				} catch (IllegalArgumentException e) {					
+					_log.warn("IllegalArgumentException", e);
+				} catch (IllegalAccessException e) {
+					_log.warn("IllegalAccessException", e);
+				}
+			}
+		}
+		return name;
+	}
+	
 
 }

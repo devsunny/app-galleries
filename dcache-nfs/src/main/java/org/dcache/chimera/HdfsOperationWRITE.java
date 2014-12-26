@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 public class HdfsOperationWRITE extends AbstractNFSv4Operation {
 
-	private static final Logger _log = LoggerFactory
+	private static final Logger LOG = LoggerFactory
 			.getLogger(HdfsOperationWRITE.class);
 	private final HadoopHdfsDriver _fsCache;
 
@@ -43,7 +43,8 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
 	@Override
 	public void process(CompoundContext context, nfs_resop4 result)
 			throws ChimeraNFSException, IOException, OncRpcException {
-//PathTraceUtility.trace();
+		
+		
     	
     	final WRITE4res res = result.opwrite;
 
@@ -76,8 +77,8 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
         FSDataOutputStream out = _fsCache.getFSDataOutputStream(inode);
         _args.opwrite.data.rewind();
         
-        if (_log.isInfoEnabled())
-			_log.info("create and write data size: {} at offset {} ", _args.opwrite.data.remaining(), offset );
+        if (LOG.isInfoEnabled())
+			LOG.info("create and write data size: {} at offset {} ", _args.opwrite.data.remaining(), offset );
         
         int bytesWritten =  _args.opwrite.data.remaining();
         byte[] b = new byte[bytesWritten];
@@ -99,7 +100,7 @@ public class HdfsOperationWRITE extends AbstractNFSv4Operation {
             stat.setSize(out.size());
             context.getFs().setattr(context.currentInode(), stat);
         }
-        _log.debug("MOVER: {}@{} written, {} requested. New File size {}",
+        LOG.debug("MOVER: {}@{} written, {} requested. New File size {}",
                 bytesWritten, offset, _args.opwrite.data, out.size());
 	}
 

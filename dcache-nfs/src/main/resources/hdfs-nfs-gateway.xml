@@ -30,12 +30,6 @@
     </bean>
     
     
-    
-     <bean id="ddl_generator" class="com.asksunny.migrators.DDLGenerator" init-method="init">
-        <description>Device manager</description>
-        <property name="dataSource" ref="dataSource" />
-    </bean>
-
     <!--
         Convert protperies with multiple values separated by comma into an array of strings:
         key=value1,value2,value3 : String[] {value1, value2, value3}
@@ -66,7 +60,7 @@
          <property name="contexts" value="production" />
      </bean>
 
-     <bean id="fileSystem" class="org.dcache.chimera.HdfsJdbcFs" depends-on="liquibase">
+     <bean id="fileSystem" class="org.dcache.chimera.HdfsJdbcFileSystemProvider" depends-on="liquibase">
         <description>Chimera Filesystem</description>
         <constructor-arg ref="dataSource" />
         <constructor-arg value="${chimera.db.dialect}" />
@@ -119,10 +113,36 @@
     <!--
         NFSv4.1 Operation factory
     -->
+    <!-- 
+      <bean id="ds-data-pool" class="org.dcache.nfs.vfs.FsCache" init-method="init">
+        <property name="base" ref="ds-data-dir" />
+        <property name="maxSize" value="1024" />
+        <property name="lastAccess" value="30" />
+    </bean>
+     <bean id="ds-data-dir" class="java.io.File" init-method="mkdirs">
+        <constructor-arg value="${ds.base}" />
+    </bean>
+    
+     -->
+       <!-- create data directory for DS -->
+   
+     <bean id="hdfs-conf-dir" class="java.io.File" init-method="mkdirs">
+        <constructor-arg value="c:/bigdata/hadoop-2.6.0.2.2.0.0-2041/etc/hadoop" />
+    </bean>
+   
+    <bean id="hdfsDriver" class="org.dcache.chimera.HadoopHdfsDriver" init-method="init">
+    	<constructor-arg ref="vfs-intern"></constructor-arg>
+    	<constructor-arg ref="hdfs-conf-dir"></constructor-arg>
+    	<property name="maxCacheSize" value="1024" />
+        <property name="lastAccess" value="30" />
+        <property name="base" value="/Data" />
+    </bean>
+    
+    
     
      <bean id="mds-factory-inner" class="org.dcache.chimera.HdfsIoOperationFactory">
         <description>MDS operation factory</description>
-        <constructor-arg ref="ds-data-pool" />
+        <constructor-arg ref="hdfsDriver" />
     </bean>
     
     <!-- 
@@ -139,24 +159,15 @@
         <constructor-arg value="mds"/>
     </bean>
 
-    <!-- create data directory for DS -->
-    <bean id="ds-data-dir" class="java.io.File" init-method="mkdirs">
-        <constructor-arg value="${ds.base}" />
-    </bean>
-
-    <bean id="ds-data-pool" class="org.dcache.nfs.vfs.FsCache" init-method="init">
-        <property name="base" ref="ds-data-dir" />
-        <property name="maxSize" value="1024" />
-        <property name="lastAccess" value="30" />
-    </bean>
+  
+  
 
     <!--
         NFSv4.1 Operation factory
     -->   
-    <bean id="ds-factory" class="org.dcache.chimera.HdfsIoOperationFactory"
-        depends-on="ds-data-pool">
+    <bean id="ds-factory" class="org.dcache.chimera.HdfsIoOperationFactory"   depends-on="hdfsDriver">
         <description>DS operation factory</description>
-        <constructor-arg ref="ds-data-pool" />
+        <constructor-arg ref="hdfsDriver" />
     </bean>   
     <bean id="idmapd" class="org.dcache.nfs.v4.SimpleIdMap" />
 

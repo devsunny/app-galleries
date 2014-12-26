@@ -54,7 +54,8 @@ public class HdfsOperationCLOSE extends AbstractNFSv4Operation {
 		final CLOSE4res res = result.opclose;
 
 		Inode inode = context.currentInode();
-
+		_fsCache.close(inode);
+		
 		NFS4Client client;	
 		if (context.getMinorversion() > 0) {
 			client = context.getSession().getClient();

@@ -1,5 +1,6 @@
 package org.dcache.chimera;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +39,17 @@ public class HadoopHdfsDriver {
 		this.hdfs = FileSystem.get(this.hdfsConfig);
 		this.hdfsVfs = hdfsVfs;
 	}
+	
+	public HadoopHdfsDriver(HadoopHdfsVfs hdfsVfs, File pathToHdfsCfgDir) throws IOException {
+		LOG.info("HadoopHdfsDriver created with:{}", pathToHdfsCfgDir);
+		this.hdfsConfig = new Configuration();		
+		this.hdfsConfig.addResource(new Path(pathToHdfsCfgDir.toString(), "core-site.xml"));
+		this.hdfsConfig.addResource(new Path(pathToHdfsCfgDir.toString(), "hdfs-site.xml"));
+		this.hdfsConfig.addResource(new Path(pathToHdfsCfgDir.toString(), "yarn-site.xml"));
+		this.hdfs = FileSystem.get(this.hdfsConfig);
+		this.hdfsVfs = hdfsVfs;
+	}
+	
 
 	public Configuration getHdfsConfig() {
 		return hdfsConfig;
@@ -105,7 +117,7 @@ public class HadoopHdfsDriver {
 		throw new IOException("Read is not allowed");
 	}
 
-	public void remove(Inode inode) 
+	public void close(Inode inode) 
 	{
 		this.cache.invalidate(inode);		
 	}
@@ -119,8 +131,20 @@ public class HadoopHdfsDriver {
 
 	protected FSDataOutputStream inode2FSDataOutputStream(Inode inode)
 			throws IOException {
-		Path path = inode2path(inode);
-		return this.hdfs.create(new Path(this.base, path));
+		FSDataOutputStream ret  =null;
+		try {
+			Path path = inode2path(inode);
+			if(LOG.isDebugEnabled()) LOG.debug("Request path:{}", path);			
+			Path hdfsFile = new Path(this.base, path);
+			if (LOG.isDebugEnabled()) LOG.debug("Request file path :{}", hdfsFile);
+			if(!this.hdfs.exists(hdfsFile.getParent())){
+				this.hdfs.mkdirs(hdfsFile.getParent());
+			}
+			ret  = this.hdfs.create(hdfsFile, Boolean.TRUE);
+		} catch (Exception e) {
+			LOG.error("Failed to create FSDataOutputStream", e);
+		}		
+		return ret;
 	}
 
 	protected FSDataInputStream inode2FSDataInputStream(Inode inode)
@@ -189,6 +213,7 @@ public class HadoopHdfsDriver {
 				FSDataOutputStream fout = notification.getValue();
 				fout.flush();
 				fout.close();
+				if(LOG.isDebugEnabled()) LOG.debug("FSDataOutputStream Closed.");
 			} catch (IOException e) {
 				LOG.error("Failed to close file channel of {} : {}",
 						notification.getKey(), e.getMessage());
