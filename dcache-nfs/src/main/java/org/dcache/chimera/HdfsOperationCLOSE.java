@@ -55,7 +55,7 @@ public class HdfsOperationCLOSE extends AbstractNFSv4Operation {
 
 		Inode inode = context.currentInode();
 
-		NFS4Client client;
+		NFS4Client client;	
 		if (context.getMinorversion() > 0) {
 			client = context.getSession().getClient();
 		} else {
@@ -73,6 +73,8 @@ public class HdfsOperationCLOSE extends AbstractNFSv4Operation {
 
 		res.open_stateid = Stateids.invalidStateId();
 		res.status = nfsstat.NFS_OK;
+		
+		if(_log.isDebugEnabled()) _log.debug("IO Closed.");
 
 	}
 }

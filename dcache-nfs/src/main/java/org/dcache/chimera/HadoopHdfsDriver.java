@@ -27,6 +27,8 @@ public class HadoopHdfsDriver {
 	private FileSystem hdfs = null;
 	private HadoopHdfsVfs hdfsVfs;
 	private LoadingCache<Inode, FSDataOutputStream> cache;
+	private LoadingCache<Inode, FSDataInputStream> readCache;
+
 	private int maxCacheSize;
 	private int lastAccess;
 	private Path base;
@@ -97,14 +99,15 @@ public class HadoopHdfsDriver {
 			throws IOException {
 		return this.cache.getUnchecked(inode);
 	}
-	
+
 	public FSDataInputStream getFSDataInputStream(Inode inode)
 			throws IOException {
 		throw new IOException("Read is not allowed");
 	}
 
-	public void remove(Inode inode) {
-		this.cache.invalidate(inode);
+	public void remove(Inode inode) 
+	{
+		this.cache.invalidate(inode);		
 	}
 
 	public Path inode2path(Inode inode) throws IOException {
@@ -120,6 +123,12 @@ public class HadoopHdfsDriver {
 		return this.hdfs.create(new Path(this.base, path));
 	}
 
+	protected FSDataInputStream inode2FSDataInputStream(Inode inode)
+			throws IOException {
+		Path path = inode2path(inode);
+		return this.hdfs.open(new Path(this.base, path));
+	}
+
 	public boolean isDirectory(Path p) throws IOException {
 		return this.hdfs.isDirectory(p);
 	}
@@ -129,6 +138,12 @@ public class HadoopHdfsDriver {
 				.expireAfterAccess(this.lastAccess, TimeUnit.SECONDS)
 				.removalListener(new InodeGarbageCollector())
 				.build(new HdfsOutputStreamSupplier(this));
+
+		this.readCache = CacheBuilder.newBuilder()
+				.maximumSize(this.maxCacheSize)
+				.expireAfterAccess(this.lastAccess, TimeUnit.SECONDS)
+				.removalListener(new InodeReadGarbageCollector())
+				.build(new HdfsInputStreamSupplier(this));
 	}
 
 	private static class HdfsOutputStreamSupplier extends
@@ -148,6 +163,22 @@ public class HadoopHdfsDriver {
 
 	}
 
+	private static class HdfsInputStreamSupplier extends
+			CacheLoader<Inode, FSDataInputStream> {
+
+		private final HadoopHdfsDriver hdfsDriver;
+
+		HdfsInputStreamSupplier(HadoopHdfsDriver hdfsDriver) throws IOException {
+			this.hdfsDriver = hdfsDriver;
+		}
+
+		@Override
+		public FSDataInputStream load(Inode inode) throws IOException {
+			return this.hdfsDriver.inode2FSDataInputStream(inode);
+		}
+
+	}
+
 	private static class InodeGarbageCollector implements
 			RemovalListener<Inode, FSDataOutputStream> {
 
@@ -158,6 +189,22 @@ public class HadoopHdfsDriver {
 				FSDataOutputStream fout = notification.getValue();
 				fout.flush();
 				fout.close();
+			} catch (IOException e) {
+				LOG.error("Failed to close file channel of {} : {}",
+						notification.getKey(), e.getMessage());
+			}
+		}
+	}
+
+	private static class InodeReadGarbageCollector implements
+			RemovalListener<Inode, FSDataInputStream> {
+
+		@Override
+		public void onRemoval(
+				RemovalNotification<Inode, FSDataInputStream> notification) {
+			try {
+				FSDataInputStream fin = notification.getValue();
+				fin.close();
 			} catch (IOException e) {
 				LOG.error("Failed to close file channel of {} : {}",
 						notification.getKey(), e.getMessage());
