@@ -67,10 +67,10 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	private final static Logger _log = LoggerFactory
 			.getLogger(HadoopHdfsVfs.class);
-	private final HdfsJdbcFs _fs;
+	private final HdfsJdbcFileSystemProvider _fs;
 	private final NfsIdMapping _idMapping;
 
-	public HadoopHdfsVfs(HdfsJdbcFs fs, NfsIdMapping idMapping) {
+	public HadoopHdfsVfs(HdfsJdbcFileSystemProvider fs, NfsIdMapping idMapping) {
 		_fs = fs;
 		_idMapping = idMapping;
 	}
@@ -245,7 +245,7 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 				fsStat.getUsedSpace(), fsStat.getUsedFiles());
 	}
 
-	private FsInode toFsInode(Inode inode) throws IOException {
+	public FsInode toFsInode(Inode inode) throws IOException {
 		
 		return _fs.inodeFromBytes(inode.getFileId());
 	}

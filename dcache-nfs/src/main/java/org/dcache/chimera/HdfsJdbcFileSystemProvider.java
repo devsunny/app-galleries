@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.jolbox.bonecp.BoneCPDataSource;
 
-public class HdfsJdbcFs implements FileSystemProvider {
+public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 	private static final Logger _log = LoggerFactory
-			.getLogger(HdfsJdbcFs.class);
+			.getLogger(HdfsJdbcFileSystemProvider.class);
 
 	private static final int LEVELS_NUMBER = 7;
 
@@ -49,11 +49,11 @@ public class HdfsJdbcFs implements FileSystemProvider {
 
 	private static final int MAX_NAME_LEN = 255;
 
-	public HdfsJdbcFs(DataSource dataSource, String dialect) {
+	public HdfsJdbcFileSystemProvider(DataSource dataSource, String dialect) {
 		this(dataSource, dialect, 0);
 	}
 
-	public HdfsJdbcFs(DataSource dataSource, String dialect, int id) {
+	public HdfsJdbcFileSystemProvider(DataSource dataSource, String dialect, int id) {
 		this._dbConnectionsPool = dataSource;
 		this._fsId = id;
 
@@ -2254,9 +2254,9 @@ public class HdfsJdbcFs implements FileSystemProvider {
 		private long _fsStatLastUpdate;
 
 		private long _fsStateLifetime = 3600000L;
-		private final HdfsJdbcFs _fs;
+		private final HdfsJdbcFileSystemProvider _fs;
 
-		FsStatCache(HdfsJdbcFs fs) {
+		FsStatCache(HdfsJdbcFileSystemProvider fs) {
 			this._fs = fs;
 		}
 
@@ -2275,10 +2275,10 @@ public class HdfsJdbcFs implements FileSystemProvider {
 				} finally {
 					SqlHelper.tryToClose(dbConnection);
 				}
-				HdfsJdbcFs._log.debug("updateing cached value of FsStat");
+				HdfsJdbcFileSystemProvider._log.debug("updateing cached value of FsStat");
 				this._fsStatLastUpdate = System.currentTimeMillis();
 			} else {
-				HdfsJdbcFs._log.debug("using cached value of FsStat");
+				HdfsJdbcFileSystemProvider._log.debug("using cached value of FsStat");
 			}
 
 			return this._fsStatCached;
