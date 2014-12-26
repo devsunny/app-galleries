@@ -376,11 +376,8 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	private static Stat fromChimeraStat(org.dcache.chimera.posix.Stat pStat,
-			long fileid) {
-		if (LOG.isDebugEnabled())
-			LOG.debug("fromChimeraStat");
+			long fileid) {		
 		Stat stat = new Stat();
-
 		stat.setATime(pStat.getATime());
 		stat.setCTime(pStat.getCTime());
 		stat.setMTime(pStat.getMTime());
@@ -394,13 +391,11 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 		stat.setSize(pStat.getSize());
 		stat.setFileid(fileid);
 		stat.setGeneration(pStat.getGeneration());
-
 		return stat;
 	}
 
 	private static org.dcache.chimera.posix.Stat toChimeraStat(Stat stat) {
-		if (LOG.isDebugEnabled())
-			LOG.debug("toChimeraStat");
+		
 		org.dcache.chimera.posix.Stat pStat = new org.dcache.chimera.posix.Stat();
 		pStat.setATime(stat.getATime());
 		pStat.setCTime(stat.getCTime());
