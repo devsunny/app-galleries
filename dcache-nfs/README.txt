@@ -41,7 +41,7 @@ Big Data Development in windows Platform without Admin rights
 	winpkg.utils.psm1
 	installHelper2.exe
 	
- 6. extract the production you want to install to installation directory, product package is in the resources directory
+ 6. extract the product you want to install to installation directory, product package is in the resources directory
  
  7. Setup Hadoop, follow single noe cluster setup at http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SingleCluster.html
  
