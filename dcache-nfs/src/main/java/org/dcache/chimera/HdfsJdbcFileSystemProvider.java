@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.jolbox.bonecp.BoneCPDataSource;
 
 public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
-	private static final Logger _log = LoggerFactory
+	private static final Logger LOG = LoggerFactory
 			.getLogger(HdfsJdbcFileSystemProvider.class);
 
 	private static final int LEVELS_NUMBER = 7;
@@ -113,20 +113,19 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.setInodeIo(dbConnection, inode, true);
 			this._sqlDriver.write(dbConnection, inode, 0, 0L, dest, 0,
 					dest.length);
-
 			dbConnection.commit();
 		} catch (SQLException se) {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("createLink rollback ", e);
+				LOG.error("createLink rollback ", e);
 			}
 
 			String sqlState = se.getSQLState();
 			if (this._sqlDriver.isDuplicatedKeyError(sqlState)) {
 				throw new FileExistsChimeraFsException();
 			}
-			_log.error("createLink ", se);
+			LOG.error("createLink ", se);
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -159,7 +158,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("create hlink rollback ", e);
+				LOG.error("create hlink rollback ", e);
 			}
 
 			String sqlState = e.getSQLState();
@@ -242,11 +241,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 							throw new FileExistsChimeraFsException(
 									name);
 						}
-						_log.error("create File: ", se);
+						LOG.error("create File: ", se);
 						try {
 							dbConnection.rollback();
 						} catch (SQLException e) {
-							_log.error("create File rollback ", e);
+							LOG.error("create File rollback ", e);
 						}
 					}
 				}
@@ -274,11 +273,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 								throw new FileExistsChimeraFsException(
 										name);
 							}
-							_log.error("create File: ", se);
+							LOG.error("create File: ", se);
 							try {
 								dbConnection.rollback();
 							} catch (SQLException e) {
-								_log.error("create File rollback ", e);
+								LOG.error("create File rollback ", e);
 							}
 						}
 					}
@@ -313,14 +312,14 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 				try {
 					dbConnection.rollback();
 				} catch (SQLException e) {
-					_log.error("create File rollback ", e);
+					LOG.error("create File rollback ", e);
 				}
 
 				if (se.getSQLState().startsWith("23")) {
 
 					throw new FileExistsChimeraFsException();
 				}
-				_log.error("create File: ", se);
+				LOG.error("create File: ", se);
 				throw new IOHimeraFsException(se.getMessage());
 			}
 		} finally {
@@ -364,14 +363,14 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("create File rollback ", e);
+				LOG.error("create File rollback ", e);
 			}
 
 			if (se.getSQLState().startsWith("23")) {
 
 				throw new FileExistsChimeraFsException();
 			}
-			_log.error("create File: ", se);
+			LOG.error("create File: ", se);
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -396,11 +395,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					inode, owner, group, mode | 0x8000, level);
 			dbConnection.commit();
 		} catch (SQLException se) {
-			_log.error("create level: ", se);
+			LOG.error("create level: ", se);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("create level rollback ", e);
+				LOG.error("create level rollback ", e);
 			}
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
@@ -435,7 +434,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			list = this._sqlDriver.listDir(dbConnection, dir);
 		} catch (SQLException se) {
-			_log.error("list: ", se);
+			LOG.error("list: ", se);
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -459,7 +458,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			return this._sqlDriver.newDirectoryStream(dbConnection,
 					dir);
 		} catch (SQLException se) {
-			_log.error("list full: ", se);
+			LOG.error("list full: ", se);
 			SqlHelper.tryToClose(dbConnection);
 			throw new IOHimeraFsException(se.getMessage());
 		}
@@ -496,15 +495,15 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("delete rollback", e);
+				LOG.error("delete rollback", e);
 			}
 			throw hfe;
 		} catch (SQLException e) {
-			_log.error("delete", e);
+			LOG.error("delete", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("delete rollback", e1);
+				LOG.error("delete rollback", e1);
 			}
 			throw new BackEndErrorHimeraFsException(e.getMessage(), e);
 		} finally {
@@ -540,15 +539,15 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("delete rollback", e);
+				LOG.error("delete rollback", e);
 			}
 			throw hfe;
 		} catch (SQLException e) {
-			_log.error("delete", e);
+			LOG.error("delete", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("delete rollback", e1);
+				LOG.error("delete rollback", e1);
 			}
 			throw new BackEndErrorHimeraFsException(e.getMessage(), e);
 		} finally {
@@ -637,13 +636,13 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("mkdir", se);
+				LOG.error("mkdir", se);
 			}
 
 			if (se.getSQLState().startsWith("23")) {
 				throw new FileExistsChimeraFsException(name);
 			}
-			_log.error("mkdir", se);
+			LOG.error("mkdir", se);
 			throw new ChimeraFsException(se.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -653,7 +652,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 	}
 
 	public FsInode path2inode(String path) throws ChimeraFsException {
-		if(_log.isInfoEnabled()) _log.info("PATH:{}", path);
+		if(LOG.isInfoEnabled()) LOG.info("PATH:{}", path);
 		return path2inode(path, this._rootInode);
 	}
 
@@ -677,7 +676,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 				throw new FileNotFoundHimeraFsException(path);
 			}
 		} catch (SQLException e) {
-			_log.error("path2inode", e);
+			LOG.error("path2inode", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -709,7 +708,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 				throw new FileNotFoundHimeraFsException(path);
 			}
 		} catch (SQLException e) {
-			_log.error("path2inode", e);
+			LOG.error("path2inode", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -721,8 +720,8 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 	public FsInode inodeOf(FsInode parent, String name)
 			throws ChimeraFsException {
 		FsInode inode = null;
-		if(_log.isDebugEnabled()) {
-			_log.debug("inodeOf:{}", name);
+		if(LOG.isDebugEnabled()) {
+			LOG.debug("inodeOf:{}", name);
 		}
 		if (name.startsWith(".(")) {
 			if (name.startsWith(".(id)(")) {
@@ -933,7 +932,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 				throw new FileNotFoundHimeraFsException(name);
 			}
 		} catch (SQLException e) {
-			_log.error("inodeOf", e);
+			LOG.error("inodeOf", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -966,7 +965,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			path = this._sqlDriver.inode2path(dbConnection, inode,
 					startFrom, inclusive);
 		} catch (SQLException e) {
-			_log.error("inode2path", e);
+			LOG.error("inode2path", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -993,11 +992,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					path2inode(path), level);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("removeFileMetadata", e);
+			LOG.error("removeFileMetadata", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("removeFileMetadata rollback", e1);
+				LOG.error("removeFileMetadata rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1028,7 +1027,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 						inode);
 			}
 		} catch (SQLException e) {
-			_log.error("getPathOf", e);
+			LOG.error("getPathOf", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -1052,11 +1051,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.setFileSize(dbConnection, inode, newSize);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileSize", e);
+			LOG.error("setFileSize", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileSize rollback", e1);
+				LOG.error("setFileSize rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1085,11 +1084,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					newOwner);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileOwner", e);
+			LOG.error("setFileOwner", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileOwner rollback", e1);
+				LOG.error("setFileOwner rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1130,11 +1129,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setInodeAttributes", e);
+			LOG.error("setInodeAttributes", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setInodeAttributes rollback", e1);
+				LOG.error("setInodeAttributes rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1163,11 +1162,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					atime);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileATime", e);
+			LOG.error("setFileATime", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileATime rollback", e1);
+				LOG.error("setFileATime rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1196,11 +1195,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					ctime);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileCTime", e);
+			LOG.error("setFileCTime", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileCTime rollback", e1);
+				LOG.error("setFileCTime rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1229,11 +1228,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					mtime);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileMTime", e);
+			LOG.error("setFileMTime", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileMTime rollback", e1);
+				LOG.error("setFileMTime rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1262,11 +1261,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					newGroup);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileGroup", e);
+			LOG.error("setFileGroup", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileGroup rollback", e1);
+				LOG.error("setFileGroup rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1295,11 +1294,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					newMode);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setFileMode", e);
+			LOG.error("setFileMode", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setFileMode rollback", e1);
+				LOG.error("setFileMode rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1323,7 +1322,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			ioEnabled = this._sqlDriver.isIoEnabled(dbConnection,
 					inode);
 		} catch (SQLException e) {
-			_log.error("isIoEnabled", e);
+			LOG.error("isIoEnabled", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -1347,11 +1346,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.setInodeIo(dbConnection, inode, enable);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setInodeIo", e);
+			LOG.error("setInodeIo", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setInodeIo rollback", e1);
+				LOG.error("setInodeIo rollback", e1);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1367,7 +1366,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 	public int write(FsInode inode, int level, long beginIndex, byte[] data,
 			int offset, int len) throws ChimeraFsException {
 		if ((level == 0) && (!inode.isIoEnabled())) {
-			_log.debug(inode + ": IO (write) not allowd");
+			LOG.debug(inode + ": IO (write) not allowd");
 			return -1;
 		}
 
@@ -1389,13 +1388,13 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("write rollback", e);
+				LOG.error("write rollback", e);
 			}
 
 			if (this._sqlDriver.isForeignKeyError(sqlState)) {
 				throw new FileNotFoundHimeraFsException();
 			}
-			_log.error("write", e);
+			LOG.error("write", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -1414,7 +1413,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 		int count = -1;
 
 		if ((level == 0) && (!inode.isIoEnabled())) {
-			_log.debug(inode + ": IO(read) not allowd");
+			LOG.debug(inode + ": IO(read) not allowd");
 			return -1;
 		}
 
@@ -1431,10 +1430,10 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			count = this._sqlDriver.read(dbConnection, inode, level,
 					beginIndex, data, offset, len);
 		} catch (SQLException se) {
-			_log.debug("read:", se);
+			LOG.debug("read:", se);
 			throw new IOHimeraFsException(se.getMessage());
 		} catch (IOException e) {
-			_log.debug("read IO:", e);
+			LOG.debug("read IO:", e);
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
 		}
@@ -1541,11 +1540,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			dbConnection.commit();
 			rc = true;
 		} catch (SQLException e) {
-			_log.error("move:", e);
+			LOG.error("move:", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("move rollback:", e);
+				LOG.error("move rollback:", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1573,7 +1572,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			locations = this._sqlDriver.getInodeLocations(
 					dbConnection, inode, type);
 		} catch (SQLException se) {
-			_log.error("getInodeLocations", se);
+			LOG.error("getInodeLocations", se);
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -1602,7 +1601,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("addInodeLocation rollback ", e);
+				LOG.error("addInodeLocation rollback ", e);
 			}
 
 			if (this._sqlDriver.isForeignKeyError(sqlState)) {
@@ -1611,7 +1610,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			if (!this._sqlDriver.isDuplicatedKeyError(sqlState)) {
 
-				_log.error("addInodeLocation:  [" + sqlState + "]",
+				LOG.error("addInodeLocation:  [" + sqlState + "]",
 						se);
 				throw new IOHimeraFsException(se.getMessage());
 			}
@@ -1636,11 +1635,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					type, location);
 			dbConnection.commit();
 		} catch (SQLException se) {
-			_log.error("clearInodeLocation", se);
+			LOG.error("clearInodeLocation", se);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("clearInodeLocation rollback ", se);
+				LOG.error("clearInodeLocation rollback ", se);
 			}
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
@@ -1663,7 +1662,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			list = this._sqlDriver.tags(dbConnection, inode);
 		} catch (SQLException se) {
-			_log.error("tags", se);
+			LOG.error("tags", se);
 			throw new IOHimeraFsException(se.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -1692,11 +1691,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					gid, mode);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("createTag", e);
+			LOG.error("createTag", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("createTag rollback", e);
+				LOG.error("createTag rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1720,15 +1719,15 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					data, offset, len);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setTag", e);
+			LOG.error("setTag", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setTag rollback", e);
+				LOG.error("setTag rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} catch (ChimeraFsException e) {
-			_log.error("setTag", e);
+			LOG.error("setTag", e);
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
 		}
@@ -1751,11 +1750,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.removeTag(dbConnection, dir, tagName);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("removeTag", e);
+			LOG.error("removeTag", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("removeTag rollback", e);
+				LOG.error("removeTag rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1777,11 +1776,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.removeTag(dbConnection, dir);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("removeTag", e);
+			LOG.error("removeTag", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("removeTag rollback", e);
+				LOG.error("removeTag rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1806,10 +1805,10 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			count = this._sqlDriver.getTag(dbConnection, inode,
 					tagName, data, offset, len);
 		} catch (SQLException e) {
-			_log.error("getTag", e);
+			LOG.error("getTag", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} catch (IOException e) {
-			_log.error("getTag io", e);
+			LOG.error("getTag io", e);
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
 		}
@@ -1832,7 +1831,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			ret = this._sqlDriver.statTag(dbConnection, dir, name);
 		} catch (SQLException e) {
-			_log.error("statTag", e);
+			LOG.error("statTag", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -1856,11 +1855,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					.setTagOwner(dbConnection, tagInode, owner);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setTagOwner", e);
+			LOG.error("setTagOwner", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setTagOwner rollback", e);
+				LOG.error("setTagOwner rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1883,11 +1882,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 					owner);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setTagOwnerGroup", e);
+			LOG.error("setTagOwnerGroup", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setTagOwnerGroup rollback", e);
+				LOG.error("setTagOwnerGroup rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1909,11 +1908,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.setTagMode(dbConnection, tagInode, mode);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("setTagMode", e);
+			LOG.error("setTagMode", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e1) {
-				_log.error("setTagMode rollback", e);
+				LOG.error("setTagMode rollback", e);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -1946,7 +1945,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException e) {
-				_log.error("setStorageInfo rollback ", e);
+				LOG.error("setStorageInfo rollback ", e);
 			}
 
 			if (this._sqlDriver.isForeignKeyError(sqlState)) {
@@ -1955,7 +1954,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			if (!this._sqlDriver.isDuplicatedKeyError(sqlState)) {
 
-				_log.error("setStorageInfo:  [" + sqlState + "]", se);
+				LOG.error("setStorageInfo:  [" + sqlState + "]", se);
 				throw new IOHimeraFsException(se.getMessage());
 			}
 		} finally {
@@ -1984,13 +1983,13 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException ee) {
-				_log.error("setAccessLatensy rollback ", ee);
+				LOG.error("setAccessLatensy rollback ", ee);
 			}
 
 			if (this._sqlDriver.isForeignKeyError(sqlState)) {
 				throw new FileNotFoundHimeraFsException();
 			}
-			_log.error("setAccessLatency:  [" + sqlState + "]", e);
+			LOG.error("setAccessLatency:  [" + sqlState + "]", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2017,13 +2016,13 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException ee) {
-				_log.error("setRetentionPolicy rollback ", ee);
+				LOG.error("setRetentionPolicy rollback ", ee);
 			}
 
 			if (this._sqlDriver.isForeignKeyError(sqlState)) {
 				throw new FileNotFoundHimeraFsException();
 			}
-			_log.error("setRetentionPolicy:  [" + sqlState + "]", e);
+			LOG.error("setRetentionPolicy:  [" + sqlState + "]", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2047,7 +2046,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			storageInfo = this._sqlDriver.getStorageInfo(
 					dbConnection, inode);
 		} catch (SQLException e) {
-			_log.error("setSorageInfo", e);
+			LOG.error("setSorageInfo", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2073,7 +2072,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			accessLatency = this._sqlDriver.getAccessLatency(
 					dbConnection, inode);
 		} catch (SQLException e) {
-			_log.error("setSorageInfo", e);
+			LOG.error("setSorageInfo", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2099,7 +2098,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			retentionPolicy = this._sqlDriver.getRetentionPolicy(
 					dbConnection, inode);
 		} catch (SQLException e) {
-			_log.error("setSorageInfo", e);
+			LOG.error("setSorageInfo", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2130,7 +2129,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			try {
 				dbConnection.rollback();
 			} catch (SQLException ee) {
-				_log.error("setInodeChecksum rollback ", ee);
+				LOG.error("setInodeChecksum rollback ", ee);
 			}
 
 			if (this._sqlDriver.isForeignKeyError(sqlState)) {
@@ -2139,7 +2138,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			if (!this._sqlDriver.isDuplicatedKeyError(sqlState)) {
 
-				_log
+				LOG
 						.error("setInodeChecksum:  [" + sqlState + "]", e);
 				throw new IOHimeraFsException(e.getMessage());
 			}
@@ -2162,7 +2161,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.removeInodeChecksum(dbConnection, inode,
 					type);
 		} catch (SQLException e) {
-			_log.error("removeInodeChecksum", e);
+			LOG.error("removeInodeChecksum", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2184,7 +2183,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			checkSum = this._sqlDriver.getInodeChecksum(dbConnection,
 					inode, type);
 		} catch (SQLException e) {
-			_log.error("getInodeChecksum", e);
+			LOG.error("getInodeChecksum", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2207,7 +2206,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 
 			acl = this._sqlDriver.getACL(dbConnection, inode);
 		} catch (SQLException e) {
-			_log.error("Failed go getACL:", e);
+			LOG.error("Failed go getACL:", e);
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
 			SqlHelper.tryToClose(dbConnection);
@@ -2229,11 +2228,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			this._sqlDriver.setACL(dbConnection, inode, acl);
 			dbConnection.commit();
 		} catch (SQLException e) {
-			_log.error("Failed to set ACL: ", e);
+			LOG.error("Failed to set ACL: ", e);
 			try {
 				dbConnection.rollback();
 			} catch (SQLException ee) {
-				_log.error("setACL rollback ", ee);
+				LOG.error("setACL rollback ", ee);
 			}
 			throw new IOHimeraFsException(e.getMessage());
 		} finally {
@@ -2275,10 +2274,10 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 				} finally {
 					SqlHelper.tryToClose(dbConnection);
 				}
-				HdfsJdbcFileSystemProvider._log.debug("updateing cached value of FsStat");
+				HdfsJdbcFileSystemProvider.LOG.debug("updateing cached value of FsStat");
 				this._fsStatLastUpdate = System.currentTimeMillis();
 			} else {
-				HdfsJdbcFileSystemProvider._log.debug("using cached value of FsStat");
+				HdfsJdbcFileSystemProvider.LOG.debug("using cached value of FsStat");
 			}
 
 			return this._fsStatCached;
@@ -2404,11 +2403,11 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 		b.get(opaque);
 		FsInodeType inodeType = FsInodeType.valueOf(type);
 		String inodeId = toHexString(id);
-		if(_log.isDebugEnabled()) _log.debug("inodeId:{}", inodeId);
+		if(LOG.isDebugEnabled()) LOG.debug("inodeId:{}", inodeId);
 		FsInode inode;
 		switch (inodeType) {
 		case INODE:
-			if(_log.isDebugEnabled()) _log.debug("INODE opaque:{}",  new String(opaque));
+			if(LOG.isDebugEnabled()) LOG.debug("INODE opaque:{}",  new String(opaque));
 			int level = Integer.parseInt(new String(opaque));
 			inode = new FsInode(this, inodeId, level);
 			break;
@@ -2422,7 +2421,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			break;
 
 		case TAG:
-			if(_log.isDebugEnabled()) _log.debug("TAG opaque:{}",  new String(opaque));
+			if(LOG.isDebugEnabled()) LOG.debug("TAG opaque:{}",  new String(opaque));
 			String tag = new String(opaque);
 			inode = new FsInode_TAG(this, inodeId, tag);
 			break;
@@ -2447,7 +2446,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 			break;
 
 		case PGET:
-			if(_log.isDebugEnabled()) _log.debug("PGET opaque:{}",  Arrays.asList(getArgs(opaque)));
+			if(LOG.isDebugEnabled()) LOG.debug("PGET opaque:{}",  Arrays.asList(getArgs(opaque)));
 			inode = getPGET(inodeId, getArgs(opaque));
 			break;
 		default:
@@ -2462,7 +2461,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 		FsInode inode = null;
 		String strHandle = new String(handle);
 		
-		if(_log.isInfoEnabled()) _log.info("inodeFromBytesOld:{}....", strHandle);
+		if(LOG.isInfoEnabled()) LOG.info("inodeFromBytesOld:{}....", strHandle);
 		
 		StringTokenizer st = new StringTokenizer(strHandle, "[:]");
 		if (st.countTokens() < 3) {
@@ -2542,7 +2541,7 @@ public class HdfsJdbcFileSystemProvider implements FileSystemProvider {
 				inode = getPGET(id, args);
 			}
 		} catch (IllegalArgumentException iae) {
-			_log.info(
+			LOG.info(
 					"Failed to generate an inode from file handle : {} : {}",
 					strHandle, iae);
 			inode = null;

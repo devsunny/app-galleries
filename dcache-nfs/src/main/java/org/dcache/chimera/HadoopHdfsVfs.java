@@ -57,7 +57,6 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 
 	private final static Logger LOG = LoggerFactory
 			.getLogger(HadoopHdfsVfs.class);
-
 	private Configuration hdfsConfig = null;
 	private FileSystem hdfs = null;
 	private LoadingCache<Inode, FSDataOutputStream> hdfsFSoutCache;
@@ -89,7 +88,7 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 			throws IOException {
 		this.jdbcFsProvider = jdbcFsProvider;
 		this.idMapping = idMapping;
-		this.base = base;		
+		this.base = base;
 		init(configDir);
 	}
 
@@ -204,13 +203,14 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	@Override
 	public int read(Inode inode, byte[] data, long offset, int count)
 			throws IOException {
-		
 		Path path = inode2path(inode);
 		FSDataInputStream fin = this.hdfs.open(new Path(this.base, path));
 		int ret = fin.read(offset, data, 0, count);
 		fin.close();
-		if (LOG.isDebugEnabled())
-			LOG.debug("Path, {}, readed {}, offset, {}, count, {}", path, ret, offset, count);		
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Path, {}, readed {}, offset, {}, count, {}", path, ret,
+					offset, count);
+		}
 		return ret;
 	}
 
@@ -376,7 +376,7 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	private static Stat fromChimeraStat(org.dcache.chimera.posix.Stat pStat,
-			long fileid) {		
+			long fileid) {
 		Stat stat = new Stat();
 		stat.setATime(pStat.getATime());
 		stat.setCTime(pStat.getCTime());
@@ -395,7 +395,7 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 	}
 
 	private static org.dcache.chimera.posix.Stat toChimeraStat(Stat stat) {
-		
+
 		org.dcache.chimera.posix.Stat pStat = new org.dcache.chimera.posix.Stat();
 		pStat.setATime(stat.getATime());
 		pStat.setCTime(stat.getCTime());
