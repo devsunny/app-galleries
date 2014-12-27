@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 class HdfsSqlDriver {
-	private static final Logger _log = LoggerFactory
+	private static final Logger LOG = LoggerFactory
 			.getLogger(HdfsSqlDriver.class);
 
 	private static final int IOMODE_ENABLE = 1;
@@ -97,6 +97,9 @@ class HdfsSqlDriver {
 
 	
 	FsStat getFsStat(Connection dbConnection) throws SQLException {
+		if(LOG.isDebugEnabled()){
+			LOG.debug("getFsStat:{}", sqlGetFsStat);
+		}
 		long usedFiles = 0L;
 		long usedSpace = 0L;
 		PreparedStatement stFsStat = null;
@@ -113,24 +116,27 @@ class HdfsSqlDriver {
 			SqlHelper.tryToClose(rs);
 			SqlHelper.tryToClose(stFsStat);
 		}
-
-		return new FsStat(1152921504606846976L, 62914560L, usedSpace,
-				usedFiles);
+		return new FsStat(1152921504606846976L, 62914560L, usedSpace, usedFiles);
 	}
 
 	
 	FsInode createFile(Connection dbConnection, FsInode parent, String name,
 			int owner, int group, int mode, int type) throws SQLException {
+		if(LOG.isDebugEnabled()){
+			LOG.debug("createFile by name:{}", name);
+		}
 		FsInode inode = new FsInode(parent.getFs());
 		createFileWithId(dbConnection, parent, inode, name, owner,
 				group, mode, type);
-
 		return inode;
 	}
 
 	FsInode createFileWithId(Connection dbConnection, FsInode parent,
 			FsInode inode, String name, int owner, int group, int mode, int type)
 			throws SQLException {
+		if(LOG.isDebugEnabled()){
+			LOG.debug("createFile with ID:{}", name);
+		}
 		createInode(dbConnection, inode, type, owner, group, mode, 1);
 		createEntryInParent(dbConnection, parent, name, inode);
 		incNlink(dbConnection, parent);
@@ -139,10 +145,13 @@ class HdfsSqlDriver {
 	}
 
 	String[] listDir(Connection dbConnection, FsInode dir) throws SQLException {
+		
+		if(LOG.isDebugEnabled()){
+			LOG.debug("listDir with ID:{}", dir.toString());
+		}
 		String[] list = null;
 		ResultSet result = null;
 		PreparedStatement stListDirectory = null;
-
 		try {
 			stListDirectory = dbConnection
 					.prepareStatement(sqlListDir);
@@ -382,10 +391,10 @@ class HdfsSqlDriver {
 			stGetInodeByName.setString(2, parent.toString());
 
 			result = stGetInodeByName.executeQuery();
-			if(_log.isDebugEnabled()) _log.debug("name:{}; parent:{}", name, parent.toString());
+			if(LOG.isDebugEnabled()) LOG.debug("name:{}; parent:{}", name, parent.toString());
 			if (result.next()) {
 				id = result.getString("ipnfsid");
-				if(_log.isDebugEnabled()) _log.debug("ipnfsid id:{}", id);
+				if(LOG.isDebugEnabled()) LOG.debug("ipnfsid id:{}", id);
 			}
 		} finally {
 			SqlHelper.tryToClose(result);
@@ -404,7 +413,7 @@ class HdfsSqlDriver {
 		PreparedStatement ps = null;
 
 		try {
-			List<String> pList = new ArrayList();
+			List<String> pList = new ArrayList<String>();
 			
 			String parentId = getParentOf(dbConnection, inode)
 					.toString();
@@ -413,7 +422,7 @@ class HdfsSqlDriver {
 			boolean done = false;
 			do {
 				
-				if(_log.isDebugEnabled()) _log.debug("inode2path SELECT iname FROM t_dirs WHERE ipnfsid={} AND iparent={} and iname !='.' and iname != '..'", elementId, parentId);
+				if(LOG.isDebugEnabled()) LOG.debug("inode2path SELECT iname FROM t_dirs WHERE ipnfsid={} AND iparent={} and iname !='.' and iname != '..'", elementId, parentId);
 				ps = dbConnection
 						.prepareStatement(sqlInode2Path_name);
 				ps.setString(1, elementId);
@@ -650,7 +659,7 @@ class HdfsSqlDriver {
 		PreparedStatement stGetParentId = null;
 		try {
 			
-			if(_log.isDebugEnabled()) _log.debug("getParentOf SELECT iparent FROM t_dirs WHERE ipnfsid={} AND iname != '.' and iname != '..'", inode.toString());
+			if(LOG.isDebugEnabled()) LOG.debug("getParentOf SELECT iparent FROM t_dirs WHERE ipnfsid={} AND iname != '.' and iname != '..'", inode.toString());
 			
 			stGetParentId = dbConnection
 					.prepareStatement(sqlGetParentOf);
@@ -965,6 +974,9 @@ class HdfsSqlDriver {
 	int write(Connection dbConnection, FsInode inode, int level,
 			long beginIndex, byte[] data, int offset, int len)
 			throws SQLException {
+		if(LOG.isDebugEnabled()){
+			LOG.debug("Write data to JDBC storage");
+		}		
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
@@ -981,35 +993,26 @@ class HdfsSqlDriver {
 
 				if (exist) {
 					String writeStream = "UPDATE t_inodes_data SET ifiledata=? WHERE ipnfsid=?";
-
 					ps = dbConnection.prepareStatement(writeStream);
-
 					ps.setBinaryStream(1, new ByteArrayInputStream(data,
 							offset, len), len);
 					ps.setString(2, inode.toString());
-
 					ps.executeUpdate();
 					SqlHelper.tryToClose(ps);
 				} else {
 					String writeStream = "INSERT INTO t_inodes_data VALUES (?,?)";
-
 					ps = dbConnection.prepareStatement(writeStream);
-
 					ps.setString(1, inode.toString());
 					ps.setBinaryStream(2, new ByteArrayInputStream(data,
 							offset, len), len);
-
 					ps.executeUpdate();
 					SqlHelper.tryToClose(ps);
 				}
 
 				String writeStream = "UPDATE t_inodes SET isize=? WHERE ipnfsid=?";
-
 				ps = dbConnection.prepareStatement(writeStream);
-
 				ps.setLong(1, len);
 				ps.setString(2, inode.toString());
-
 				ps.executeUpdate();
 
 			} else {
@@ -1040,6 +1043,11 @@ class HdfsSqlDriver {
 	int read(Connection dbConnection, FsInode inode, int level,
 			long beginIndex, byte[] data, int offset, int len)
 			throws SQLException, IOHimeraFsException {
+		
+		if(LOG.isDebugEnabled()){
+			LOG.debug("Read data from JDBC storage");
+		}	
+		
 		int count = 0;
 		PreparedStatement stReadFromInode = null;
 		ResultSet rs = null;
@@ -1082,7 +1090,7 @@ class HdfsSqlDriver {
 
 	List<StorageLocatable> getInodeLocations(Connection dbConnection,
 			FsInode inode, int type) throws SQLException {
-		List<StorageLocatable> locations = new ArrayList();
+		List<StorageLocatable> locations = new ArrayList<StorageLocatable>();
 		ResultSet rs = null;
 		PreparedStatement stGetInodeLocations = null;
 		try {
@@ -1174,7 +1182,7 @@ class HdfsSqlDriver {
 			stGetTags.setString(1, inode.toString());
 			rs = stGetTags.executeQuery();
 
-			List<String> v = new ArrayList();
+			List<String> v = new ArrayList<String>();
 
 			while (rs.next()) {
 				v.add(rs.getString("itagname"));
@@ -1793,7 +1801,7 @@ class HdfsSqlDriver {
 			throws SQLException, IOHimeraFsException {
 		File pathFile = new File(path);
 		
-		if(_log.isInfoEnabled()) _log.info("path2inode PATH:{}", path);
+		if(LOG.isInfoEnabled()) LOG.info("path2inode PATH:{}", path);
 		
 		List<String> pathElemts = new ArrayList<String>();
 		do {
@@ -1812,11 +1820,9 @@ class HdfsSqlDriver {
 		for (int i = pathElemts.size(); i > 0; i--) {
 			String f = (String) pathElemts.get(i - 1);
 			inode = inodeOf(dbConnection, parentInode, f);
-
 			if (inode == null) {
 				break;
 			}
-
 			Stat s = stat(dbConnection, inode);
 			if (UnixPermission.getType(s.getMode()) == 40960) {
 				byte[] b = new byte[(int) s.getSize()];
@@ -1830,14 +1836,14 @@ class HdfsSqlDriver {
 			}
 			parentInode = inode;
 		}
-		if(_log.isInfoEnabled()) _log.info("inode :{}", inode.toString());
+		if(LOG.isInfoEnabled()) LOG.info("inode :{}", inode.toString());
 		return inode;
 	}
 
 	List<FsInode> path2inodes(Connection dbConnection, FsInode root, String path)
 			throws SQLException, IOHimeraFsException {
 		File pathFile = new File(path);
-		List<String> pathElements = new ArrayList();
+		List<String> pathElements = new ArrayList<String>();
 		do {
 			String fileName = pathFile.getName();
 			if (fileName.length() != 0) {
@@ -1849,7 +1855,7 @@ class HdfsSqlDriver {
 
 		FsInode parentInode = root;
 
-		List<FsInode> inodes = new ArrayList(pathElements.size() + 1);
+		List<FsInode> inodes = new ArrayList<FsInode>(pathElements.size() + 1);
 		inodes.add(root);
 
 		for (String f : Lists.reverse(pathElements)) {
@@ -1972,7 +1978,7 @@ class HdfsSqlDriver {
 					.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 		} catch (ClassNotFoundException e) {
-			_log.info(dialectDriverClass
+			LOG.info(dialectDriverClass
 					+ " not found, using default FsSqlDriver1.");
 			driver = new HdfsSqlDriver();
 		}
