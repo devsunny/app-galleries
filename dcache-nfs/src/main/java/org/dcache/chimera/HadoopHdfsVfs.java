@@ -254,7 +254,7 @@ public class HadoopHdfsVfs implements VirtualFileSystem, AclCheckable {
 			LOG.debug("remove");
 		FsInode parentFsInode = toFsInode(parent);
 		try {
-			jdbcFsProvider.remove(parentFsInode, path);
+			jdbcFsProvider.remove(parentFsInode, path);		
 		} catch (FileNotFoundHimeraFsException e) {
 			throw new NoEntException("path not found");
 		} catch (DirNotEmptyHimeraFsException e) {
