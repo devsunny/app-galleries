@@ -22,12 +22,13 @@
 	
 	
 	
-	<logger name="org.dcache" level="DEBUG"/>
+	<logger name="com.asksunny.nfs.hadoop" level="DEBUG">		
+	</logger>
+	 
 	
 
-	<root level="WARN">
+	<root level="INFO">		
 		<appender-ref ref="STDOUT" />
-		<appender-ref ref="FILE" />
 	</root>
 
 </configuration>

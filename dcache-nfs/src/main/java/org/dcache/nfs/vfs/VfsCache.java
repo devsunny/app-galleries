@@ -19,6 +19,7 @@
  */
 package org.dcache.nfs.vfs;
 
+
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -252,13 +253,19 @@ public class VfsCache implements VirtualFileSystem {
 
         @Override
         public Inode load(CacheKey k) throws Exception {
-            return _inner.lookup(k.getParent(), k.getName());
+           //System.out.println(String.format("############$$$$$$ %s >>> %s", _inner.getClass().getName(), k.getName()));
+           Inode inode = _inner.lookup(k.getParent(), k.getName());
+           if(inode==null){
+        	   //System.out.println("What is going on here");
+           }
+           return inode;
         }
     }
 
     private Inode lookupFromCacheOrLoad(final Inode parent, final String path) throws IOException {
-	try {
-	    return _lookupCache.get(new CacheKey(parent, path));
+	try {	    
+		
+		return _lookupCache.get(new CacheKey(parent, path));
 	} catch (ExecutionException e) {
 	    Throwable t = e.getCause();
 	    Throwables.propagateIfInstanceOf(t, IOException.class);

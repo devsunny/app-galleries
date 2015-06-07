@@ -27,7 +27,7 @@ import org.dcache.nfs.v4.xdr.stable_how4;
 public interface VirtualFileSystem {
 
     int access(Inode inode, int mode) throws IOException;
-
+    
     Inode create(Inode parent, Stat.Type type, String path, int uid, int gid, int mode) throws IOException;
 
     FsStat getFsStat() throws IOException;

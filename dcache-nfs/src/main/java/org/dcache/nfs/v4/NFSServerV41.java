@@ -203,6 +203,7 @@ public class NFSServerV41 extends nfs4_prot_NFS4_PROGRAM_ServerStub {
 			res.resarray = Collections.emptyList();
 			res.status = e.getStatus();
 		} catch (Exception e) {
+			e.printStackTrace();
 			_log.error("Unhandled exception:", e);
 			res.resarray = Collections.emptyList();
 			res.status = nfsstat.NFSERR_SERVERFAULT;

@@ -176,6 +176,10 @@ class HdfsSqlDriver {
 
 	DirectoryStreamB<HimeraDirectoryEntry> newDirectoryStream(
 			Connection dbConnection, FsInode dir) throws SQLException {
+		if(LOG.isDebugEnabled()){
+			LOG.debug("newDirectoryStream:{}", dir.toString());
+		}
+		
 		PreparedStatement stListDirectoryFull = dbConnection
 				.prepareStatement(sqlListDirFull);
 		stListDirectoryFull.setFetchSize(50);
@@ -188,6 +192,7 @@ class HdfsSqlDriver {
 
 	void remove(Connection dbConnection, FsInode parent, String name)
 			throws ChimeraFsException, SQLException {
+		
 		FsInode inode = inodeOf(dbConnection, parent, name);
 		if ((inode == null) || (inode.type() != FsInodeType.INODE)) {
 			throw new FileNotFoundHimeraFsException("Not a file.");

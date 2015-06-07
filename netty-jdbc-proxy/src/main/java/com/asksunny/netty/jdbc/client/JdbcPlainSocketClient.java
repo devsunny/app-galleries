@@ -3,15 +3,19 @@ package com.asksunny.netty.jdbc.client;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import org.apache.commons.codec.binary.Base64;
 
 public class JdbcPlainSocketClient {
 
@@ -22,7 +26,7 @@ public class JdbcPlainSocketClient {
 	{
 		int i=0;
 		while(i < 1000){		
-			SSLContext sc = SSLContext.getInstance("TLS"); 
+			SSLContext sc = SSLContext.getInstance("TLSv1"); 
 		    sc.init(null, InsecureTrustManagerFactory.INSTANCE.getTrustManagers(), new java.security.SecureRandom()); 	    
 			SSLSocketFactory sf = sc.getSocketFactory();	    
 			SSLSocket clientSocket = (SSLSocket) sf.createSocket("localhost", 20443);
@@ -64,8 +68,7 @@ public class JdbcPlainSocketClient {
 	{
 		
 		for(int i=0; i<20; i++){
-			Thread t = new Thread(new Runnable() {
-				
+			Thread t = new Thread(new Runnable() {//				
 				@Override
 				public void run() {					
 					try {
@@ -79,6 +82,21 @@ public class JdbcPlainSocketClient {
 			t.start();
 			
 		}
+		
+		System.out.println(Base64.encodeBase64String("ABCDEFGHABCDEFGH".getBytes()));
+		System.out.println(Base64.encodeBase64String("ABCDEFGHABCDEFGH".getBytes()).length());		
+		String test = "ABCDEFGH";
+		
+		System.out.println(test.length());
+		System.out.println(Base64.encodeBase64String(test.getBytes()).length());		
+		System.out.println((Base64.encodeBase64String(test.getBytes()).length() - test.length())*1.0/test.length());
+		
+		ByteArrayOutputStream bou = new ByteArrayOutputStream();
+		GZIPOutputStream gou = new GZIPOutputStream(bou);
+		gou.write(Base64.encodeBase64String(test.getBytes()).getBytes());
+		gou.flush();
+		gou.close();
+		System.out.println(bou.toByteArray().length);
 		
 		
 	}
