@@ -3,19 +3,15 @@ package com.asksunny.netty.jdbc.client;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import org.apache.commons.codec.binary.Base64;
 
 public class JdbcPlainSocketClient {
 
@@ -31,8 +27,7 @@ public class JdbcPlainSocketClient {
 			SSLSocketFactory sf = sc.getSocketFactory();	    
 			SSLSocket clientSocket = (SSLSocket) sf.createSocket("localhost", 20443);
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-			DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());		 
-			
+			DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());	
 			for(int j=0; j<12; j++){
 				byte[] test = "HELLO".getBytes(StandardCharsets.UTF_8);		
 				int tlen = test.length;		
@@ -79,26 +74,8 @@ public class JdbcPlainSocketClient {
 					}					
 				}
 			}, "T" + i);
-			t.start();
-			
+			t.start();			
 		}
-		
-		System.out.println(Base64.encodeBase64String("ABCDEFGHABCDEFGH".getBytes()));
-		System.out.println(Base64.encodeBase64String("ABCDEFGHABCDEFGH".getBytes()).length());		
-		String test = "ABCDEFGH";
-		
-		System.out.println(test.length());
-		System.out.println(Base64.encodeBase64String(test.getBytes()).length());		
-		System.out.println((Base64.encodeBase64String(test.getBytes()).length() - test.length())*1.0/test.length());
-		
-		ByteArrayOutputStream bou = new ByteArrayOutputStream();
-		GZIPOutputStream gou = new GZIPOutputStream(bou);
-		gou.write(Base64.encodeBase64String(test.getBytes()).getBytes());
-		gou.flush();
-		gou.close();
-		System.out.println(bou.toByteArray().length);
-		
-		
 	}
 
 }
