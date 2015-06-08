@@ -22,7 +22,7 @@ public class StressTestDataSet {
 	public static int[] displaySizes = new int[] { 16, 32, 32, 32, 8, 16, 32,
 			128, 64, 32, 5, 8 };
 
-	public static Object[] row = new Object[] { 1, "John", "Bogus", "Doe",
+	public static final Object[] DATAROW = new Object[] { 1, "John", "Bogus", "Doe",
 			new GregorianCalendar(1983, 10, 21).getTime(), "123-45-6789",
 			"123", "Main Street", "New York", "NY", "12345",
 			new GregorianCalendar(2010, 5, 21, 9, 30, 21).getTime() };
@@ -36,6 +36,40 @@ public class StressTestDataSet {
 		pw.flush();
 		zout.flush();
 		zout.close();
+	}
+
+	public static void compressData(int numRows, OutputStream out, String rsId,
+			int rowDelimiter, int coldelimiter) throws SQLException,
+			IOException {
+		GZIPOutputStream zout = new GZIPOutputStream(out);
+		PrintWriter pw = new PrintWriter(zout);
+		serializeData(numRows, pw, rsId, (char) rowDelimiter,
+				(char) coldelimiter);
+		pw.flush();
+		zout.flush();
+		zout.close();
+	}
+	
+	
+
+	public static void serializeData(int numRows, PrintWriter pw, String rsId,
+			char rowDelimiter, char coldelimiter) throws SQLException {
+
+		for (int i = 0; i < numRows; i++) {
+			DATAROW[0] = i+1; 
+			for (int j = 0; j < DATAROW.length; j++) 
+			{
+				pw.print(DATAROW[j].toString());
+				if (j < DATAROW.length - 1) {
+					pw.print(coldelimiter);
+				}
+			}
+			if(i<numRows-1){
+				pw.print(rowDelimiter);
+			}
+		}
+		pw.flush();
+
 	}
 
 	public static void serializeMetaBase(PrintWriter pw, String rsId,
@@ -60,21 +94,21 @@ public class StressTestDataSet {
 		for (colIdx = 0; colIdx < colCount; colIdx++) {
 			types[colIdx] = StressTestDataSet.columnTypes[colIdx];
 			pw.print(types[colIdx]);
-			if (colIdx < colCount-1) {
+			if (colIdx < colCount - 1) {
 				pw.print(coldelimiter);
 			}
 		}
 		pw.print(rowDelimiter);
 		for (colIdx = 0; colIdx < colCount; colIdx++) {
 			pw.print(StressTestDataSet.columnNames[colIdx]);
-			if (colIdx < colCount-1) {
+			if (colIdx < colCount - 1) {
 				pw.print(coldelimiter);
 			}
 		}
 		pw.print(rowDelimiter);
 		for (colIdx = 0; colIdx < colCount; colIdx++) {
 			pw.print(StressTestDataSet.displaySizes[colIdx]);
-			if (colIdx < colCount-1) {
+			if (colIdx < colCount - 1) {
 				pw.print(coldelimiter);
 			}
 		}

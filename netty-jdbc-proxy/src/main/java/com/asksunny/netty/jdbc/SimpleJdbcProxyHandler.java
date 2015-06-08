@@ -33,7 +33,14 @@ public class SimpleJdbcProxyHandler extends SimpleChannelInboundHandler<String>
 	{			
 		ByteBuf buf = channelCtx.alloc().buffer(1024);		
 		ByteBufOutputStream bout = new ByteBufOutputStream(buf);
-		StressTestDataSet.compressMetaBase(bout, UUID.randomUUID().toString(), 1, 2);
+		if(jdbcCommand.equals("Q")){
+			StressTestDataSet.compressMetaBase(bout, UUID.randomUUID().toString(), 1, 2);			
+		}else if(jdbcCommand.startsWith("R")){
+			String cntstr = jdbcCommand.length()>1?jdbcCommand.substring(1):"250";
+			int cnt = Integer.valueOf(cntstr);
+			System.out.println("Request:" + cnt);
+			StressTestDataSet.compressData(cnt, bout, UUID.randomUUID().toString(), 1, 2);
+		}		
 		channelCtx.writeAndFlush(buf);			
 	}
 	
