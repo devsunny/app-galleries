@@ -40,8 +40,7 @@ public class ResultSetSerDeTest {
 		gout.flush();
 		gout.close();
 		binaryData = bout.toByteArray();
-		ByteArrayOutputStream bout2 = new ByteArrayOutputStream();	
-		
+		ByteArrayOutputStream bout2 = new ByteArrayOutputStream();			
 		DataOutputStream out = new DataOutputStream(bout2);		
 		out.writeInt(binaryData.length);
 		out.write(binaryData);

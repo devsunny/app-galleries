@@ -33,16 +33,8 @@ public class SimpleJdbcProxyHandler extends SimpleChannelInboundHandler<String>
 	{			
 		ByteBuf buf = channelCtx.alloc().buffer(1024);		
 		ByteBufOutputStream bout = new ByteBufOutputStream(buf);
-		GZIPOutputStream zout = new GZIPOutputStream(bout);		
-		int c = 0;
-		for(int i=0; i<MB; i++){
-			zout.write('A');
-			c++;
-		}	
-		zout.flush();
-		zout.close();		
-		channelCtx.writeAndFlush(buf);		
-		
+		StressTestDataSet.compressMetaBase(bout, UUID.randomUUID().toString(), 1, 2);
+		channelCtx.writeAndFlush(buf);			
 	}
 	
 	

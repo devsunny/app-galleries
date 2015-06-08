@@ -120,13 +120,6 @@ public final class ResultSetSerDe {
 
 	public static int[] sendMetaBase(String prefix,
 			ChannelHandlerContext channelCtx, ResultSet rs, String rsId,
-			int rowDelimiter, int coldelimiter) throws Exception {
-		return sendMetaBase(prefix, channelCtx, rs, rsId, (char) rowDelimiter,
-				(char) coldelimiter);
-	}
-
-	public static int[] sendMetaBase(String prefix,
-			ChannelHandlerContext channelCtx, ResultSet rs, String rsId,
 			char rowDelimiter, char coldelimiter) throws Exception {
 		ByteBuf buf = channelCtx.alloc().buffer(1024);
 		ByteBufOutputStream bout = new ByteBufOutputStream(buf);
@@ -136,13 +129,6 @@ public final class ResultSetSerDe {
 		channelCtx.writeAndFlush(buf);
 		pw.flush();
 		return types;
-	}
-
-	public static void sendMetaMore(String prefix,
-			ChannelHandlerContext channelCtx, ResultSet rs, String rsId,
-			int rowDelimiter, int coldelimiter) throws Exception {
-		sendMetaMore(prefix, channelCtx, rs, rsId, (char) rowDelimiter,
-				(char) coldelimiter);
 	}
 
 	public static void sendMetaMore(String prefix,
@@ -158,13 +144,6 @@ public final class ResultSetSerDe {
 
 	public static void sendData(String prefix,
 			ChannelHandlerContext channelCtx, ResultSet rs, int maxRows,
-			int[] types, int rowDelimiter, int coldelimiter) throws Exception {
-		sendData(prefix, channelCtx, rs, maxRows, types, (char) rowDelimiter,
-				(char) coldelimiter);
-	}
-
-	public static void sendData(String prefix,
-			ChannelHandlerContext channelCtx, ResultSet rs, int maxRows,
 			int[] types, char rowDelimiter, char coldelimiter) throws Exception {
 		ByteBuf buf = channelCtx.alloc().buffer(1024);
 		ByteBufOutputStream bout = new ByteBufOutputStream(buf);
@@ -175,13 +154,14 @@ public final class ResultSetSerDe {
 		channelCtx.writeAndFlush(buf);
 	}
 
+	
 	public static int[] serializeMetaBase(String prefix, PrintWriter pw,
 			ResultSet rs, String rsId, int rowDelimiter, int coldelimiter)
-			throws SQLException {
-		return serializeMetaBase(prefix, pw, rs, rsId, (char) rowDelimiter,
-				(char) coldelimiter);
+			throws SQLException{
+		return serializeMetaBase(prefix, pw,  rs,
+				rsId, rowDelimiter, coldelimiter);
 	}
-
+	
 	public static int[] serializeMetaBase(String prefix, PrintWriter pw,
 			ResultSet rs, String rsId, char rowDelimiter, char coldelimiter)
 			throws SQLException {
@@ -189,13 +169,6 @@ public final class ResultSetSerDe {
 			pw.print(prefix);
 		}
 		return serializeMetaBase(pw, rs, rsId, rowDelimiter, coldelimiter);
-	}
-
-	public static int[] serializeMetaBase(PrintWriter pw, ResultSet rs,
-			String rsId, int rowDelimiter, int coldelimiter)
-			throws SQLException {
-		return serializeMetaBase(pw, rs, rsId, (char) rowDelimiter,
-				(char) coldelimiter);
 	}
 
 	public static int[] serializeMetaBase(PrintWriter pw, ResultSet rs,
@@ -245,26 +218,12 @@ public final class ResultSetSerDe {
 	}
 
 	public static void serializeMetaMore(String prefix, PrintWriter pw,
-			ResultSet rs, String rsId, int rowDelimiter, int coldelimiter)
-			throws SQLException {
-		serializeMetaMore(prefix, pw, rs, rsId, (char) rowDelimiter,
-				(char) coldelimiter);
-	}
-
-	public static void serializeMetaMore(String prefix, PrintWriter pw,
 			ResultSet rs, String rsId, char rowDelimiter, char coldelimiter)
 			throws SQLException {
 		if (prefix != null) {
 			pw.print(prefix);
 		}
 		serializeMetaMore(pw, rs, rsId, rowDelimiter, coldelimiter);
-	}
-
-	public static void serializeMetaMore(PrintWriter pw, ResultSet rs,
-			String rsId, int rowDelimiter, int coldelimiter)
-			throws SQLException {
-		serializeMetaMore(pw, rs, rsId, (char) rowDelimiter,
-				(char) coldelimiter);
 	}
 
 	public static void serializeMetaMore(PrintWriter pw, ResultSet rs,
@@ -297,26 +256,12 @@ public final class ResultSetSerDe {
 	}
 
 	public static void serializeData(String prefix, PrintWriter pw,
-			ResultSet rs, int maxRows, int[] types, int rowDelimiter,
-			int coldelimiter) throws SQLException {
-		serializeData(prefix, pw, rs, maxRows, types, (char) rowDelimiter,
-				(char) coldelimiter);
-	}
-
-	public static void serializeData(String prefix, PrintWriter pw,
 			ResultSet rs, int maxRows, int[] types, char rowDelimiter,
 			char coldelimiter) throws SQLException {
 		if (prefix != null) {
 			pw.print(prefix);
 		}
 		serializeData(pw, rs, maxRows, types, rowDelimiter, coldelimiter);
-	}
-
-	public static void serializeData(PrintWriter pw, ResultSet rs, int maxRows,
-			int[] types, int rowDelimiter, int coldelimiter)
-			throws SQLException {
-		serializeData(pw, rs, maxRows, types, (char) rowDelimiter,
-				(char) coldelimiter);
 	}
 
 	public static void serializeData(PrintWriter pw, ResultSet rs, int maxRows,
