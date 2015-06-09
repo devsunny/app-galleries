@@ -13,6 +13,9 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.SSLContext;
@@ -21,6 +24,10 @@ import javax.net.ssl.SSLSocketFactory;
 
 public class JdbcPlainSocketClient {
 
+	
+	ExecutorService executor = Executors.newSingleThreadExecutor();
+	
+	
 	public void testServer() throws Exception {
 		SSLContext sc = SSLContext.getInstance("TLS");
 		sc.init(null, InsecureTrustManagerFactory.INSTANCE.getTrustManagers(),
@@ -43,18 +50,31 @@ public class JdbcPlainSocketClient {
 		out.write(R, 0, R.length);
 		out.flush();
 		System.out.println("Here");
-		readResponse(in);
+		Future<List<String[]>> future = executor.submit(new AsynResponseReader(in));		
+		while(!future.isDone()){
+			Thread.sleep(100);
+		}
+		List<String[]> response = future.get();
+		for (String[] strings : response) {
+			for (int k = 0; k < strings.length; k++) {
+				System.out.println(strings[k]);
+			}					
+		}
 		clientSocket.close();
 	}
-
+	
+	
+	
+	
+	
+	
 	protected List<String[]> readResponse(DataInputStream in)
 			throws IOException {
 		ArrayList<String[]> dataSet = new ArrayList<>();
 		boolean responded = false;
 		while (!responded) {
 			try {
-				int plen = in.readInt();
-				System.out.println("DATA LENGTH:" + plen);
+				int plen = in.readInt();				
 				byte[] tmp = new byte[plen];
 				in.readFully(tmp);
 				GZIPInputStream gin = new GZIPInputStream(
@@ -91,13 +111,7 @@ public class JdbcPlainSocketClient {
 						strRow = row.toArray(strRow);
 						dataSet.add(strRow);
 					}
-				}
-				for (String[] strings : dataSet) {
-					for (int k = 0; k < strings.length; k++) {
-						System.out.println(strings[k]);
-					}
-					System.out.println("************************");
-				}
+				}				
 				responded = true;
 			} catch (SocketTimeoutException scktex) {
 				responded = false;
@@ -155,10 +169,8 @@ public class JdbcPlainSocketClient {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		renderRequest(new PrintWriter(System.out), '^', '#', 97, 61, "Test p1", new int[] { 1, 2, 3 }, "Test2");
-		System.out.println();
-		renderRequest(new PrintWriter(System.out), '^', '#', 92, 61, "Test p1", null, "Test2");
-		System.out.println();
+		JdbcPlainSocketClient client = new JdbcPlainSocketClient();
+		client.testServer();
 	}
 
 }
