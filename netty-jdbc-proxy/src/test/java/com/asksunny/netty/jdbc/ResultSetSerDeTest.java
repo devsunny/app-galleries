@@ -1,6 +1,6 @@
 package com.asksunny.netty.jdbc;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +30,10 @@ public class ResultSetSerDeTest {
 	public void setUp() throws Exception {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
-		serializeMetaBase( pw, UUID.randomUUID().toString(), (char)1, (char)2);
+		pw.print((char)93);
+		pw.print((char)105);		
+		pw.print((char)1);
+		serializeMetaBase(pw, UUID.randomUUID().toString(), (char)1, (char)2);
 		pw.flush();
 		data = sw.toString();
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
