@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans    
+    http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/jdbc
+    http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd   
+    ">
+	<context:property-placeholder location="classpath:server-app.properties" />
+
+	<bean id="springDispatcher" class="org.springframework.web.servlet.DispatcherServlet">
+		<property name="contextConfigLocation" value="classpath:app-web-context.xml"></property>
+	</bean>
+
+	<bean id="springDispatcherHolder" class="org.eclipse.jetty.servlet.ServletHolder">
+		<constructor-arg>
+			<ref bean="springDispatcher"></ref>
+		</constructor-arg>
+	</bean>
+	<bean
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject">
+			<ref bean="servlethandles" />
+		</property>
+		<property name="targetMethod">
+			<value>addServlet</value>
+		</property>
+		<property name="arguments">
+			<list>
+				<ref bean="springDispatcherHolder"></ref>
+				<value>/spring/*</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="servlethandles" class="org.eclipse.jetty.servlet.ServletContextHandler">
+	</bean>
+
+	<bean id="handlers" class="org.eclipse.jetty.server.handler.HandlerList">
+		<property name="handlers">
+			<array>
+				<ref bean="servlethandles" />
+			</array>
+		</property>
+	</bean>
+
+	<bean id="securityHandler" class="org.eclipse.jetty.security.ConstraintSecurityHandler">
+		<property name="authenticator">
+			<bean class="org.eclipse.jetty.security.authentication.BasicAuthenticator"></bean>
+		</property>
+		<property name="loginService">
+			<bean class="org.eclipse.jetty.security.HashLoginService">
+				<property name="name" value="MyRealm"></property>
+			</bean>
+		</property>
+		<property name="handler">
+			<ref bean="handlers" />
+		</property>
+		<property name="constraintMappings">
+			<list>
+				<bean class="org.eclipse.jetty.security.ConstraintMapping">
+					<property name="constraint">
+						<bean class="org.eclipse.jetty.util.security.Constraint">
+							<property name="authenticate" value="true"></property>
+							<!-- public final static String __BASIC_AUTH = "BASIC"; -->
+							<!-- public final static String __FORM_AUTH = "FORM"; -->
+							<!-- public final static String __DIGEST_AUTH = "DIGEST"; -->
+							<!-- public final static String __CERT_AUTH = "CLIENT_CERT"; -->
+							<!-- public final static String __CERT_AUTH2 = "CLIENT-CERT"; -->
+							<!-- public final static String __SPNEGO_AUTH = "SPNEGO"; -->
+							<!-- public final static String __NEGOTIATE_AUTH = "NEGOTIATE"; -->
+							<property name="name" value="BASIC"></property>
+							<property name="roles">
+								<array>
+									<value>ADMIN</value>
+									<value>USER</value>
+								</array>
+							</property>
+						</bean>
+					</property>
+					<property name="pathSpec" value="/XXXXXX"></property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	<!-- <bean id="sslContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory"> 
+		<property name="KeyStorePath" value="./src/test/resources/webcert.jks"></property> 
+		<property name="KeyStorePassword" value="changeit"></property> <property 
+		name="KeyManagerPassword" value="changeit"></property> <property name="TrustStorePath" 
+		value="./src/test/resources/webcert.jks"></property> <property name="TrustStorePassword" 
+		value="changeit"></property> </bean> -->
+	<bean id="server" name="Main" class="org.eclipse.jetty.server.Server"
+		init-method="start" destroy-method="stop">
+		<constructor-arg>
+			<bean id="threadPool" class="org.eclipse.jetty.util.thread.QueuedThreadPool">
+				<property name="minThreads" value="10" />
+				<property name="maxThreads" value="50" />
+			</bean>
+		</constructor-arg>
+		<property name="connectors">
+			<list>
+				<bean id="connector" class="org.eclipse.jetty.server.ServerConnector">
+					<constructor-arg ref="server" />
+					<!-- <constructor-arg ref="sslContextFactory" /> -->
+					<property name="port" value="${server.http.port}" />
+				</bean>
+			</list>
+		</property>
+		<property name="handler">
+			<bean id="handlers" class="org.eclipse.jetty.server.handler.HandlerCollection">
+				<property name="handlers">
+					<list>
+						<ref bean="securityHandler" />
+						<bean id="defaultHandler" class="org.eclipse.jetty.server.handler.DefaultHandler" />
+					</list>
+				</property>
+			</bean>
+		</property>
+	</bean>
+</beans>
