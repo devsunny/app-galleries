@@ -45,9 +45,8 @@
 	<mvc:annotation-driven
 		content-negotiation-manager="contentNegotiationManager">
 		<mvc:message-converters register-defaults="true">
-			<bean id="customTextConverterExample" class="com.asksunny.rest.converters.PlainTextConverter"></bean>
-			<bean id="customYamlConverterExample"
-				class="com.asksunny.rest.converters.MappingJackson2YamlHttpMessageConverter"></bean>
+			<!-- <bean id="customTextConverterExample" class="com.asksunny.rest.converters.PlainTextConverter"></bean> -->
+			<!-- <bean id="customYamlConverterExample" class="com.asksunny.rest.converters.MappingJackson2YamlHttpMessageConverter"></bean> -->
 			<bean id="jacksonMessageXmlConverter"
 				class="org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter"></bean>
 			<bean id="jacksonMessageJsonConverter"
@@ -58,6 +57,10 @@
 	</mvc:annotation-driven>
 
 
+
+	<bean id="resourceGovernor" class="com.asksunny.app.service.ResourceGovernor"></bean>
+	<bean id="policyManagementService" class="com.asksunny.app.service.PolicyManagementService"></bean>
+	<bean id="resourceManagementService" class="com.asksunny.app.service.ResourceManagementService"></bean>
 	<bean id="simpleService" class="com.asksunny.app.service.SimpleInMemoryService">
 	</bean>
 

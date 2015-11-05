@@ -1,0 +1,30 @@
+Resources:
+
+[
+{"name":"Teradata Prod cluster", "maxCapacity":"1000"},
+{"name":"Teradata Dev cluster", "maxCapacity":"200"},
+{"name":"Teradata QA cluster", "maxCapacity":"500"}
+]
+
+Resource:
+{"name":"Hadoop", "maxCapacity":"100"}
+
+[
+{
+"priorityGroupName":"P1",
+"priority":"5",
+"resourceReservations":[{"resourceName":"Hadoop", "reservedCapacity":"20"}, {"resourceName":"Teradata Dev cluster", "reservedCapacity":"10"}]
+},
+{
+"priorityGroupName":"P2",
+"priority":"6",
+"resourceReservations":[{"resourceName":"Hadoop", "reservedCapacity":"5"}, {"resourceName":"Teradata Prod cluster", "reservedCapacity":"20"}]
+}
+]
+
+
+{
+"priorityGroupName":"P3",
+"priority":"8",
+"resourceReservations":[{"resourceName":"Hadoop", "reservedCapacity":"1"}, {"resourceName":"Teradata QA cluster", "reservedCapacity":"5"}]
+}
