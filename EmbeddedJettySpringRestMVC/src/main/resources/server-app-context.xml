@@ -2,22 +2,30 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-	 xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:cache="http://www.springframework.org/schema/cache" xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans    
-    http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/beans/spring-beans.xsd
     http://www.springframework.org/schema/context
-    http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/context/spring-context.xsd
     http://www.springframework.org/schema/tx
-    http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/tx/spring-tx.xsd
     http://www.springframework.org/schema/jdbc
-    http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd
+    http://www.springframework.org/schema/jdbc/spring-jdbc.xsd   
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc.xsd   
+    http://www.springframework.org/schema/task
+    http://www.springframework.org/schema/mvc/spring-task.xsd  
+    http://www.springframework.org/schema/cache
+    http://www.springframework.org/schema/cache/spring-cache.xsd   
     http://www.springframework.org/schema/util
-    http://www.springframework.org/schema/util/spring-util-4.0.xsd   
+    http://www.springframework.org/schema/util/spring-util.xsd   
     ">
 	<context:property-placeholder location="classpath:server-app.properties" />
 
 	<bean id="springDispatcher" class="org.springframework.web.servlet.DispatcherServlet">
-		<property name="contextConfigLocation" value="classpath:app-web-context.xml"></property>
+		<property name="contextConfigLocation"
+			value="classpath:hazelcast-context.xml, classpath:ignite-context.xml, classpath:app-web-context.xml"></property>
 	</bean>
 
 	<bean id="springDispatcherHolder" class="org.eclipse.jetty.servlet.ServletHolder">

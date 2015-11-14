@@ -1,0 +1,25 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:hz="http://www.hazelcast.com/schema/spring"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans.xsd
+                http://www.springframework.org/schema/context
+                http://www.springframework.org/schema/context/spring-context.xsd
+                http://www.hazelcast.com/schema/spring
+                http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd">
+	<context:annotation-config />
+	<hz:hazelcast id="hazelcast">
+		<hz:config>
+			<hz:spring-aware />
+			<hz:group name="dev" password="password" />
+			<hz:network port="5701" port-auto-increment="false">
+				<hz:join>
+					<hz:multicast enabled="false" />
+					<hz:tcp-ip enabled="true">
+						<hz:members>127.0.0.1</hz:members>
+					</hz:tcp-ip>
+				</hz:join>
+			</hz:network>
+		</hz:config>
+	</hz:hazelcast>
+</beans>
