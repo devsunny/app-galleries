@@ -22,9 +22,10 @@ public class SimpleRestController {
 	
 	
 	@RequestMapping(value="/greet/{name}", method={RequestMethod.GET})
-	@ResponseBody
+	@ResponseBody	
 	public String greeting(@PathVariable String name)
 	{
+		
 		return String.format("Hello %s!", name);
 	}
 
