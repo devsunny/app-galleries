@@ -1,5 +1,9 @@
 package com.asksunny.validator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class ValidationResult {
 
 	private boolean success = false;
@@ -11,14 +15,6 @@ public class ValidationResult {
 
 	public ValidationResult() {
 
-	}
-
-	public ValidationResult(boolean success, Class<?> className, String fieldName, String validationMessage) {
-		super();
-		this.success = success;
-		this.className = className;
-		this.fieldName = fieldName;
-		this.validationMessage = validationMessage;
 	}
 
 	public ValidationResult(String validatorName, boolean success, Class<?> className, String fieldName,
@@ -80,11 +76,42 @@ public class ValidationResult {
 		this.validatorName = validatorName;
 	}
 
+	public List<ValidationResult> flat() {
+		return Arrays.asList(this);
+	}
+
+	public static List<ValidationResult> flatValidationResults(List<ValidationResult> allrs) {
+		List<ValidationResult> flatResults = new ArrayList<ValidationResult>();
+		if (allrs != null && allrs.size() > 0) {
+			for (ValidationResult vrs : allrs) {
+				flatResults.addAll(vrs.flat());
+			}
+		}
+		return flatResults;
+	}
+
+	public static List<ValidationResult> flatFailedValidationResults(List<ValidationResult> allrs) {
+		List<ValidationResult> flatResults = new ArrayList<ValidationResult>();
+		List<ValidationResult> failedResults = new ArrayList<ValidationResult>();
+
+		if (allrs != null && allrs.size() > 0) {
+			for (ValidationResult vrs : allrs) {
+				flatResults.addAll(vrs.flat());
+			}
+		}
+		for (ValidationResult vrs : flatResults) {
+			if (!vrs.isSuccess()) {
+				failedResults.add(vrs);
+			}
+		}
+		return failedResults;
+	}
+
 	@Override
 	public String toString() {
-		return "ValidationResult [validatorName=" + validatorName + ", success=" + success + ", className=" + className
-				+ ", fieldName=" + fieldName + ", actualValue=" + actualValue + ", validationMessage="
-				+ validationMessage + "]";
+		return "ValidationResult [validatorName=" + validatorName + ", success=" + success + ", className="
+				+ ((className != null) ? className.getName() : "") + ", fieldName=" + fieldName + ", actualValue="
+				+ actualValue + ", validationMessage=" + validationMessage + "]";
 	}
 
 }

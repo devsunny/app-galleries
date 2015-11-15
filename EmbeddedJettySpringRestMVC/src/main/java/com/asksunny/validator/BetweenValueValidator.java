@@ -3,21 +3,29 @@ package com.asksunny.validator;
 import java.util.Collection;
 import java.util.Map;
 
-import com.asksunny.validator.annotation.FieldValidate;
+import com.asksunny.validator.annotation.ValueValidation;
 
 public class BetweenValueValidator extends ValueValidator {
 
-	private String maxValue;
-	private String minValue;
-
-	public BetweenValueValidator(Class<?> fieldType, String fieldName, FieldValidate fv) {
-		this(fieldType, fieldName, fv, false);
+	public BetweenValueValidator(Class<?> targetType, Class<?> valueType, String fieldName, ValueValidation fv,
+			boolean neg) {
+		super(targetType, valueType, fieldName, fv, neg);
 	}
 
-	public BetweenValueValidator(Class<?> fieldType, String fieldName, FieldValidate fv, boolean neg) {
-		super(fieldType, fieldName, fv, neg);
-		this.minValue = fv.minValue();
-		this.maxValue = fv.maxValue();
+	public BetweenValueValidator(Class<?> targetType, Class<?> fieldType, String fieldName, ValueValidation fv) {
+		super(targetType, fieldType, fieldName, fv);
+	}
+
+	public BetweenValueValidator(Class<?> fieldType, String fieldName, ValueValidation fv) {
+		super(fieldType, fieldName, fv);
+	}
+
+	public BetweenValueValidator(String fieldName, ValueValidationRule rule, boolean neg) {
+		super(fieldName, rule, neg);
+	}
+
+	public BetweenValueValidator(String fieldName, ValueValidationRule rule) {
+		super(fieldName, rule);
 	}
 
 	@Override
@@ -26,30 +34,15 @@ public class BetweenValueValidator extends ValueValidator {
 		Class<?> clz = value.getClass();
 		if (clz.isArray() || CharSequence.class.isAssignableFrom(clz) || Map.class.isAssignableFrom(clz)
 				|| Collection.class.isAssignableFrom(clz)) {
-			valid = sizeCompare(getFieldValidateAnnotation().minSize(), value) <= 0
-					&& sizeCompare(getFieldValidateAnnotation().maxSize(), value) >= 0;
+			valid = sizeCompare(getValidationRule().getMinSize(), value) <= 0
+					&& sizeCompare(getValidationRule().getMaxSize(), value) >= 0;
 		} else {
-			valid = valueCompare(getMinValue(), value) <= 0 && valueCompare(getMaxValue(), value) >= 0;
+			valid = valueCompare(getValidationRule().getMinValue(), value) <= 0
+					&& valueCompare(getValidationRule().getMaxValue(), value) >= 0;
 		}
 		valid = isNegate() ? !valid : valid;
-		return new ValidationResult(getClass().getName(), valid, getFieldType(), getFieldName(), value,
-				valid ? getFieldValidateAnnotation().successMessage() : getFieldValidateAnnotation().failedMessage());
-	}
-
-	public String getMaxValue() {
-		return maxValue;
-	}
-
-	public void setMaxValue(String maxValue) {
-		this.maxValue = maxValue;
-	}
-
-	public String getMinValue() {
-		return minValue;
-	}
-
-	public void setMinValue(String minValue) {
-		this.minValue = minValue;
+		return new ValidationResult(getClass().getName(), valid, getValidationRule().getTargetType(), getFieldName(),
+				value, valid ? getValidationRule().getSuccessMessage() : getValidationRule().getFailedMessage());
 	}
 
 }

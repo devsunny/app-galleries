@@ -2,39 +2,38 @@ package com.asksunny.validator;
 
 import java.util.List;
 
-import com.asksunny.validator.annotation.FieldValidate;
-import com.asksunny.validator.annotation.ValidationOperator;
+import com.asksunny.validator.annotation.ValueValidation;
 
 public class TestChildObject {
 
 	
-	@FieldValidate(value="123456", operator=ValidationOperator.EQUALS)
+	@ValueValidation(value="123456", operator=ValidationOperator.EQUALS)
 	private int id;
 	
-	@FieldValidate(value={"NY", "NJ", "CT"}, operator=ValidationOperator.WITHIN, notNull=true)
+	@ValueValidation(value={"NY", "NJ", "CT"}, operator=ValidationOperator.WITHIN, notNull=true)
 	private String state;
 	
-	@FieldValidate(value="^S\\d{2}.+$", operator=ValidationOperator.REGEX_MATCH, notNull=false)
+	@ValueValidation(value="^S\\d{2}.+$", operator=ValidationOperator.REGEX_MATCH, notNull=false)
 	private String someText;
 	
 	
-	@FieldValidate(operator=ValidationOperator.BETWEEN, minValue="100", maxValue="1000")
+	@ValueValidation(operator=ValidationOperator.BETWEEN, minValue="100", maxValue="1000", failedMessage="Allowed value range from 100 to 1000")
 	private long betweenTest;
 	
-	@FieldValidate(operator=ValidationOperator.GREATER, minValue="10", failedMessage="size must be bigger than 10")
+	@ValueValidation(operator=ValidationOperator.GREATER, minValue="10", failedMessage="size must be bigger than 10")
 	private long sizeInLog;
 	
-	@FieldValidate(operator=ValidationOperator.GREATER_OR_EQUALS, minValue="18")
+	@ValueValidation(operator=ValidationOperator.GREATER_OR_EQUALS, minValue="18")
 	private int age;
 	
-	@FieldValidate(operator=ValidationOperator.LESS, maxValue="21", failedMessage="Must not older than 20")
+	@ValueValidation(operator=ValidationOperator.LESS, maxValue="21", failedMessage="Must not older than 20")
 	private int k12Age;
 	
-	@FieldValidate(operator=ValidationOperator.LESS_OR_EQUALS, maxValue="12")
+	@ValueValidation(operator=ValidationOperator.LESS_OR_EQUALS, maxValue="12")
 	private int k5Age;
 	
 	
-	@FieldValidate(notNull=true, minSize=1, maxSize=5 , operator=ValidationOperator.BETWEEN)
+	@ValueValidation(notNull=true, minSize=1, maxSize=5 , operator=ValidationOperator.BETWEEN)
 	private List<String> hobbies;
 	
 	public TestChildObject() 

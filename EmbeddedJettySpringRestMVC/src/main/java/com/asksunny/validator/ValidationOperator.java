@@ -1,4 +1,4 @@
-package com.asksunny.validator.annotation;
+package com.asksunny.validator;
 
 public enum ValidationOperator {
 

@@ -1,15 +1,14 @@
 package com.asksunny.validator;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.beanutils.PropertyUtils;
 
-import com.asksunny.validator.annotation.FieldValidate;
-import com.asksunny.validator.annotation.ValidationOperator;
+import com.asksunny.validator.annotation.ValueValidation;
 
 public class AnnotatedBeanValidator {
 
@@ -24,43 +23,68 @@ public class AnnotatedBeanValidator {
 		this(false);
 	}
 
-	public boolean validate(Object objInstance)
-			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	public boolean validate(Object objInstance) throws ValidationException {
 		return checkState(validateValues(objInstance));
 	}
 
-	public List<ValidationResult> validateValues(Object objInstance)
-			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	public List<ValidationResult> validateValues(Object objInstance) throws ValidationException {
 		if (objInstance == null) {
 			throw new NullPointerException("Validator cannot validate NULL");
 		}
 		List<ValidationResult> results = new ArrayList<ValidationResult>();
-		Field[] fields = getAllFields(objInstance.getClass(), new ArrayList<Field>(128)).toArray(new Field[0]);
-
-		for (Field field : fields) {
-			FieldValidate fv = field.getAnnotation(FieldValidate.class);
-			if (fv == null)
-				continue;
-			Object obj = PropertyUtils.getProperty(objInstance, field.getName());
-			if (obj == null && fv.notNull() == false) {
-				results.add(new ValidationResult(Boolean.TRUE, objInstance.getClass(), field.getName(),
-						fv.failedMessage()));
-			}else if (obj == null && fv.notNull() == true) {
-				results.add(new ValidationResult(Boolean.FALSE, objInstance.getClass(), field.getName(),
-						fv.failedMessage()));
-			}else if (obj != null && fv.operator()==ValidationOperator.NONE && fv.notNull() == false){
-				results.add(new ValidationResult(Boolean.TRUE, objInstance.getClass(), field.getName(),
-						fv.successMessage()));
-			}else{			
-				ValueValidator validator = ValueValidatorFactory.createValidator(field, fv);
-				if (validator != null) {
-					results.add(validator.validate(obj));
-				} else {
-
+		try {
+			Field[] fields = getAllFields(objInstance.getClass(), new ArrayList<Field>(128)).toArray(new Field[0]);
+			for (Field field : fields) {
+				ValueValidation fv = field.getAnnotation(ValueValidation.class);
+				if (fv == null) {
+					continue;
 				}
+				Object obj = PropertyUtils.getProperty(objInstance, field.getName());
+				validateValue(fv, objInstance.getClass(), field.getType(), field.getName(), obj, results);
 			}
+
+			Method[] methods = objInstance.getClass().getMethods();
+			for (Method method : methods) {
+				ValueValidation fv = method.getAnnotation(ValueValidation.class);
+				if (fv == null || method.getParameters().length > 0) {
+					continue;
+				}
+				Object obj = method.invoke(objInstance, new Object[0]);
+				validateValue(fv, objInstance.getClass(), method.getReturnType(), method.getName(), obj, results);
+			}
+		} catch (Exception e) {
+			throw new ValidationException("Failed to validate", e);
 		}
 		return results;
+	}
+
+	protected void validateValue(ValueValidation vvanno, Class<?> targetType, Class<?> valueType, String fieldName,
+			Object value, List<ValidationResult> results) {
+
+		if (value == null) {
+			if (vvanno.notNull()) {
+				results.add(new ValidationResult("NullableValidator", Boolean.FALSE, targetType, fieldName, null,
+						vvanno.failedMessage()));
+			} else {
+				results.add(new ValidationResult("NullableValidator", Boolean.TRUE, targetType, fieldName, null,
+						"Nullable field with null value"));
+			}
+
+		} else {
+			ValueValidator validator = ValueValidatorFactory.createValidator(targetType, valueType, fieldName, vvanno);
+			if (validator != null) {
+				validator.setShortCircuit(isShortCircuit());
+				ValidationResult result = validator.validate(value);
+				results.add(result);
+				if (this.shortCircuit && result.isSuccess() == false) {
+					throw new ValidationException(targetType, valueType, fieldName, result);
+				}
+			} else {
+				throw new NoMatchedValidatorFoundException(targetType, valueType, vvanno);
+			}
+
+		}
+
 	}
 
 	protected boolean checkState(List<ValidationResult> results) {

@@ -6,10 +6,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.asksunny.validator.ValidationOperator;
+
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = { ElementType.FIELD, ElementType.METHOD })
 @Inherited
-public @interface FieldValidate {
+public @interface ValueValidation {
 
 	boolean notNull() default false;
 
@@ -23,9 +25,7 @@ public @interface FieldValidate {
 
 	int minSize() default 0;
 
-	int maxSize() default 0;
-
-	boolean recursive() default false;
+	int maxSize() default 0;	
 
 	String failedMessage() default "";
 

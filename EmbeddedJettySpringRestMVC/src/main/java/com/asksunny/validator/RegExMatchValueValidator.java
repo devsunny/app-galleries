@@ -6,25 +6,46 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.asksunny.validator.annotation.FieldValidate;
+import com.asksunny.validator.annotation.ValueValidation;
 
 public class RegExMatchValueValidator extends ValueValidator {
 
 	private Pattern[] paterns = null;
 
-	public RegExMatchValueValidator(Class<?> fieldType, String fieldName, FieldValidate fv) {
-		this(fieldType, fieldName, fv, false);
+	public RegExMatchValueValidator(Class<?> targetType, Class<?> valueType, String fieldName, ValueValidation fv,
+			boolean neg) {
+		super(targetType, valueType, fieldName, fv, neg);
+		initPattern();
 	}
 
-	public RegExMatchValueValidator(Class<?> fieldType, String fieldName, FieldValidate fv, boolean neg) {
-		super(fieldType, fieldName, fv, neg);
-		if (fv.value().length > 0) {
-			paterns = new Pattern[fv.value().length];
+	public RegExMatchValueValidator(Class<?> targetType, Class<?> fieldType, String fieldName, ValueValidation fv) {
+		super(targetType, fieldType, fieldName, fv);
+		initPattern();
+	}
+
+	public RegExMatchValueValidator(Class<?> fieldType, String fieldName, ValueValidation fv) {
+		super(fieldType, fieldName, fv);
+		initPattern();
+	}
+
+	public RegExMatchValueValidator(String fieldName, ValueValidationRule rule, boolean neg) {
+		super(fieldName, rule, neg);
+		initPattern();
+	}
+
+	public RegExMatchValueValidator(String fieldName, ValueValidationRule rule) {
+		super(fieldName, rule);
+		initPattern();
+	}
+
+	protected void initPattern() {
+		String[] vals = getValidationRule().getValues();
+		if (vals != null && vals.length > 0) {
+			paterns = new Pattern[vals.length];
 			for (int i = 0; i < paterns.length; i++) {
-				paterns[i] = Pattern.compile(fv.value()[i]);
+				paterns[i] = Pattern.compile(vals[i]);
 			}
 		}
-
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -32,8 +53,8 @@ public class RegExMatchValueValidator extends ValueValidator {
 	public ValidationResult validate(Object value) {
 
 		if (paterns == null || paterns.length == 0) {
-			return new ValidationResult(getClass().getName(), true, getFieldType(), getFieldName(), value,
-					getFieldValidateAnnotation().successMessage());
+			return new ValidationResult(getClass().getName(), Boolean.TRUE, getValidationRule().getTargetType(),
+					getFieldName(), value, "No validation pattern been specified");
 		}
 		boolean valid = false;
 		Class<?> clz = value.getClass();
@@ -52,10 +73,9 @@ public class RegExMatchValueValidator extends ValueValidator {
 				}
 			}
 		}
-
 		valid = isNegate() ? !valid : valid;
-		return new ValidationResult(getClass().getName(), valid, getFieldType(), getFieldName(), value,
-				valid ? getFieldValidateAnnotation().successMessage() : getFieldValidateAnnotation().failedMessage());
+		return new ValidationResult(getClass().getName(), valid, getValidationRule().getTargetType(), getFieldName(), value,
+				valid ? getValidationRule().getSuccessMessage() : getValidationRule().getFailedMessage());
 	}
 
 	@SuppressWarnings("rawtypes")

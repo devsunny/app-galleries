@@ -1,44 +1,51 @@
 package com.asksunny.validator;
 
-import com.asksunny.validator.annotation.FieldValidate;
+import com.asksunny.validator.annotation.ValueValidation;
 
 public class WinthinValuesValidator extends ValueValidator {
 
-	private String[] values = null;
+	public WinthinValuesValidator(Class<?> targetType, Class<?> valueType, String fieldName, ValueValidation fv,
+			boolean neg) {
+		super(targetType, valueType, fieldName, fv, neg);
 
-	public WinthinValuesValidator(Class<?> type, String fieldName, FieldValidate fv) {
-		this(type, fieldName, fv, false);
 	}
 
-	public WinthinValuesValidator(Class<?> type, String fieldName, FieldValidate fv, boolean neg) {
-		super(type, fieldName, fv, neg);
-		this.values = fv.value();
+	public WinthinValuesValidator(Class<?> targetType, Class<?> fieldType, String fieldName, ValueValidation fv) {
+		super(targetType, fieldType, fieldName, fv);
+
 	}
 
-	public String[] getValues() {
-		return values;
+	public WinthinValuesValidator(Class<?> fieldType, String fieldName, ValueValidation fv) {
+		super(fieldType, fieldName, fv);
+
 	}
 
-	public void setValues(String[] values) {
-		this.values = values;
+	public WinthinValuesValidator(String fieldName, ValueValidationRule rule, boolean neg) {
+		super(fieldName, rule, neg);
+
+	}
+
+	public WinthinValuesValidator(String fieldName, ValueValidationRule rule) {
+		super(fieldName, rule);
+
 	}
 
 	@Override
 	public ValidationResult validate(Object val) {
-		if (getValues() == null || val == null) {
-			return new ValidationResult(false, getFieldType(), getFieldName(),
-					getFieldValidateAnnotation().failedMessage());
+		if (getValidationRule().getValues() == null || val == null) {
+			return new ValidationResult(getClass().getName(), Boolean.FALSE, getValidationRule().getTargetType(),
+					getFieldName(), val, "No comparing rule been specified");
 		}
 		boolean valid = false;
-		for (String cmpVal : getValues()) {
+		for (String cmpVal : getValidationRule().getValues()) {
 			valid = valueCompare(cmpVal, val) == 0;
 			if (valid) {
 				break;
 			}
 		}
 		valid = isNegate() ? !valid : valid;
-		return new ValidationResult(getClass().getName(), valid, getFieldType(), getFieldName(), val,
-				valid ? getFieldValidateAnnotation().successMessage() : getFieldValidateAnnotation().failedMessage());
+		return new ValidationResult(getClass().getName(), valid, getValidationRule().getTargetType(), getFieldName(),
+				val, valid ? getValidationRule().getSuccessMessage() : getValidationRule().getFailedMessage());
 
 	}
 
