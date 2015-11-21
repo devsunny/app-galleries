@@ -1,8 +1,5 @@
 package com.asksunny.app;
 
-import org.apache.ignite.Ignition;
-import org.apache.ignite.configuration.IgniteConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
