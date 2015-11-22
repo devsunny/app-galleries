@@ -24,8 +24,40 @@
 
 	<context:property-placeholder location="classpath:web-app.properties" />
 	<context:component-scan
-		base-package="com.asksunny.rest.controller, com.asksunny.web.controller" />
+		base-package="com.asksunny.rest.controller, com.asksunny.web.controller, com.asksunny.app.service" />
 
+
+	<jdbc:embedded-database id="dataSource" type="H2">
+		<jdbc:script location="classpath:schema.sql" />
+		<jdbc:script location="classpath:seed-data.sql" />
+	</jdbc:embedded-database>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="transactionFactory">
+			<bean
+				class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
+		</property>
+		<property name="mapperLocations" value="classpath*:com/asksunny/mappers/**/*.xml" />
+		<property name="typeAliasesPackage" value="com.asksunny.app.domain" />
+	</bean>
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.asksunny.app.mappers" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+
+	
+	
+	
+	
+	
 
 	<bean id="contentNegotiationManager"
 		class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">

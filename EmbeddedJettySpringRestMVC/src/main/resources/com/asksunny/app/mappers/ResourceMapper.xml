@@ -1,0 +1,32 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asksunny.app.mappers.ResourceMapper">
+
+	
+	<select id="getResourceByName" parameterType="string"
+		resultType="Resource">
+		select name, maxCapacity, reservedCapacity from Resources
+		where name =
+		#{name}
+	</select>
+	
+	<select id="getResources" resultType="Resource">
+		select name, maxCapacity, reservedCapacity from Resources		
+	</select>
+		
+	<insert id="insertResource" parameterType="Resource">
+		INSERT INTO Resources
+		(name, maxCapacity, reservedCapacity)
+		values (#{name}, #{maxCapacity},
+		#{reservedCapacity});
+	</insert>
+
+	<update id="updateResource" parameterType="Resource">
+		update Resources set
+		maxCapacity = #{maxCapacity}
+		, reservedCapacity=#{reservedCapacity}
+		where name = #{name}
+	</update>
+
+</mapper>
