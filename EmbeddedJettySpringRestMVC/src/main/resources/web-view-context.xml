@@ -15,7 +15,7 @@
     http://www.springframework.org/schema/mvc
     http://www.springframework.org/schema/mvc/spring-mvc.xsd   
     http://www.springframework.org/schema/task
-    http://www.springframework.org/schema/mvc/spring-task.xsd  
+    http://www.springframework.org/schema/task/spring-task.xsd  
     http://www.springframework.org/schema/cache
     http://www.springframework.org/schema/cache/spring-cache.xsd   
     http://www.springframework.org/schema/util
@@ -23,41 +23,42 @@
     ">
 
 	<context:property-placeholder location="classpath:web-app.properties" />
-	<context:component-scan
-		base-package="com.asksunny.rest.controller, com.asksunny.web.controller, com.asksunny.app.service" />
+	<mvc:annotation-driven />
+	<mvc:resources location="classpath:/META-INF/images/"
+		mapping="/images/**" />
+	<mvc:resources location="classpath:/META-INF/css/"
+		mapping="/css/**" />
+	<mvc:resources location="classpath:/META-INF/scripts/"
+		mapping="/scripts/**" />
 
-
-	<jdbc:embedded-database id="dataSource" type="H2">
-		<jdbc:script location="classpath:schema.sql" />
-		<jdbc:script location="classpath:seed-data.sql" />
-	</jdbc:embedded-database>
-
-	<bean id="transactionManager"
-		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-		<property name="dataSource" ref="dataSource" />
+	<!-- Internationalization -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="Messages" />
 	</bean>
 
-
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-		<property name="dataSource" ref="dataSource" />
-		<property name="transactionFactory">
-			<bean
-				class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
-		</property>
-		<property name="mapperLocations" value="classpath*:com/asksunny/mappers/**/*.xml" />
-		<property name="typeAliasesPackage" value="com.asksunny.app.domain" />
+	<!-- conversion-service="conversionService" <bean id="conversionService" 
+		class="org.springframework.format.support.FormattingConversionServiceFactoryBean"> 
+		<property name="formatters"> <set> <bean class="thymeleafexamples.stsm.web.conversion.DateFormatter" 
+		/> </set> </property> </bean> -->
+		
+		
+	<bean id="templateResolver"
+		class="org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver">
+		<property name="prefix" value="classpath:/META-INF/views/" />
+		<property name="suffix" value=".html" />
+		<property name="templateMode" value="HTML5" />
+		<property name="order" value="0" />
 	</bean>
 
-	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="com.asksunny.app.mappers" />
-		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	<bean id="templateEngine" class="org.thymeleaf.spring4.SpringTemplateEngine">
+		<property name="templateResolver" ref="templateResolver" />
 	</bean>
 
-	
-	
-	
-	
-	
+	<bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">
+		<property name="templateEngine" ref="templateEngine" />
+	</bean>
+
 
 	<bean id="contentNegotiationManager"
 		class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
@@ -92,15 +93,5 @@
 				class="org.springframework.http.converter.StringHttpMessageConverter" />
 		</mvc:message-converters>
 	</mvc:annotation-driven>
-
-
-
-	<bean id="resourceGovernor" class="com.asksunny.app.service.ResourceGovernor"></bean>
-	<bean id="policyManagementService" class="com.asksunny.app.service.PolicyManagementService"></bean>
-	<bean id="resourceManagementService" class="com.asksunny.app.service.ResourceManagementService"></bean>
-	<bean id="simpleService" class="com.asksunny.app.service.SimpleInMemoryService">
-	</bean>
-
-
 
 </beans>

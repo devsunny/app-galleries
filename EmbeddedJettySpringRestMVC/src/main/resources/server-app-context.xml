@@ -15,7 +15,7 @@
     http://www.springframework.org/schema/mvc
     http://www.springframework.org/schema/mvc/spring-mvc.xsd   
     http://www.springframework.org/schema/task
-    http://www.springframework.org/schema/mvc/spring-task.xsd  
+    http://www.springframework.org/schema/task/spring-task.xsd  
     http://www.springframework.org/schema/cache
     http://www.springframework.org/schema/cache/spring-cache.xsd   
     http://www.springframework.org/schema/util
@@ -25,9 +25,9 @@
 
 	<bean id="springDispatcher" class="org.springframework.web.servlet.DispatcherServlet">
 		<property name="contextConfigLocation"
-			value="classpath:hazelcast-context.xml, classpath:app-web-context.xml"></property>
+			value="classpath:hazelcast-context.xml, classpath:app-context.xml, classpath:web-view-context.xml"></property>
 	</bean>
-
+	<!-- , classpath:web-view-context.xml -->
 	<bean id="springDispatcherHolder" class="org.eclipse.jetty.servlet.ServletHolder">
 		<constructor-arg>
 			<ref bean="springDispatcher"></ref>
