@@ -26,6 +26,8 @@
 	<mvc:annotation-driven />
 	<mvc:resources location="classpath:/META-INF/images/"
 		mapping="/images/**" />
+		<mvc:resources location="classpath:/META-INF/htmls/"
+		mapping="/htmls/**" />
 	<mvc:resources location="classpath:/META-INF/css/"
 		mapping="/css/**" />
 	<mvc:resources location="classpath:/META-INF/scripts/"
