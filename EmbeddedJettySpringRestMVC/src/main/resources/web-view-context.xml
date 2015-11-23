@@ -30,6 +30,8 @@
 		mapping="/css/**" />
 	<mvc:resources location="classpath:/META-INF/scripts/"
 		mapping="/scripts/**" />
+		<mvc:resources location="classpath:/META-INF/fonts/"
+		mapping="/fonts/**" />
 
 	<!-- Internationalization -->
 	<bean id="messageSource"
