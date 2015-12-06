@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import org.apache.hadoop.io.compress.GzipCodec;
 
 //44 GB.It tooks 851 seconds 
+//6 GB.It tooks 1490 seconds GZIP
 public class CSVFileTest extends BenchmarkBase {
 
 	@Override
