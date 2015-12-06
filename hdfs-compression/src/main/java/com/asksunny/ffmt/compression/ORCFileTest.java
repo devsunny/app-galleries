@@ -64,5 +64,17 @@ public class ORCFileTest extends BenchmarkBase {
 	protected void writeObjects(OutputStream fout) throws IOException {
 
 	}
+	
+	public static void main(String[] args) throws Exception 
+	{
+		ORCFileTest test = new ORCFileTest();		
+		test.start();
+		test.write(null, "target/orcTestObject.orc");
+		long d1  = test.stopInSeconds();
+		System.out.printf("It tooks %d seconds to generate %d records in CSV format\n", d1, test.getNumberOfRecord());
+		
+				
+	}
+	
 
 }
