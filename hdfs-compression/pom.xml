@@ -16,7 +16,12 @@
 		</plugins>
 	</build>
 	<dependencies>
-		
+
+		<dependency>
+			<groupId>com.hadoop.gplcompression</groupId>
+			<artifactId>hadoop-lzo</artifactId>
+			<version>cdh4-0.4.15-gplextras</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.hive</groupId>
@@ -29,25 +34,13 @@
 			<version>1.2.1</version>
 		</dependency>
 
-
-
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
 			<version>1.8.1</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.anarres.lzo</groupId>
-			<artifactId>lzo-hadoop</artifactId>
-			<version>1.0.0</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>hadoop-core</artifactId>
-					<groupId>org.apache.hadoop</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -55,4 +48,10 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<repositories>
+		<repository>
+			<id>cloudera-repo-releases</id>
+			<url>https://repository.cloudera.com/artifactory/repo/</url>
+		</repository>
+	</repositories>
 </project>

@@ -14,7 +14,9 @@ import org.apache.hadoop.hive.ql.io.orc.Writer;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.io.compress.GzipCodec;
-
+//26 GB. 391 seconds
+//2 GB. 509 seconds GZIP
+//5 GB. 411 seconds SNAPPY
 public class ORCFileTest extends BenchmarkBase {
 
 	@Override
@@ -68,10 +70,11 @@ public class ORCFileTest extends BenchmarkBase {
 	public static void main(String[] args) throws Exception 
 	{
 		ORCFileTest test = new ORCFileTest();		
+		test.setNumberOfRecord(10);
 		test.start();
-		test.write(null, "target/orcTestObject.orc");
+		test.write("lzo", "target/orcTestObject.orc.lzo");
 		long d1  = test.stopInSeconds();
-		System.out.printf("It tooks %d seconds to generate %d records in CSV format\n", d1, test.getNumberOfRecord());
+		System.out.printf("It tooks %d seconds to generate %d records in %s format\n", d1, test.getNumberOfRecord(), "lzo");
 		
 				
 	}

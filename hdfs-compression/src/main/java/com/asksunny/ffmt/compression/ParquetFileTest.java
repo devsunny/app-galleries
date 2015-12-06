@@ -3,11 +3,14 @@ package com.asksunny.ffmt.compression;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.GzipCodec;
 
 import parquet.example.data.Group;
 import parquet.example.data.simple.SimpleGroup;
@@ -90,5 +93,32 @@ public class ParquetFileTest extends BenchmarkBase {
 		
 
 	}
+	
+	public static void main(String[] args) throws Exception 
+	{
+		PrintWriter out = new PrintWriter("ParquetFileTest.stdout");
+		PrintStream sysout = new PrintStream("Parquetlib.stdout");
+		System.setOut(sysout);
+		ParquetFileTest test = new ParquetFileTest();		
+		test.start();
+		test.write(null, "target/parquetTestObject.parquet");
+		long d1  = test.stopInSeconds();
+		out.printf("It tooks %d seconds to generate %d records in %s format\n", d1, test.getNumberOfRecord(), "");
+		out.flush();
+		
+		test.start();
+		test.write("gzip", "target/csvTestObject.parquet.gzip");
+		long d2  = test.stopInSeconds();
+		out.printf("It tooks %d seconds to generate %d records in CSV GZIP format\n", d2, test.getNumberOfRecord(), "gzip");
+		out.flush();
+		
+		test.start();
+		test.write("snappy", "target/csvTestObject.parquet.snappy");
+		d2  = test.stopInSeconds();
+		out.printf("It tooks %d seconds to generate %d records in CSV GZIP format\n", d2, test.getNumberOfRecord(), "snappy");
+		out.flush();
+		out.close();
+	}
+	
 
 }
