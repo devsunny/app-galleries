@@ -1,19 +1,16 @@
 package com.asksunny.ffmt.compression;
 
-import static parquet.Preconditions.checkNotNull;
 import static parquet.schema.MessageTypeParser.parseMessageType;
 
 import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
 
-import parquet.Preconditions;
 import parquet.example.data.Group;
 import parquet.example.data.GroupWriter;
 import parquet.hadoop.api.WriteSupport;
 import parquet.io.api.RecordConsumer;
 import parquet.schema.MessageType;
-import parquet.schema.MessageTypeParser;
 
 public class GroupWriteSupportI extends WriteSupport<Group> {
 

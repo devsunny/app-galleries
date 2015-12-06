@@ -42,14 +42,11 @@ public class CSVFileTest extends BenchmarkBase {
 	{
 		CSVFileTest test = new CSVFileTest();		
 		test.start();
-		test.write(null, "target/csvTestObject.txt");
+		test.write("snappy", "target/csvTestObject.txt.snappy");
 		long d1  = test.stopInSeconds();
-		System.out.printf("It tooks %d seconds to generate %d records in CSV format\n", d1, test.getNumberOfRecord());
+		System.out.printf("It tooks %d seconds to generate %d records in %s format\n", d1, test.getNumberOfRecord(), "snappy");
 		
-		test.start();
-		test.write(GzipCodec.class.getName(), "target/csvTestObject.txt");
-		long d2  = test.stopInSeconds();
-		System.out.printf("It tooks %d seconds to generate %d records in CSV GZIP format\n", d2, test.getNumberOfRecord());
+		
 		
 	}
 	

@@ -10,7 +10,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.compress.GzipCodec;
 
 import parquet.example.data.Group;
 import parquet.example.data.simple.SimpleGroup;
@@ -109,13 +108,13 @@ public class ParquetFileTest extends BenchmarkBase {
 		test.start();
 		test.write("gzip", "target/csvTestObject.parquet.gzip");
 		long d2  = test.stopInSeconds();
-		out.printf("It tooks %d seconds to generate %d records in CSV GZIP format\n", d2, test.getNumberOfRecord(), "gzip");
+		out.printf("It tooks %d seconds to generate %d records in CSV %s format\n", d2, test.getNumberOfRecord(), "gzip");
 		out.flush();
 		
 		test.start();
 		test.write("snappy", "target/csvTestObject.parquet.snappy");
 		d2  = test.stopInSeconds();
-		out.printf("It tooks %d seconds to generate %d records in CSV GZIP format\n", d2, test.getNumberOfRecord(), "snappy");
+		out.printf("It tooks %d seconds to generate %d records in CSV %s format\n", d2, test.getNumberOfRecord(), "snappy");
 		out.flush();
 		out.close();
 	}
