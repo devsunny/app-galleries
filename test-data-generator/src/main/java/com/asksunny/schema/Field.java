@@ -1,5 +1,6 @@
 package com.asksunny.schema;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Field {
@@ -20,15 +21,19 @@ public class Field {
 	String step;
 	boolean random;
 
-	List<Field> referencedBy;
+	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
 
 	public List<Field> getReferencedBy() {
 		return referencedBy;
 	}
 
-	public void setReferencedBy(List<Field> referencedBy) {
-		this.referencedBy = referencedBy;
+	public void addReferencedBy(List<Field> referencedBy) {
+		this.referencedBy.addAll(referencedBy);
+	}
+
+	public void addReferencedBy(Field referencedBy) {
+		this.referencedBy.add(referencedBy);
 	}
 
 	public Field getReference() {
