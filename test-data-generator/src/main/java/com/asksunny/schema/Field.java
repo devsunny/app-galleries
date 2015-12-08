@@ -5,6 +5,11 @@ import java.util.List;
 
 public class Field {
 
+	public Field() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
 	Entity container;
 
 	int jdbcType;
@@ -19,10 +24,35 @@ public class Field {
 	String maxValue;
 	String minValue;
 	String step;
-	boolean random;
+	ValueRandomType random = ValueRandomType.FALSE;
 
 	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
+
+	public Field(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
+			DataGenType dataType, String minValue, String maxValue, String format, String step,
+			ValueRandomType random) {
+		super();
+		this.jdbcType = jdbcType;
+		this.scale = scale;
+		this.precision = precision;
+		this.displaySize = displaySize;
+		this.nullable = nullable;
+		this.name = name;
+		this.dataType = dataType;
+		this.minValue = minValue;
+		this.maxValue = maxValue;
+		this.format = format;
+		this.step = step;
+		this.random = random;
+	}
+
+	public static Field newField(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
+			DataGenType dataType, String minValue, String maxValue, String format, String step,
+			ValueRandomType random) {
+		return new Field(jdbcType, scale, precision, displaySize, nullable, name, dataType, minValue, maxValue, format,
+				step, random);
+	}
 
 	public List<Field> getReferencedBy() {
 		return referencedBy;
@@ -132,11 +162,11 @@ public class Field {
 		this.step = step;
 	}
 
-	public boolean isRandom() {
+	public ValueRandomType isRandom() {
 		return random;
 	}
 
-	public void setRandom(boolean random) {
+	public void setRandom(ValueRandomType random) {
 		this.random = random;
 	}
 
@@ -147,5 +177,16 @@ public class Field {
 	public void setContainer(Entity container) {
 		this.container = container;
 	}
+
+	@Override
+	public String toString() {
+		return "Field [container=" + container + ", name=" + name + ", jdbcType=" + jdbcType + ", precision="
+				+ precision + ", scale=" + scale + ", displaySize=" + displaySize + ", nullable=" + nullable
+				+ ", dataType=" + dataType + ", format=" + format + ", minValue=" + minValue + ", maxValue=" + maxValue
+				+ ", reference=" + reference + ", step=" + step + ", random=" + random + ", referencedBy="
+				+ referencedBy + "]";
+	}
+	
+	
 
 }

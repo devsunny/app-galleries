@@ -2,6 +2,7 @@ package com.asksunny.schema.generator;
 
 import java.util.Date;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 public class TimestampGenerator implements Generator<Timestamp> {
@@ -10,6 +11,25 @@ public class TimestampGenerator implements Generator<Timestamp> {
 	private long maxValue;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+	
+	public TimestampGenerator(String minValue, String maxValue, String format) {
+		super();
+
+		if (format != null) {
+			this.sdf = new SimpleDateFormat(format);
+			try {
+				this.minValue = minValue == null ? 0 : this.sdf.parse(minValue).getTime();
+				this.maxValue = maxValue == null ? 0 : this.sdf.parse(maxValue).getTime();
+			} catch (ParseException e) {
+				throw new IllegalArgumentException(String.format("%s %s expect %s", minValue, maxValue, format));
+			}
+		} else {
+			this.minValue = minValue == null ? 0 : Long.valueOf(minValue);
+			this.maxValue = maxValue == null ? 0 : Long.valueOf(maxValue);
+		}
+	}
+	
+	
 	public TimestampGenerator(long minValue, long maxValue) {
 		super();
 		this.minValue = minValue;

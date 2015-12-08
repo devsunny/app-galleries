@@ -24,6 +24,11 @@ public class Schema extends HashMap<String, Entity> {
 		this.name = name;
 	}
 
+	public Schema(String name) {
+		super();
+		this.name = name;
+	}
+
 	@Override
 	public Entity get(Object arg0) {
 		return super.get(arg0.toString().toUpperCase());

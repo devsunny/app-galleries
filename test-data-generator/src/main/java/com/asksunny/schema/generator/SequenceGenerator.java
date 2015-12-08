@@ -2,13 +2,13 @@ package com.asksunny.schema.generator;
 
 import java.math.BigInteger;
 
-public class SequenceGenerator {
+public class SequenceGenerator implements Generator<BigInteger> {
 	private BigInteger sequence;
 	private BigInteger step = new BigInteger("1");
 
 	public SequenceGenerator(String base, String step) {
-		this.sequence = new BigInteger(base);
-		this.step = new BigInteger(step);
+		this.sequence = base == null ? new BigInteger("1") : new BigInteger(base);
+		this.step = step == null ? new BigInteger("1") : new BigInteger(step);
 	}
 
 	public SequenceGenerator() {
@@ -21,13 +21,18 @@ public class SequenceGenerator {
 		this.step = new BigInteger(String.valueOf(step));
 	}
 
-	public String nextValue() {
+	public String nextStringValue() {
 		String ret = sequence.toString();
 		sequence = sequence.add(step);
 		return ret;
 	}
-	
-	
+
+	@Override
+	public BigInteger nextValue() {
+		String ret = sequence.toString();
+		sequence = sequence.add(step);
+		return new BigInteger(ret);
+	}
 
 	public static void main(String[] args) {
 		SequenceGenerator gen = new SequenceGenerator(10, 3);

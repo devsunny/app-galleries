@@ -7,10 +7,17 @@ public class Entity {
 
 	private String name;
 
-	private List<Field> fields;
+	private final List<Field> fields = new ArrayList<>();;
+
+	
 
 	public String getName() {
 		return name;
+	}
+
+	public Entity(String name) {
+		super();
+		this.name = name;
 	}
 
 	public void setName(String name) {
@@ -21,11 +28,17 @@ public class Entity {
 		return fields;
 	}
 
+	public void addField(Field field) {
+		field.setContainer(this);
+		this.fields.add(field);
+	}
+
 	public void setFields(List<Field> fields) {
-		this.fields = fields;
-		for (Field fd : this.fields) {
+
+		for (Field fd : fields) {
 			fd.setContainer(this);
 		}
+		this.fields.addAll(fields);
 	}
 
 	public Field findField(String name) {
@@ -53,14 +66,13 @@ public class Entity {
 
 	public boolean hasReference() {
 		if (this.fields != null) {
-			for (Field fd : this.fields) {
-				if (fd.reference != null) {
-					return true;
+			for (Field fd : this.fields) {				
+				if (fd.reference != null) {					
+					return true;					
 				}
 			}
 		}
 		return false;
-
 	}
 
 }
