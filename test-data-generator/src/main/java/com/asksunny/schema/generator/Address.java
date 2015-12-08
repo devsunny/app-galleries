@@ -1,4 +1,4 @@
-package com.asksunny.schema;
+package com.asksunny.schema.generator;
 
 public class Address 
 {

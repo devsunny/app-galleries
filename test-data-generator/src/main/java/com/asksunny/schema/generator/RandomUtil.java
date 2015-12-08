@@ -1,6 +1,7 @@
-package com.asksunny.schema;
+package com.asksunny.schema.generator;
 
 import java.security.SecureRandom;
+import java.util.Random;
 import java.util.UUID;
 
 public final class RandomUtil {
@@ -41,7 +42,58 @@ public final class RandomUtil {
 	}
 
 	public int getUnsignedInt(int max) {
-		return Math.abs(random.nextInt(max))%max;
+		return Math.abs(random.nextInt(max)) % max;
+	}
+
+	public int getRandomInt(int min, int max) {
+		if (max == Integer.MAX_VALUE) {
+			return min + (Math.abs(random.nextInt(Integer.MAX_VALUE)) & 0x0FFFFFFF);
+		} else {
+			return min + Math.abs(random.nextInt(((max - min) & 0x0FFFFFFF)));
+		}
+
+	}
+	
+	public Random getRandom()
+	{
+		return this.random;
+	}
+
+	public long getRandomLong(long min, long max) {
+
+		long rlong = random.nextLong();
+		if (rlong >= min && rlong <= max) {
+			return rlong;
+		} else if (rlong > max) {
+			return rlong % max;
+		} else {
+			return (min + rlong) % max;
+		}
+
+	}
+
+	public double getRandomDouble(double min, double max) {
+		double rlong = random.nextDouble();
+		if (rlong >= min && rlong <= max) {
+			return rlong;
+		} else if (rlong > max) {
+			return rlong % max;
+		} else {
+			return (min + rlong) % max;
+		}
+
+	}
+
+	public float getRandomFloat(float min, float max) {
+		float rlong = random.nextFloat();
+		if (rlong >= min && rlong <= max) {
+			return rlong;
+		} else if (rlong > max) {
+			return rlong % max;
+		} else {
+			return (min + rlong) % max;
+		}
+
 	}
 
 	public String getFormattedString(String format) {
@@ -65,8 +117,8 @@ public final class RandomUtil {
 	public static RandomUtil getInstance() {
 		return instance;
 	}
-	
-	public static void main(String[] args){
+
+	public static void main(String[] args) {
 		System.out.println(RandomUtil.getInstance().getFormattedString("XDX-DDD-DD-DDDD"));
 	}
 

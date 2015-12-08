@@ -1,4 +1,4 @@
-package com.asksunny.schema;
+package com.asksunny.schema.generator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
