@@ -1,17 +1,14 @@
 package com.asksunny.schema.generator;
 
+import com.asksunny.schema.Field;
+
 public class FirstNameGenerator implements Generator<String> {
 
-	private boolean nullable;
+	private Field field;
 
-	public FirstNameGenerator(boolean nullable) {
+	public FirstNameGenerator(Field field) {
 		super();
-		this.nullable = nullable;
-	}
-
-	public FirstNameGenerator() {
-		super();
-		this.nullable = false;
+		this.field = field;
 	}
 
 	@Override
@@ -21,10 +18,11 @@ public class FirstNameGenerator implements Generator<String> {
 
 	@Override
 	public String nextValue() {
-		if (nullable && RandomUtil.getInstance().getUnsignedInt(100000) % 13 == 0) {
+		if (field.isNullable() && RandomUtil.getInstance().isOddEnough()) {
 			return null;
+		}else{
+			return PersonNameUtils.getInstance().getFirstName();
 		}
-		return PersonNameUtils.getInstance().getFirstName();
 	}
 
 }

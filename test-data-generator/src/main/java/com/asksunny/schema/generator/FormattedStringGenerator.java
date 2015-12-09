@@ -1,26 +1,26 @@
 package com.asksunny.schema.generator;
 
+import com.asksunny.schema.Field;
+
 public class FormattedStringGenerator implements Generator<String> {
 
-	
 	private String format;
-	private boolean nullable;
-	
-	
-	public FormattedStringGenerator(String format, boolean nullable) {
+	private Field fmtField;
+
+	public FormattedStringGenerator(Field fmtField) {
 		super();
-		this.format = format;
-		this.nullable = nullable;
+		this.format = fmtField.getFormat();
+		this.fmtField = fmtField;
 	}
 
 	@Override
-	public String nextStringValue() {		
+	public String nextStringValue() {
 		return nextValue();
 	}
 
 	@Override
 	public String nextValue() {
-		if (nullable && RandomUtil.getInstance().getUnsignedInt(100000) % 13 == 0) {
+		if (this.fmtField.isNullable() && RandomUtil.getInstance().isOddEnough()) {
 			return null;
 		}
 		return RandomUtil.getInstance().getFormattedString(format);

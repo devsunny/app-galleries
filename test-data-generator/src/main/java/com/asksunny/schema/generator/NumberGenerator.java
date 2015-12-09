@@ -2,6 +2,8 @@ package com.asksunny.schema.generator;
 
 import java.math.BigDecimal;
 
+import com.asksunny.schema.Field;
+
 public class NumberGenerator implements Generator<BigDecimal> {
 
 	private int precision;
@@ -9,24 +11,29 @@ public class NumberGenerator implements Generator<BigDecimal> {
 
 	private long intDigitsMax = 0L;
 	private long decimalDigitsMax = 0L;
+	private Field field;
 
-	public NumberGenerator(int precision, int scale) {
+	public NumberGenerator(Field field) {
 		super();
-		this.precision = precision;
-		this.scale = scale;
+		this.precision = field.getPrecision();
+		this.scale = field.getScale();
+		this.field = field;
 		decimalDigitsMax = (long) Math.pow(10, this.scale);
 		intDigitsMax = (long) Math.pow(10, this.precision - this.scale);
-	}
 
-	public NumberGenerator() {
-		this(16, 0);
 	}
 
 	public String nextStringValue() {
-		return nextValue().toPlainString();
+		BigDecimal out = nextValue();
+		return out == null ? null : nextValue().toPlainString();
 	}
 
 	public BigDecimal nextValue() {
+
+		if (field.isNullable() && RandomUtil.getInstance().isOddEnough()) {
+			return null;
+		}
+
 		if (this.scale > 0) {
 			return new BigDecimal(String.format("%d.%d", RandomUtil.getInstance().getUnsignedLong(intDigitsMax),
 					RandomUtil.getInstance().getUnsignedLong(decimalDigitsMax)));
@@ -34,11 +41,6 @@ public class NumberGenerator implements Generator<BigDecimal> {
 			return new BigDecimal(RandomUtil.getInstance().getUnsignedLong(intDigitsMax));
 
 		}
-	}
-
-	public static void main(String[] args) {
-		NumberGenerator g = new NumberGenerator(5, 2);
-		System.out.println(g.nextStringValue());
 	}
 
 }

@@ -50,6 +50,19 @@ public final class RandomUtil {
 		return l % max;
 	}
 
+	public long getUnsignedLong(long min, long max) {
+		long l = getUnsignedLong(max);
+		if (l < min) {
+			l = min + (l % (max - min));
+		}
+		return l;
+	}
+	
+	public boolean isOddEnough()
+	{
+		return getUnsignedInt(10000)%13==0;
+	}
+
 	public int getRandomInt(int min, int max) {
 		if (max == Integer.MAX_VALUE) {
 			return min + (Math.abs(random.nextInt(Integer.MAX_VALUE)) & 0x7FFFFFFF);
@@ -124,9 +137,9 @@ public final class RandomUtil {
 
 	public static void main(String[] args) {
 		System.out.println(RandomUtil.getInstance().getFormattedString("XDX-DDD-DD-DDDD"));
-		
+
 		long t = 1L;
-		long x = t  & 0x7FFFFFFFFFFFFFFFL;
+		long x = t & 0x7FFFFFFFFFFFFFFFL;
 		System.out.println(x);
 	}
 

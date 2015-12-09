@@ -1,14 +1,16 @@
 package com.asksunny.schema.generator;
 
+import com.asksunny.schema.Field;
+
 public class TextGenerator implements Generator<String> {
 
 	private int size;
-	private boolean nullable;
+	private Field field;
 
-	public TextGenerator(int size, boolean nullable) {
+	public TextGenerator(Field field) {
 		super();
-		this.size = size;
-		this.nullable = true;
+		this.size = field.getDisplaySize();
+		this.field = field;
 	}
 
 	@Override
@@ -18,6 +20,9 @@ public class TextGenerator implements Generator<String> {
 
 	@Override
 	public String nextValue() {
+		if (field.isNullable() && RandomUtil.getInstance().isOddEnough()) {
+			return null;
+		}
 		String ret = TextUtils.getInstance().getText(0, size);
 		if (ret.length() == 0 || ret.length() % 13 == 0) {
 			return null;

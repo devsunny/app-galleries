@@ -25,6 +25,9 @@ public class Field {
 	String minValue;
 	String step;
 	ValueRandomType random = ValueRandomType.FALSE;
+	int fieldIndex;
+	String enumValues;
+	
 
 	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
@@ -46,6 +49,20 @@ public class Field {
 		this.step = step;
 		this.random = random;
 	}
+	
+	
+
+	public int getFieldIndex() {
+		return fieldIndex;
+	}
+
+
+
+	public void setFieldIndex(int fieldIndex) {
+		this.fieldIndex = fieldIndex;
+	}
+
+
 
 	public static Field newField(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
 			DataGenType dataType, String minValue, String maxValue, String format, String step,
@@ -185,6 +202,18 @@ public class Field {
 				+ ", dataType=" + dataType + ", format=" + format + ", minValue=" + minValue + ", maxValue=" + maxValue
 				+ ", reference=" + reference + ", step=" + step + ", random=" + random + ", referencedBy="
 				+ referencedBy + "]";
+	}
+
+
+
+	public String getEnumValues() {
+		return enumValues;
+	}
+
+
+
+	public void setEnumValues(String enumValues) {
+		this.enumValues = enumValues;
 	}
 	
 	

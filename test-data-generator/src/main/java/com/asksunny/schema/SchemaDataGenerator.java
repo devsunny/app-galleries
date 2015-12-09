@@ -1,22 +1,30 @@
 package com.asksunny.schema;
 
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.asksunny.schema.generator.AddressHolder;
+import com.asksunny.schema.generator.BinaryGenerator;
 import com.asksunny.schema.generator.CityGenerator;
 import com.asksunny.schema.generator.DateGenerator;
+import com.asksunny.schema.generator.DoubleGenerator;
+import com.asksunny.schema.generator.EnumGenerator;
 import com.asksunny.schema.generator.FirstNameGenerator;
 import com.asksunny.schema.generator.FormattedStringGenerator;
 import com.asksunny.schema.generator.Generator;
+import com.asksunny.schema.generator.IntegerGenerator;
 import com.asksunny.schema.generator.LastNameGenerator;
+import com.asksunny.schema.generator.NumberGenerator;
+import com.asksunny.schema.generator.RefValueGenerator;
 import com.asksunny.schema.generator.SequenceGenerator;
 import com.asksunny.schema.generator.StateGenerator;
 import com.asksunny.schema.generator.StreetGenerator;
 import com.asksunny.schema.generator.TextGenerator;
 import com.asksunny.schema.generator.TimeGenerator;
 import com.asksunny.schema.generator.TimestampGenerator;
-import com.asksunny.schema.generator.UDoubleGenerator;
 import com.asksunny.schema.generator.UIntegerGenerator;
 import com.asksunny.schema.generator.ULongGenerator;
 import com.asksunny.schema.generator.ZipGenerator;
@@ -29,40 +37,95 @@ public class SchemaDataGenerator {
 	private String schemaUri;
 	private Schema schema;
 	private long numberOfRecords;
+	private Map<String, List<Generator<?>>> cacheGenerators = new HashMap<>();
+	private Map<String, RefereeDataGenerator> cacheRefereeGenerators = new HashMap<>();
 
-	protected void generateData() {
+	public void generateData() {
+		schema.buildRelationship();
 		List<Entity> entityes = schema.getIndependentEntities();
 		for (Entity entity : entityes) {
-			System.out.println(entity.getName());
-			 generateData(entity, creatorFieldGenerator(entity));
+			EntityDataGenerator entGen = new EntityDataGenerator(this, entity, creatorFieldGenerator(entity));
+			entGen.generateData();
 		}
-
 	}
 
-	protected void generateData(Entity entity, List<Generator<?>> generators) {
+	public RefereeDataGenerator creatorRefereeGenerator(Entity entity, Field refBy) {
 
-		for (long i = 0; i < numberOfRecords; i++) {
-			for (Generator<?> gen : generators) {
-				System.out.print(gen.nextStringValue());
-				System.out.print(",");
-			}
-			System.out.println();
+		RefereeDataGenerator generator = null;
+		generator = this.cacheRefereeGenerators.get(entity.getName().toUpperCase());
+		if (generator == null) {
+			List<Generator<?>> gens = creatorFieldGenerator(entity);
+			generator = new RefereeDataGenerator(entity, refBy, gens);
+			this.cacheRefereeGenerators.put(entity.getName().toUpperCase(), generator);
 		}
+		return generator;
 
 	}
 
 	protected List<Generator<?>> creatorFieldGenerator(Entity entity) {
 
-		List<Generator<?>> generators = new ArrayList<>();
-		List<Field> fields = entity.getFields();
-		for (Field field : fields) {
-			generators.add(creatorFieldGenerator(field));
+		List<Generator<?>> generators = null;
+		generators = cacheGenerators.get(entity.getName().toUpperCase());
+		if (generators == null) {
+			generators = new ArrayList<>();
+			List<Field> fields = entity.getFields();
+			for (Field field : fields) {
+				Generator<?> gen = creatorFieldGenerator(field);
+				generators.add(gen);
+			}
+			cacheGenerators.put(entity.getName().toUpperCase(), generators);
 		}
 		return generators;
 
 	}
 
 	protected Generator<?> creatorFieldGenerator(Field field) {
+		Generator<?> gen = createExtendFieldGenerator(field);
+		if (gen == null) {
+			gen = createJdbcFieldGenerator(field);
+		}
+		return gen;
+	}
+
+	protected Generator<?> createJdbcFieldGenerator(Field field) {
+		Generator<?> gen = null;
+		switch (field.getJdbcType()) {
+		case Types.BIGINT:
+		case Types.INTEGER:
+		case Types.SMALLINT:
+		case Types.TINYINT:
+			gen = new IntegerGenerator(field);
+			break;
+		case Types.DOUBLE:
+		case Types.FLOAT:
+		case Types.DECIMAL:
+		case Types.REAL:
+			gen = new DoubleGenerator(field);
+			break;
+		case Types.BINARY:
+		case Types.BLOB:
+		case Types.VARBINARY:
+		case Types.LONGVARBINARY:
+			gen = new BinaryGenerator(field);
+			break;
+		case Types.DATE:
+			gen = new DateGenerator(field);
+			break;
+		case Types.TIME:
+			gen = new TimeGenerator(field);
+			break;
+		case Types.TIMESTAMP:
+			gen = new TimestampGenerator(field);
+			break;
+		default:
+			gen = new TextGenerator(field);
+			break;
+		}
+
+		return gen;
+	}
+
+	protected Generator<?> createExtendFieldGenerator(Field field) {
 		Generator<?> gen = null;
 		AddressHolder addressHolder = new AddressHolder();
 		switch (field.getDataType()) {
@@ -72,58 +135,75 @@ public class SchemaDataGenerator {
 			gen = new SequenceGenerator(seqmin, seqstep);
 			break;
 		case FIRST_NAME:
-			gen = new FirstNameGenerator(field.isNullable());
+			gen = new FirstNameGenerator(field);
 			break;
 		case LAST_NAME:
-			gen = new LastNameGenerator(field.isNullable());
+			gen = new LastNameGenerator(field);
 			break;
 		case DATE:
-			gen = new DateGenerator(field.getMinValue(), field.getMaxValue(), field.getFormat());
+			gen = new DateGenerator(field);
 			break;
 		case TIME:
-			gen = new TimeGenerator(field.getMinValue(), field.getMaxValue(), field.getFormat());
+			gen = new TimeGenerator(field);
 			break;
 		case TIMESTAMP:
-			gen = new TimestampGenerator(field.getMinValue(), field.getMaxValue(), field.getFormat());
+			gen = new TimestampGenerator(field);
 			break;
 		case FORMATTED_STRING:
-			gen = new FormattedStringGenerator(field.getFormat(), field.isNullable());
+			gen = new FormattedStringGenerator(field);
+			break;
+		case REF:
+			gen = new RefValueGenerator(field);
 			break;
 		case CITY:
-			gen = new CityGenerator(addressHolder);
+			gen = new CityGenerator(field, addressHolder);
 			break;
 		case STATE:
-			gen = new StateGenerator(addressHolder);
+			gen = new StateGenerator(field, addressHolder);
 			break;
 		case ZIP_US:
-			gen = new ZipGenerator(addressHolder);
+			gen = new ZipGenerator(field, addressHolder);
 			break;
 		case STREET:
-			gen = new StreetGenerator(addressHolder);
+			gen = new StreetGenerator(field, addressHolder);
 			break;
 		case SSN:
-			gen = new FormattedStringGenerator("DDD-DD-DDDD", field.isNullable());
+			field.setFormat("DDD-DD-DDDD");
+			gen = new FormattedStringGenerator(field);
 			break;
 		case UINT:
-			int uimax = field.getMaxValue() == null ? 0 : Integer.valueOf(field.getMaxValue());
-			int uiqmin = field.getMinValue() == null ? 0 : Integer.valueOf(field.getMinValue());
-			gen = new UIntegerGenerator(uiqmin, uimax);
+			gen = new UIntegerGenerator(field);
 			break;
 		case ULONG:
-			long ulmax = field.getMaxValue() == null ? 0 : Long.valueOf(field.getMaxValue());
-			long ulqmin = field.getMinValue() == null ? 0 : Long.valueOf(field.getMinValue());
-			gen = new ULongGenerator(ulqmin, ulmax);
+			gen = new IntegerGenerator(field);
+			break;
+		case INT:
+			gen = new IntegerGenerator(field);
+			break;
+		case BIGINTEGER:
+			gen = new IntegerGenerator(field);
 			break;
 		case UDOUBLE:
-			double udmax = field.getMaxValue() == null ? 0 : Double.valueOf(field.getMaxValue());
-			double udmin = field.getMinValue() == null ? 0 : Double.valueOf(field.getMinValue());
-			gen = new UDoubleGenerator(udmax, udmin);
+			gen = new DoubleGenerator(field);
+			break;
+		case UFLOAT:
+			gen = new DoubleGenerator(field);
+			break;
+		case DOUBLE:
+			gen = new DoubleGenerator(field);
+			break;
+		case FLOAT:
+			gen = new DoubleGenerator(field);
+			break;
+		case BINARY:
+			gen = new BinaryGenerator(field);
+			break;
+		case ENUM:
+			gen = new EnumGenerator(field);
 			break;
 		default:
-			gen = new TextGenerator(field.getDisplaySize(), field.isNullable());
-
+			gen = null;
 		}
-
 		return gen;
 
 	}
@@ -174,7 +254,5 @@ public class SchemaDataGenerator {
 	public void setNumberOfRecords(long numberOfRecords) {
 		this.numberOfRecords = numberOfRecords;
 	}
-	
-	
 
 }

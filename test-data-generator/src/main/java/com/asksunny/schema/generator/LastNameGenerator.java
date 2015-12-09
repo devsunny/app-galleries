@@ -1,18 +1,18 @@
 package com.asksunny.schema.generator;
 
+import com.asksunny.schema.Field;
+
 public class LastNameGenerator implements Generator<String> {
 
-	private boolean nullable;
+	
 
-	public LastNameGenerator(boolean nullable) {
+	private Field field;
+
+	public LastNameGenerator(Field field) {
 		super();
-		this.nullable = nullable;
+		this.field = field;
 	}
 
-	public LastNameGenerator() {
-		super();
-		this.nullable = false;
-	}
 
 	@Override
 	public String nextStringValue() {
@@ -22,7 +22,7 @@ public class LastNameGenerator implements Generator<String> {
 	@Override
 	public String nextValue() {
 
-		if (nullable && RandomUtil.getInstance().getUnsignedInt(100000) % 13 == 0) {
+		if (field.isNullable() && RandomUtil.getInstance().isOddEnough()) {
 			return null;
 		}
 		return PersonNameUtils.getInstance().getLastName();

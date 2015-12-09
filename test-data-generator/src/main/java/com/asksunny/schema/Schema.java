@@ -48,7 +48,9 @@ public class Schema extends HashMap<String, Entity> {
 	}
 
 	/**
-	 * We start with all independent entities that does reference other entity (foreign key relationship)
+	 * We start with all independent entities that does reference other entity
+	 * (foreign key relationship)
+	 * 
 	 * @return
 	 */
 	public List<Entity> getIndependentEntities() {
@@ -61,4 +63,27 @@ public class Schema extends HashMap<String, Entity> {
 		}
 		return entities;
 	}
+
+	public void buildRelationship() {
+		List<Entity> entities = new ArrayList<Entity>(this.values());
+		for (Entity entity : entities) {
+			List<Field> refColumn = entity.getAllReferences();
+			if (refColumn != null && refColumn.size() > 0) {
+				for (Field field : refColumn) {
+					Field fd = field.getReference();
+					Entity refEntity = this.get(fd.getContainer().getName());
+					if (refEntity == null) {
+						throw new IllegalArgumentException(
+								String.format("Invalid ref at %s:%s", entity.getName(), field.getName()));
+					}
+					Field refField = refEntity.findField(fd.getName());
+					refField.addReferencedBy(field);
+				}
+
+			}
+
+		}
+
+	}
+
 }

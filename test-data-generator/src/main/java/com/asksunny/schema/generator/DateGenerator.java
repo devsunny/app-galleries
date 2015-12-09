@@ -2,6 +2,9 @@ package com.asksunny.schema.generator;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+
+import com.asksunny.schema.Field;
+
 import java.sql.Date;
 
 public class DateGenerator implements Generator<Date> {
@@ -9,45 +12,35 @@ public class DateGenerator implements Generator<Date> {
 	private long minValue;
 	private long maxValue;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	private Field dateField;
 
-	public DateGenerator(String minValue, String maxValue, String format) {
+	public DateGenerator(Field dateField) {
 		super();
-
-		if (format != null) {
-			this.sdf = new SimpleDateFormat(format);
+		this.dateField = dateField;
+		if (dateField.getFormat() != null) {
+			this.sdf = new SimpleDateFormat(dateField.getFormat());
 			try {
-				this.minValue = minValue == null ? 0 : this.sdf.parse(minValue).getTime();
-				this.maxValue = maxValue == null ? 0 : this.sdf.parse(maxValue).getTime();
+				this.minValue = dateField.getMinValue() == null ? 0 : this.sdf.parse(dateField.getMinValue()).getTime();
+				this.maxValue = dateField.getMaxValue() == null ? 0 : this.sdf.parse(dateField.getMaxValue()).getTime();
 			} catch (ParseException e) {
-				throw new IllegalArgumentException(String.format("%s %s expect %s", minValue, maxValue, format));
+				throw new IllegalArgumentException(
+						String.format("%s %s expect %s", minValue, maxValue, dateField.getFormat()));
 			}
 		} else {
-			this.minValue = minValue == null ? 0 : Long.valueOf(minValue);
-			this.maxValue = maxValue == null ? 0 : Long.valueOf(maxValue);
+			this.minValue = dateField.getMinValue() == null ? 0 : Long.valueOf(minValue);
+			this.maxValue = dateField.getMaxValue() == null ? 0 : Long.valueOf(maxValue);
 		}
 	}
 
-	public DateGenerator(long minValue, long maxValue) {
-		super();
-		this.minValue = minValue;
-		this.maxValue = maxValue;
-	}
-
-	public DateGenerator(Date minValue, Date maxValue) {
-		super();
-		this.minValue = minValue == null ? 0 : minValue.getTime();
-		this.maxValue = maxValue == null ? Long.MAX_VALUE : maxValue.getTime();
-	}
-
-	public DateGenerator() {
-		this(null, null);
-	}
-
 	public String nextStringValue() {
-		return sdf.format(nextValue());
+		Date out = nextValue();
+		return out != null ? sdf.format(nextValue()) : null;
 	}
 
 	public Date nextValue() {
+		if (this.dateField.isNullable() && RandomUtil.getInstance().isOddEnough()) {
+			return null;
+		}
 		return new Date(RandomUtil.getInstance().getRandomLong(this.minValue, this.maxValue));
 	}
 

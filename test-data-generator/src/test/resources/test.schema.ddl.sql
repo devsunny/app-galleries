@@ -12,7 +12,7 @@ create table account
 	SACCNT VARCHAR(10) NULL --#FORMATTED_STRING XDD-DD-DDD
 )
 
-
+;
 
 create table orders
 (

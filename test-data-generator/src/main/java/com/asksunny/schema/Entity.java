@@ -30,13 +30,15 @@ public class Entity {
 
 	public void addField(Field field) {
 		field.setContainer(this);
+		field.setFieldIndex(this.fields.size());
 		this.fields.add(field);
 	}
 
 	public void setFields(List<Field> fields) {
 
-		for (Field fd : fields) {
+		for (Field fd : fields) {			
 			fd.setContainer(this);
+			fd.setFieldIndex(this.fields.size());
 		}
 		this.fields.addAll(fields);
 	}
