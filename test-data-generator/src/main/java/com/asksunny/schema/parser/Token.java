@@ -6,6 +6,7 @@ public class Token
 	int line;
 	int column;
 	LexerTokenKind kind = LexerTokenKind.OTHER;
+	private Keyword keyword = null;
 	
 	public Token() {
 		super();
@@ -40,6 +41,12 @@ public class Token
 	}
 	public void setKind(LexerTokenKind kind) {
 		this.kind = kind;
+	}
+	public Keyword getKeyword() {
+		return keyword;
+	}
+	public void setKeyword(Keyword keyword) {
+		this.keyword = keyword;
 	}
 	
 	

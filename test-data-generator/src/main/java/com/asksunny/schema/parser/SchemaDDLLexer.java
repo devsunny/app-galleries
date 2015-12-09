@@ -12,6 +12,7 @@ public class SchemaDDLLexer {
 	private int line = 1;
 	private int column = 1;
 	private boolean eof = false;
+	private KeywordDictionary kdict = new KeywordDictionary();
 
 	public SchemaDDLLexer(Reader reader) throws IOException {
 		lhReader = new LookaheadReader(3, reader);
@@ -42,22 +43,28 @@ public class SchemaDDLLexer {
 				column = 1;
 				break;
 			case ')':
-				buf.append((char)c);
+				buf.append((char) c);
 				ret = new Token(buf.toString(), line, column);
 				buf.setLength(0);
 				ret.setKind(LexerTokenKind.RPAREN);
 				break;
 			case '(':
-				buf.append((char)c);
+				buf.append((char) c);
 				ret = new Token(buf.toString(), line, column);
 				buf.setLength(0);
 				ret.setKind(LexerTokenKind.LPAREN);
-				break;				
+				break;
 			case ',':
-				buf.append((char)c);
+				buf.append((char) c);
 				ret = new Token(buf.toString(), line, column);
 				buf.setLength(0);
 				ret.setKind(LexerTokenKind.COMMA);
+				break;
+			case '=':
+				buf.append((char) c);
+				ret = new Token(buf.toString(), line, column);
+				buf.setLength(0);
+				ret.setKind(LexerTokenKind.EQUAL);
 				break;
 			case '-':
 				int l1 = lhReader.peek(0);
@@ -77,15 +84,15 @@ public class SchemaDDLLexer {
 					ret = new Token(buf.toString(), line, column);
 					buf.setLength(0);
 					ret.setKind(LexerTokenKind.COMMENT);
-					ret=null;
+					ret = null;
 				} else {
-					buf.append((char)c);
+					buf.append((char) c);
 					ret = new Token(buf.toString(), line, column);
 					buf.setLength(0);
 				}
 				break;
 			case ';':
-				buf.append((char)c);
+				buf.append((char) c);
 				ret = new Token(buf.toString(), line, column);
 				buf.setLength(0);
 				ret.setKind(LexerTokenKind.SEMICOLON);
@@ -103,14 +110,29 @@ public class SchemaDDLLexer {
 				ret.setKind(LexerTokenKind.SINGLE_QUOTED_TEXT);
 				break;
 			default:
-				buf.append((char)c);
-				readIdentifier(buf);
-				ret = new Token(buf.toString(), line, column);
-				buf.setLength(0);				
+				buf.append((char) c);
+				if (Character.isJavaIdentifierStart((char) c)) {
+					readIdentifier(buf);
+					ret = new Token(buf.toString(), line, column);
+					Keyword kw = kdict.get(ret.getImage());
+					if (kw != null) {
+						ret.setKind(LexerTokenKind.KEYWORD);
+						ret.setKeyword(kw);
+					} else {
+						ret.setKind(LexerTokenKind.IDENTIFIER);
+					}
+				} else if (Character.isDigit((char) c)) {
+					readNumber(buf);
+					ret = new Token(buf.toString(), line, column);
+					ret.setKind(LexerTokenKind.NUMBER);
+				} else {
+					ret = new Token(buf.toString(), line, column);
+				}
+				buf.setLength(0);
 				break;
 			}
 		}
-		
+
 		return ret;
 	}
 
@@ -119,9 +141,25 @@ public class SchemaDDLLexer {
 		return lhReader.read();
 	}
 
+	protected void readNumber(StringBuilder buf) throws IOException {
+		do {
+			int ic = lhReader.peek(0);
+			if (ic == -1) {
+				eof = true;
+				break;
+			}
+			if (Character.isDigit((char) ic) || ic == '.') {
+				buf.append(readChar());
+			} else {
+				break;
+			}
+		} while (true);
+
+	}
+
 	protected void readTo(int c, StringBuilder buf, boolean inclusive) throws IOException {
 		do {
-			int ic = lhReader.peek(1);
+			int ic = lhReader.peek(0);
 			if (ic == -1) {
 				eof = true;
 				break;
@@ -142,12 +180,15 @@ public class SchemaDDLLexer {
 
 	protected void readToEnd(int c, StringBuilder buf) throws IOException {
 		do {
-			int ic = lhReader.peek(1);
+			int ic = lhReader.peek(0);
 			if (ic == -1) {
 				eof = true;
 				break;
 			}
 			if (ic == c) {
+				if (buf.charAt(buf.length() - 1) == '\r') {
+					buf.deleteCharAt(buf.length() - 1);
+				}
 				break;
 			} else {
 				buf.append((char) readChar());
@@ -163,9 +204,8 @@ public class SchemaDDLLexer {
 				eof = true;
 				break;
 			}
-			if ((ic >= 'a' && ic <= 'z') || (ic >= 'A' && ic <= 'Z') || (ic >= '0' && ic <= '9') || ic == '$'
-					|| ic == '_') {
-				buf.append((char) lhReader.read());
+			if (Character.isJavaIdentifierPart((char) ic)) {
+				buf.append((char)readChar());
 			} else {
 				break;
 			}
