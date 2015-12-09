@@ -20,4 +20,9 @@ create table orders
 	account_id number(16, 0) not null,  --#REF,ref=account.id,min=0,max=100
 	created_date timestamp not null, --#TIMESTAMP
 	total_price number(16, 2) not null --#UDOUBLE
-)
+);
+
+ALTER TABLE Orders
+ADD CONSTRAINT fk_PerOrders
+FOREIGN KEY (account_id)
+REFERENCES account(id);
