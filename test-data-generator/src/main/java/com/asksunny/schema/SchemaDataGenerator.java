@@ -102,12 +102,14 @@ public class SchemaDataGenerator {
 		case Types.INTEGER:
 		case Types.SMALLINT:
 		case Types.TINYINT:
+		case Types.BIT:
 			gen = new IntegerGenerator(field);
 			break;
 		case Types.DOUBLE:
 		case Types.FLOAT:
 		case Types.DECIMAL:
 		case Types.REAL:
+		case Types.NUMERIC:
 			gen = new DoubleGenerator(field);
 			break;
 		case Types.BINARY:

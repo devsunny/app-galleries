@@ -9,9 +9,12 @@ public class TextGenerator implements Generator<String> {
 
 	public TextGenerator(Field field) {
 		super();
-		this.size = field.getDisplaySize();
 		this.field = field;
-		if(size==0){
+		this.size = field.getDisplaySize();
+		if (this.size == 0) {
+			this.size = field.getPrecision();
+		}		
+		if (size == 0) {
 			size = 8;
 		}
 	}
