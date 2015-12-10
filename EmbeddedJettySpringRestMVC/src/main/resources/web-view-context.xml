@@ -24,16 +24,10 @@
 
 	<context:property-placeholder location="classpath:web-app.properties" />
 	<mvc:annotation-driven />
-	<mvc:resources location="classpath:/META-INF/images/"
-		mapping="/images/**" />
-		<mvc:resources location="classpath:/META-INF/htmls/"
-		mapping="/htmls/**" />
-	<mvc:resources location="classpath:/META-INF/css/"
-		mapping="/css/**" />
-	<mvc:resources location="classpath:/META-INF/scripts/"
-		mapping="/scripts/**" />
-		<mvc:resources location="classpath:/META-INF/fonts/"
-		mapping="/fonts/**" />
+	<mvc:resources location="classpath:/META-INF/app/"
+		mapping="/app/**" />		
+		<mvc:resources location="classpath:/META-INF/bower_components/"
+		mapping="/bower_components/**" />
 
 	<!-- Internationalization -->
 	<bean id="messageSource"
