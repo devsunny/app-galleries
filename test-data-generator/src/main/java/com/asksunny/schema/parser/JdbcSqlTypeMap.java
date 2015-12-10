@@ -27,6 +27,10 @@ public final class JdbcSqlTypeMap {
 			lname = "VARCHAR";
 		} else if (name.equalsIgnoreCase("NUMBER")) {
 			lname = "NUMERIC";
+		}else if (name.equalsIgnoreCase("INT")) {
+			lname = "INTEGER";
+		}else if (name.equalsIgnoreCase("LONG")) {
+			lname = "BIGINT";
 		}
 		Integer t = jdbcTypeMap.get(lname.toUpperCase());
 		if (t == null) {

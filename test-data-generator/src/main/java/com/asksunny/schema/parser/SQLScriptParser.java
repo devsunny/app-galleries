@@ -1,5 +1,7 @@
 package com.asksunny.schema.parser;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 
 import com.asksunny.schema.DataGenType;
@@ -16,23 +18,35 @@ public class SQLScriptParser {
 		this.tokenReader = new SQLScriptLookaheadTokenReader(3, sqlLexer);
 	}
 
+	public SQLScriptParser(File sqlFile) throws IOException {
+		super();
+		this.tokenReader = new SQLScriptLookaheadTokenReader(3, new SQLScriptLexer(new FileReader(sqlFile)));
+	}
+
 	public Schema parseSql() throws IOException {
 		Schema schema = new Schema();
-
-		Token t = null;
-		while ((t = tokenReader.read()) != null) {
-			switch (t.getKind()) {
-			case KEYWORD:
-				parseStatement(schema, t);
-				break;
-			default:
-				ignoreStatement();
-				break;
+		try {
+			Token t = null;
+			while ((t = tokenReader.read()) != null) {
+				switch (t.getKind()) {
+				case KEYWORD:
+					parseStatement(schema, t);
+					break;
+				default:
+					ignoreStatement();
+					break;
+				}
 			}
-
+		} finally {
+			close();
 		}
-
 		return schema;
+	}
+
+	public void close() throws IOException {
+		if (this.tokenReader != null) {
+			this.tokenReader.close();
+		}
 	}
 
 	protected void parseStatement(Schema schema, Token startToken) throws IOException {
@@ -113,6 +127,10 @@ public class SQLScriptParser {
 			ret = new Field();
 			ret.setName(tokenReader.read().image);
 			String tname = consume().image;
+//			if(ret.getName().equals("house_number")){
+//				System.out.println(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
+//				System.out.println(tname);
+//			}			
 			ret.setJdbcType(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
 			if (peekMatch(0, LexerTokenKind.LPAREN)) {
 				consume();

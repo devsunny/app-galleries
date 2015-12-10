@@ -11,6 +11,9 @@ public class TextGenerator implements Generator<String> {
 		super();
 		this.size = field.getDisplaySize();
 		this.field = field;
+		if(size==0){
+			size = 8;
+		}
 	}
 
 	@Override

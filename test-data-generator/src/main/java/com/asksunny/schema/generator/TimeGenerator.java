@@ -22,14 +22,14 @@ public class TimeGenerator implements Generator<Time> {
 			this.sdf = new SimpleDateFormat(dateField.getFormat());
 			try {
 				this.minValue = dateField.getMinValue() == null ? 0 : this.sdf.parse(dateField.getMinValue()).getTime();
-				this.maxValue = dateField.getMaxValue() == null ? 0 : this.sdf.parse(dateField.getMaxValue()).getTime();
+				this.maxValue = dateField.getMaxValue() == null ? System.currentTimeMillis() : this.sdf.parse(dateField.getMaxValue()).getTime();
 			} catch (ParseException e) {
 				throw new IllegalArgumentException(
 						String.format("%s %s expect %s", minValue, maxValue, dateField.getFormat()));
 			}
 		} else {
 			this.minValue = dateField.getMinValue() == null ? 0 : Long.valueOf(minValue);
-			this.maxValue = dateField.getMaxValue() == null ? 0 : Long.valueOf(maxValue);
+			this.maxValue = dateField.getMaxValue() == null ? System.currentTimeMillis() : Long.valueOf(maxValue);
 		}
 	}
 

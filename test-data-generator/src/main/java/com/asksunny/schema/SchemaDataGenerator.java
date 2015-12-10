@@ -17,7 +17,6 @@ import com.asksunny.schema.generator.FormattedStringGenerator;
 import com.asksunny.schema.generator.Generator;
 import com.asksunny.schema.generator.IntegerGenerator;
 import com.asksunny.schema.generator.LastNameGenerator;
-import com.asksunny.schema.generator.NumberGenerator;
 import com.asksunny.schema.generator.RefValueGenerator;
 import com.asksunny.schema.generator.SequenceGenerator;
 import com.asksunny.schema.generator.StateGenerator;
@@ -26,7 +25,6 @@ import com.asksunny.schema.generator.TextGenerator;
 import com.asksunny.schema.generator.TimeGenerator;
 import com.asksunny.schema.generator.TimestampGenerator;
 import com.asksunny.schema.generator.UIntegerGenerator;
-import com.asksunny.schema.generator.ULongGenerator;
 import com.asksunny.schema.generator.ZipGenerator;
 import com.asksunny.schema.sample.SampleSchemaCreator;
 
@@ -45,7 +43,14 @@ public class SchemaDataGenerator {
 		List<Entity> entityes = schema.getIndependentEntities();
 		for (Entity entity : entityes) {
 			EntityDataGenerator entGen = new EntityDataGenerator(this, entity, creatorFieldGenerator(entity));
-			entGen.generateData();
+			entGen.setOutputUri(this.outputUri);
+			entGen.setOutputType(this.outputType);
+			entGen.open();
+			try {
+				entGen.generateData();
+			} finally {
+				entGen.close();
+			}
 		}
 	}
 
@@ -56,6 +61,9 @@ public class SchemaDataGenerator {
 		if (generator == null) {
 			List<Generator<?>> gens = creatorFieldGenerator(entity);
 			generator = new RefereeDataGenerator(entity, refBy, gens);
+			generator.setOutputUri(this.outputUri);
+			generator.setOutputType(this.outputType);
+			generator.open();
 			this.cacheRefereeGenerators.put(entity.getName().toUpperCase(), generator);
 		}
 		return generator;
@@ -128,6 +136,9 @@ public class SchemaDataGenerator {
 	protected Generator<?> createExtendFieldGenerator(Field field) {
 		Generator<?> gen = null;
 		AddressHolder addressHolder = new AddressHolder();
+		if (field.getDataType() == null) {
+			return null;
+		}
 		switch (field.getDataType()) {
 		case SEQUENCE:
 			int seqmin = field.getMinValue() == null ? 0 : Integer.valueOf(field.getMinValue());
@@ -253,6 +264,16 @@ public class SchemaDataGenerator {
 
 	public void setNumberOfRecords(long numberOfRecords) {
 		this.numberOfRecords = numberOfRecords;
+	}
+
+	public void close() {
+		for (RefereeDataGenerator rdg : this.cacheRefereeGenerators.values()) {
+			try {
+				rdg.close();
+			} catch (Exception e) {
+				;
+			}
+		}
 	}
 
 }

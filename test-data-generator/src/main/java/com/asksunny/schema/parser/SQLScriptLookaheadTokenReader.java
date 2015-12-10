@@ -46,5 +46,10 @@ public class SQLScriptLookaheadTokenReader {
 		this.readPos++;
 		return token;
 	}
+	
+	public void close() throws IOException
+	{
+		this.sqlLexer.close();
+	}
 
 }
