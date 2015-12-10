@@ -48,6 +48,10 @@ public class Token
 	public void setKeyword(Keyword keyword) {
 		this.keyword = keyword;
 	}
+	@Override
+	public String toString() {
+		return image;
+	}
 	
 	
 	

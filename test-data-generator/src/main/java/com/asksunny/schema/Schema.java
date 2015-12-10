@@ -9,6 +9,10 @@ import java.util.Set;
 
 public class Schema extends HashMap<String, Entity> {
 
+	public Schema() {
+		super();
+	}
+
 	/**
 	 * 
 	 */
@@ -27,6 +31,14 @@ public class Schema extends HashMap<String, Entity> {
 	public Schema(String name) {
 		super();
 		this.name = name;
+	}
+
+	public Entity addEntity(Entity arg0) {
+		return put(arg0.getName(), arg0);
+	}
+
+	public List<Entity> getAllEntities() {
+		return new ArrayList<>(this.values());
 	}
 
 	@Override

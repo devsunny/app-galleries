@@ -77,4 +77,12 @@ public class Entity {
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return "Entity [name=" + name + ", fields=" + fields + "]";
+	}
+	
+	
+	
+
 }

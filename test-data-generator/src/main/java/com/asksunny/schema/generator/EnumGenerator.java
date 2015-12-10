@@ -11,7 +11,7 @@ public class EnumGenerator implements Generator<String> {
 		super();
 		this.field = field;
 		if (this.field.getEnumValues() != null) {
-			enumValues = this.field.getEnumValues().split("[,;]");
+			enumValues = this.field.getEnumValues().split("\\s*\\|\\s*");
 		}
 	}
 

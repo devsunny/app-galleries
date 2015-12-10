@@ -36,6 +36,9 @@ public class KeywordDictionary extends HashMap<String, Keyword> {
 		this.put("FOREIGN", Keyword.FOREIGN);
 		this.put("REFERENCES", Keyword.REFERENCES);
 	}
+	
+	
+	
 
 	@Override
 	public Keyword get(Object key) {

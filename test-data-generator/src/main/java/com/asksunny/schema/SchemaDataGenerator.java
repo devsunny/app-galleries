@@ -161,7 +161,7 @@ public class SchemaDataGenerator {
 		case STATE:
 			gen = new StateGenerator(field, addressHolder);
 			break;
-		case ZIP_US:
+		case ZIP:
 			gen = new ZipGenerator(field, addressHolder);
 			break;
 		case STREET:

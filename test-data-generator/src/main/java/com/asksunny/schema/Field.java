@@ -5,36 +5,32 @@ import java.util.List;
 
 public class Field {
 
-	public Field() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-
 	Entity container;
-
 	int jdbcType;
 	int scale;
 	int precision;
 	int displaySize;
 	boolean nullable;
+	boolean primaryKey;
 	String name;
 
 	DataGenType dataType;
 	String format;
 	String maxValue;
 	String minValue;
-	String step;
-	ValueRandomType random = ValueRandomType.FALSE;
+	String step;	
 	int fieldIndex;
 	String enumValues;
-	
 
 	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
 
+	public Field() {
+		super();
+	}
+
 	public Field(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
-			DataGenType dataType, String minValue, String maxValue, String format, String step,
-			ValueRandomType random) {
+			DataGenType dataType, String minValue, String maxValue, String format, String step) {
 		super();
 		this.jdbcType = jdbcType;
 		this.scale = scale;
@@ -46,29 +42,21 @@ public class Field {
 		this.minValue = minValue;
 		this.maxValue = maxValue;
 		this.format = format;
-		this.step = step;
-		this.random = random;
+		this.step = step;		
 	}
-	
-	
 
 	public int getFieldIndex() {
 		return fieldIndex;
 	}
 
-
-
 	public void setFieldIndex(int fieldIndex) {
 		this.fieldIndex = fieldIndex;
 	}
 
-
-
 	public static Field newField(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
-			DataGenType dataType, String minValue, String maxValue, String format, String step,
-			ValueRandomType random) {
+			DataGenType dataType, String minValue, String maxValue, String format, String step) {
 		return new Field(jdbcType, scale, precision, displaySize, nullable, name, dataType, minValue, maxValue, format,
-				step, random);
+				step);
 	}
 
 	public List<Field> getReferencedBy() {
@@ -179,13 +167,7 @@ public class Field {
 		this.step = step;
 	}
 
-	public ValueRandomType isRandom() {
-		return random;
-	}
-
-	public void setRandom(ValueRandomType random) {
-		this.random = random;
-	}
+	
 
 	public Entity getContainer() {
 		return container;
@@ -197,25 +179,27 @@ public class Field {
 
 	@Override
 	public String toString() {
-		return "Field [container=" + container + ", name=" + name + ", jdbcType=" + jdbcType + ", precision="
+		return "Field [container=" + container.getName() + ", name=" + name + ", jdbcType=" + jdbcType + ", precision="
 				+ precision + ", scale=" + scale + ", displaySize=" + displaySize + ", nullable=" + nullable
 				+ ", dataType=" + dataType + ", format=" + format + ", minValue=" + minValue + ", maxValue=" + maxValue
-				+ ", reference=" + reference + ", step=" + step + ", random=" + random + ", referencedBy="
+				+ ", reference=" + reference + ", step=" + step +  ", referencedBy="
 				+ referencedBy + "]";
 	}
-
-
 
 	public String getEnumValues() {
 		return enumValues;
 	}
 
-
-
 	public void setEnumValues(String enumValues) {
 		this.enumValues = enumValues;
 	}
-	
-	
+
+	public boolean isPrimaryKey() {
+		return primaryKey;
+	}
+
+	public void setPrimaryKey(boolean primaryKey) {
+		this.primaryKey = primaryKey;
+	}
 
 }

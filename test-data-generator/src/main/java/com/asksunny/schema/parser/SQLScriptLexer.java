@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 
-public class SchemaDDLLexer {
+public class SQLScriptLexer {
 
 	private LookaheadReader lhReader = null;
 	private int line = 1;
@@ -14,14 +14,15 @@ public class SchemaDDLLexer {
 	private boolean eof = false;
 	private KeywordDictionary kdict = new KeywordDictionary();
 
-	public SchemaDDLLexer(Reader reader) throws IOException {
+	public SQLScriptLexer(Reader reader) throws IOException {
 		lhReader = new LookaheadReader(3, reader);
 	}
 
-	public SchemaDDLLexer(InputStream in) throws IOException {
+	public SQLScriptLexer(InputStream in) throws IOException {
 		lhReader = new LookaheadReader(3, new InputStreamReader(in, Charset.defaultCharset()));
 	}
 
+	
 	public Token nextToken() throws IOException {
 		Token ret = null;
 		if (eof) {
@@ -149,7 +150,7 @@ public class SchemaDDLLexer {
 				break;
 			}
 			if (Character.isDigit((char) ic) || ic == '.') {
-				buf.append(readChar());
+				buf.append((char)readChar());
 			} else {
 				break;
 			}
@@ -211,6 +212,11 @@ public class SchemaDDLLexer {
 			}
 		} while (true);
 
+	}
+	
+	public void close() throws IOException
+	{
+		this.lhReader.close();
 	}
 
 }
