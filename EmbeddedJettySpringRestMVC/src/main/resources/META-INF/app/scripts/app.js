@@ -85,7 +85,7 @@ angular
               files:[
               'scripts/controllers/main.js',
               'scripts/directives/timeline/timeline.js',
-              'scripts/directives/notifications/notifications.js',
+              'scripts/directives/jobnotifications/jobnotifications.js',
               'scripts/directives/chat/chat.js',
               'scripts/directives/dashboard/stats/stats.js'
               ]

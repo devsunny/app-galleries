@@ -52,7 +52,7 @@ public class SimpleWebController {
 	@RequestMapping({ "/home" })
 	public String apphome() {
 		try {
-			InputStream in = getClass().getResourceAsStream("/META-INF/views/apphome.html");
+			InputStream in = getClass().getResourceAsStream("/META-INF/app/index.html");
 			String text = IOUtils.toString(in);
 			System.out.println(text);
 			in.close();
