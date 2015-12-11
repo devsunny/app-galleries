@@ -7,10 +7,19 @@
  * # adminPosHeader
  */
 angular.module('sbAdminApp', [])	
-	.controller('JobNotiCtrl', ['$scope', function($scope) {
+	.controller('JobNotiCtrl', ['$scope', '$http', '$interval',  function($scope, $http, $interval) {
 	  $scope.job = {
-	    name: 'demo job 1'
+	    name: 'demo job 1',
+	    number: 0
 	  };
+	  
+	  $interval(function(){
+		  $http.get('/spring/s1.json').then(function(json) {
+			  console.log(json.data.payload);
+			  $scope.job.number = json.data.payload;
+	      });		  
+	  }, 2000);
+	  
 	}])
 	.directive('jobnotifications',function(){
 		return {
