@@ -2,9 +2,13 @@ package com.asksunny.fs;
 
 import java.io.File;
 
-public class LastLookupFileHolder {
+final class LastLookupFileHolder {
 	private File file;
 
+	LastLookupFileHolder()
+	{
+		
+	}
 	public File getFile() {
 		return file;
 	}

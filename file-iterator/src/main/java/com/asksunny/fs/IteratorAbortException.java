@@ -1,6 +1,6 @@
 package com.asksunny.fs;
 
-class IteratorAbortException extends RuntimeException {
+final class IteratorAbortException extends RuntimeException {
 
 	/**
 	 * 
