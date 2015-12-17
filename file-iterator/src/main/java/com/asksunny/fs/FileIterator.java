@@ -14,13 +14,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 
-public class FileIterator implements Iterator<File>, UncaughtExceptionHandler {
+public final class FileIterator implements Iterator<File>,
+		UncaughtExceptionHandler {
 
 	private final File dir;
 	private final FileFilter filter;
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private final AtomicBoolean endOfLoop = new AtomicBoolean(false);
-	private final LastLookupFileHolder fileHolder = new LastLookupFileHolder();
+	private final FileReferenceHolder fileHolder = new FileReferenceHolder();
 	private Throwable throwable = null;
 	private final AtomicBoolean interruptIterator = new AtomicBoolean(false);
 
@@ -77,7 +78,8 @@ public class FileIterator implements Iterator<File>, UncaughtExceptionHandler {
 		if (this.throwable != null) {
 			Throwable e = this.throwable;
 			this.throwable = null;
-			new RuntimeIOException("Failed to iterate through directory:" + this.dir.toString(), e);
+			new RuntimeIOException("Failed to iterate through directory:"
+					+ this.dir.toString(), e);
 		}
 		if (!endOfLoop.get()) {
 			while (!(counter.get() > 0)) {
@@ -116,6 +118,16 @@ public class FileIterator implements Iterator<File>, UncaughtExceptionHandler {
 	protected void finalize() throws Throwable {
 		interruptIterator.compareAndSet(false, true);
 		super.finalize();
+	}
+
+	@Override
+	public void remove() {
+		throw new IllegalStateException(
+				"Remove Operation is not allowed for FileIterator");
+	}
+
+	public File getDir() {
+		return dir;
 	}
 
 }
