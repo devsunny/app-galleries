@@ -13,6 +13,7 @@ public class Field {
 	boolean nullable;
 	boolean primaryKey;
 	String name;
+	String objname;
 
 	DataGenType dataType;
 	String format;
@@ -200,6 +201,14 @@ public class Field {
 
 	public void setPrimaryKey(boolean primaryKey) {
 		this.primaryKey = primaryKey;
+	}
+
+	public String getObjname() {
+		return objname;
+	}
+
+	public void setObjname(String objname) {
+		this.objname = objname;
 	}
 
 }

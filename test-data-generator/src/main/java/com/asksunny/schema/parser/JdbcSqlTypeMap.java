@@ -38,6 +38,106 @@ public final class JdbcSqlTypeMap {
 		}
 		return t;
 	}
+	
+	public static String toJavaTypeName(int jdbcType) {
+		String ret = "String";
+		switch (jdbcType) {
+		case Types.BIT:
+			ret = "boolean";
+			break;
+
+		case Types.TINYINT:
+		case Types.SMALLINT:
+			ret = "int";
+			break;
+		case Types.INTEGER:
+		case Types.BIGINT:
+			ret = "long";
+			break;
+		case Types.FLOAT:
+		case Types.REAL:
+		case Types.DOUBLE:
+		case Types.NUMERIC:
+		case Types.DECIMAL:
+			ret = "double";
+			break;
+
+		case Types.CHAR:
+		case Types.VARCHAR:
+		case Types.LONGVARCHAR:
+			ret = "String";
+			break;
+
+		case Types.DATE:
+			ret = "java.sql.Date";
+			break;
+
+		case Types.TIME:
+			ret = "java.sql.Time";
+			break;
+
+		case Types.TIMESTAMP:
+			ret = "java.sql.Timestamp";
+			break;
+
+		case Types.BINARY:
+			ret = "byte[]";
+			break;
+
+		case Types.VARBINARY:
+			ret = "byte[]";
+			break;
+
+		case Types.LONGVARBINARY:
+			ret = "byte[]";
+			break;
+
+		case Types.BLOB:
+			ret = "byte[]";
+			break;
+
+		case Types.CLOB:
+			ret = "String";
+			break;
+		case Types.BOOLEAN:
+			ret = "boolean";
+			break;
+
+		case Types.ROWID:
+			ret = "String";
+			break;
+
+		case Types.NCHAR:
+			ret = "String";
+			break;
+
+		case Types.NVARCHAR:
+			ret = "String";
+			break;
+
+		case Types.LONGNVARCHAR:
+			ret = "String";
+			break;
+
+		case Types.NCLOB:
+			ret = "String";
+			break;
+
+		case Types.SQLXML:
+			ret = "String";
+			break;
+		case Types.TIME_WITH_TIMEZONE:
+			ret = "java.sql.Time";
+			break;
+
+		case Types.TIMESTAMP_WITH_TIMEZONE:
+			ret = "java.sql.Timestamp";
+			break;
+		}
+
+		return ret;
+	}
+
 
 	public static JdbcSqlTypeMap getInstance() {
 		return instance;
