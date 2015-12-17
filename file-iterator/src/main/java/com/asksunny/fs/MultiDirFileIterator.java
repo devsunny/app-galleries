@@ -1,3 +1,5 @@
+package com.asksunny.fs;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -16,9 +18,9 @@ public final class MultiDirFileIterator implements Iterator<File> {
 	private final AtomicInteger fileIteratorsSize = new AtomicInteger(0);
 	private final FileFilter filter;
 	private final Lock iteratorLock = new ReentrantLock();
-	private final FileReferenceHolder fileHolder = new FileReferenceHolder();
+	private final IteratorFileHolder fileHolder = new IteratorFileHolder();
 
-	public ConcurrentMultiDirFileIterator(FileFilter filterp) {
+	public MultiDirFileIterator(FileFilter filterp) {
 		this.filter = filterp;
 	}
 

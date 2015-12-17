@@ -2,10 +2,10 @@ package com.asksunny.fs;
 
 import java.io.File;
 
-final class LastLookupFileHolder {
+final class IteratorFileHolder {
 	private File file;
 
-	LastLookupFileHolder()
+	IteratorFileHolder()
 	{
 		
 	}
