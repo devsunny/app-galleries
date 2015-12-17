@@ -1,3 +1,13 @@
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 public final class MultiDirFileIterator implements Iterator<File> {
 
 	private final List<FileIterator> fileIterators = (List<FileIterator>) Collections
@@ -14,7 +24,7 @@ public final class MultiDirFileIterator implements Iterator<File> {
 
 	public synchronized void addDirectory(File dir) {
 		if (dir == null || !dir.isDirectory()) {
-			throw new IllegalArgumentException("Only Directory allowed");
+			throw new IllegalArgumentException("Only aacept directory");
 		}
 		fileIterators.add(FileIterator.createFileIterator(dir, this.filter));
 		fileIteratorsSize.incrementAndGet();
