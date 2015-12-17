@@ -8,6 +8,8 @@ import java.util.Map;
 public final class JdbcSqlTypeMap {
 	private static final JdbcSqlTypeMap instance = new JdbcSqlTypeMap();
 	private Map<String, Integer> jdbcTypeMap = new HashMap<>();
+	
+	private Map<Integer, String> jdbcTypeInvertMap = new HashMap<>();
 
 	private JdbcSqlTypeMap() {
 		try {
@@ -15,11 +17,18 @@ public final class JdbcSqlTypeMap {
 			Field[] fields = typesClzz.getFields();
 			for (Field field : fields) {
 				jdbcTypeMap.put(String.format("%s", field.getName()), field.getInt(null));
+				jdbcTypeInvertMap.put(field.getInt(null), String.format("%s", field.getName()));				
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to extact type info from JDBC types");
 		}
 	}
+	
+	public String findJdbcTypeName(int jt)
+	{
+		return jdbcTypeInvertMap.get(jt);
+	}
+	
 
 	public Integer findJdbcType(String name) {
 		String lname = name;
@@ -126,15 +135,14 @@ public final class JdbcSqlTypeMap {
 		case Types.SQLXML:
 			ret = "String";
 			break;
-		case Types.TIME_WITH_TIMEZONE:
-			ret = "java.sql.Time";
-			break;
-
-		case Types.TIMESTAMP_WITH_TIMEZONE:
-			ret = "java.sql.Timestamp";
-			break;
+//		case Types.TIME_WITH_TIMEZONE:
+//			ret = "java.sql.Time";
+//			break;
+//
+//		case Types.TIMESTAMP_WITH_TIMEZONE:
+//			ret = "java.sql.Timestamp";
+//			break;
 		}
-
 		return ret;
 	}
 
@@ -144,3 +152,4 @@ public final class JdbcSqlTypeMap {
 	}
 
 }
+
