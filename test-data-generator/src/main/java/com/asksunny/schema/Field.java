@@ -3,6 +3,8 @@ package com.asksunny.schema;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.asksunny.codegen.JavaIdentifierUtil;
+
 public class Field {
 
 	Entity container;
@@ -13,13 +15,14 @@ public class Field {
 	boolean nullable;
 	boolean primaryKey;
 	String name;
-	String objname;
+	String varname;
+	String uiname;
 
 	DataGenType dataType;
 	String format;
 	String maxValue;
 	String minValue;
-	String step;	
+	String step;
 	int fieldIndex;
 	String enumValues;
 
@@ -43,7 +46,7 @@ public class Field {
 		this.minValue = minValue;
 		this.maxValue = maxValue;
 		this.format = format;
-		this.step = step;		
+		this.step = step;
 	}
 
 	public int getFieldIndex() {
@@ -168,8 +171,6 @@ public class Field {
 		this.step = step;
 	}
 
-	
-
 	public Entity getContainer() {
 		return container;
 	}
@@ -183,8 +184,7 @@ public class Field {
 		return "Field [container=" + container.getName() + ", name=" + name + ", jdbcType=" + jdbcType + ", precision="
 				+ precision + ", scale=" + scale + ", displaySize=" + displaySize + ", nullable=" + nullable
 				+ ", dataType=" + dataType + ", format=" + format + ", minValue=" + minValue + ", maxValue=" + maxValue
-				+ ", reference=" + reference + ", step=" + step +  ", referencedBy="
-				+ referencedBy + "]";
+				+ ", reference=" + reference + ", step=" + step + ", referencedBy=" + referencedBy + "]";
 	}
 
 	public String getEnumValues() {
@@ -203,12 +203,24 @@ public class Field {
 		this.primaryKey = primaryKey;
 	}
 
-	public String getObjname() {
-		return objname;
+	public String getVarname() {
+		return varname;
 	}
 
-	public void setObjname(String objname) {
-		this.objname = objname;
+	public void setVarname(String varname) {
+		if (varname.indexOf("_") != -1) {
+			this.varname = JavaIdentifierUtil.toVariableName(varname);
+		} else {
+			this.varname = varname;
+		}
+	}
+
+	public String getUiname() {
+		return uiname;
+	}
+
+	public void setUiname(String uiname) {
+		this.uiname = uiname;
 	}
 
 }

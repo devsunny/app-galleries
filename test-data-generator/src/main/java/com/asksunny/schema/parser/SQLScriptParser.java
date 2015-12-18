@@ -3,6 +3,13 @@ package com.asksunny.schema.parser;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.asksunny.schema.DataGenType;
 import com.asksunny.schema.Entity;
@@ -19,8 +26,20 @@ public class SQLScriptParser {
 	}
 
 	public SQLScriptParser(File sqlFile) throws IOException {
+		this(new FileReader(sqlFile));
+	}
+
+	public SQLScriptParser(String sqlText) throws IOException {
+		this(new StringReader(sqlText));
+	}
+
+	public SQLScriptParser(InputStream in, Charset encode) throws IOException {
+		this(new InputStreamReader(in, encode));
+	}
+
+	public SQLScriptParser(Reader reader) throws IOException {
 		super();
-		this.tokenReader = new SQLScriptLookaheadTokenReader(3, new SQLScriptLexer(new FileReader(sqlFile)));
+		this.tokenReader = new SQLScriptLookaheadTokenReader(3, new SQLScriptLexer(reader));
 	}
 
 	public Schema parseSql() throws IOException {
@@ -97,14 +116,34 @@ public class SQLScriptParser {
 				} else if (kk.getKeyword() == Keyword.PRIMARY) {
 					consume();
 					consume();
-					consumeItemList();
+					List<Token> toks = consumeItemList();
+					if (toks != null) {
+						for (Token token : toks) {
+							Field fd = entity.findField(token.image);
+							if (fd != null) {
+								fd.setPrimaryKey(true);
+							}
+						}
+					}
 				} else if (kk.getKeyword() == Keyword.FOREIGN) {
 					consume();
 					consume();
-					consumeItemList();
+					List<Token> ftoks = consumeItemList();
 					consume();
-					consume(); // refrence table name
-					consumeItemList();
+					Token tb = consume(); // refrence table name
+					List<Token> rtoks = consumeItemList();
+					int size = ftoks.size();
+
+					for (int i = 0; i < size; i++) {
+						Token fk = ftoks.get(i);
+						Token rk = rtoks.get(i);
+						Field fd = entity.findField(fk.image);
+						Entity e = new Entity(tb.image);
+						Field rd = new Field();
+						rd.setContainer(e);
+						rd.setName(rk.getImage());
+						fd.setReference(rd);
+					}
 				}
 			} else if (kk.getKind() == LexerTokenKind.COMMA) {
 				consume();
@@ -127,10 +166,10 @@ public class SQLScriptParser {
 			ret = new Field();
 			ret.setName(tokenReader.read().image);
 			String tname = consume().image;
-//			if(ret.getName().equals("house_number")){
-//				System.out.println(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
-//				System.out.println(tname);
-//			}			
+			// if(ret.getName().equals("house_number")){
+			// System.out.println(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
+			// System.out.println(tname);
+			// }
 			ret.setJdbcType(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
 			if (peekMatch(0, LexerTokenKind.LPAREN)) {
 				consume();
@@ -207,7 +246,7 @@ public class SQLScriptParser {
 	protected void parseAnnotationComment(Field field, String commentText) {
 		String[] ps = commentText.split("\\s*[,]\\s*");
 		if (ps.length > 0) {
-			DataGenType genType = DataGenType.valueOf(ps[0].toUpperCase());
+			DataGenType genType = ps[0].length() == 0 ? DataGenType.OTHER : DataGenType.valueOf(ps[0].toUpperCase());
 			field.setDataType(genType);
 			if (ps.length > 1) {
 				for (int i = 1; i < ps.length; i++) {
@@ -220,6 +259,10 @@ public class SQLScriptParser {
 						field.setMinValue(nvp[1]);
 					} else if (nvp[0].equalsIgnoreCase("max")) {
 						field.setMaxValue(nvp[1]);
+					} else if (nvp[0].equalsIgnoreCase("varname")) {
+						field.setVarname(nvp[1]);
+					} else if (nvp[0].equalsIgnoreCase("uiname")) {
+						field.setUiname(nvp[1]);
 					} else if (nvp[0].equalsIgnoreCase("ref")) {
 						String[] refs = nvp[1].split("\\.");
 						if (refs.length != 2) {
@@ -249,14 +292,19 @@ public class SQLScriptParser {
 		return tt;
 	}
 
-	protected void consumeItemList() throws IOException {
+	protected List<Token> consumeItemList() throws IOException {
+		List<Token> toks = new ArrayList<>();
 		if (peekMatch(0, LexerTokenKind.LPAREN)) {
 			consume();
 			while (!peekMatch(0, LexerTokenKind.RPAREN)) {
-				consume();
+				Token t = consume();
+				if (t.kind != LexerTokenKind.COMMA) {
+					toks.add(t);
+				}
 			}
 			consume();
 		}
+		return toks;
 	}
 
 	protected void consumeTo(LexerTokenKind kind) throws IOException {

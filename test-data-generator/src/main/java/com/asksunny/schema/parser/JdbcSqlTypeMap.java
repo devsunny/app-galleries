@@ -8,7 +8,7 @@ import java.util.Map;
 public final class JdbcSqlTypeMap {
 	private static final JdbcSqlTypeMap instance = new JdbcSqlTypeMap();
 	private Map<String, Integer> jdbcTypeMap = new HashMap<>();
-	
+
 	private Map<Integer, String> jdbcTypeInvertMap = new HashMap<>();
 
 	private JdbcSqlTypeMap() {
@@ -17,18 +17,16 @@ public final class JdbcSqlTypeMap {
 			Field[] fields = typesClzz.getFields();
 			for (Field field : fields) {
 				jdbcTypeMap.put(String.format("%s", field.getName()), field.getInt(null));
-				jdbcTypeInvertMap.put(field.getInt(null), String.format("%s", field.getName()));				
+				jdbcTypeInvertMap.put(field.getInt(null), String.format("%s", field.getName()));
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to extact type info from JDBC types");
 		}
 	}
-	
-	public String findJdbcTypeName(int jt)
-	{
+
+	public String findJdbcTypeName(int jt) {
 		return jdbcTypeInvertMap.get(jt);
 	}
-	
 
 	public Integer findJdbcType(String name) {
 		String lname = name;
@@ -36,9 +34,9 @@ public final class JdbcSqlTypeMap {
 			lname = "VARCHAR";
 		} else if (name.equalsIgnoreCase("NUMBER")) {
 			lname = "NUMERIC";
-		}else if (name.equalsIgnoreCase("INT")) {
+		} else if (name.equalsIgnoreCase("INT")) {
 			lname = "INTEGER";
-		}else if (name.equalsIgnoreCase("LONG")) {
+		} else if (name.equalsIgnoreCase("LONG")) {
 			lname = "BIGINT";
 		}
 		Integer t = jdbcTypeMap.get(lname.toUpperCase());
@@ -47,30 +45,43 @@ public final class JdbcSqlTypeMap {
 		}
 		return t;
 	}
-	
-	public static String toJavaTypeName(int jdbcType) {
-		String ret = "String";
-		switch (jdbcType) {
-		case Types.BIT:
-			ret = "boolean";
-			break;
 
+	public static Integer getJdbcTyep(String name) {
+		return getInstance().findJdbcType(name);
+	}
+
+	public static String getJdbcTyepName(int jt) {
+		return getInstance().findJdbcTypeName(jt);
+	}
+	
+	public static String toJavaTypeName(com.asksunny.schema.Field field)
+	{
+		String ret = "String";
+		switch (field.getJdbcType()) {
+		case Types.BIT:
+			ret = "Boolean";
+			break;
 		case Types.TINYINT:
 		case Types.SMALLINT:
-			ret = "int";
+			ret = "Integer";
 			break;
 		case Types.INTEGER:
 		case Types.BIGINT:
-			ret = "long";
+			ret = "Long";
 			break;
 		case Types.FLOAT:
 		case Types.REAL:
-		case Types.DOUBLE:
-		case Types.NUMERIC:
+		case Types.DOUBLE:		
 		case Types.DECIMAL:
-			ret = "double";
+			ret = "Double";
 			break;
-
+		case Types.NUMERIC:
+			if(field.getScale()==0){
+				ret = "Long";
+			}else{
+				ret = "Double";
+			}
+			break;
 		case Types.CHAR:
 		case Types.VARCHAR:
 		case Types.LONGVARCHAR:
@@ -109,7 +120,7 @@ public final class JdbcSqlTypeMap {
 			ret = "String";
 			break;
 		case Types.BOOLEAN:
-			ret = "boolean";
+			ret = "Boolean";
 			break;
 
 		case Types.ROWID:
@@ -135,21 +146,21 @@ public final class JdbcSqlTypeMap {
 		case Types.SQLXML:
 			ret = "String";
 			break;
-//		case Types.TIME_WITH_TIMEZONE:
-//			ret = "java.sql.Time";
-//			break;
-//
-//		case Types.TIMESTAMP_WITH_TIMEZONE:
-//			ret = "java.sql.Timestamp";
-//			break;
+		// case Types.TIME_WITH_TIMEZONE:
+		// ret = "java.sql.Time";
+		// break;
+		//
+		// case Types.TIMESTAMP_WITH_TIMEZONE:
+		// ret = "java.sql.Timestamp";
+		// break;
 		}
 		return ret;
 	}
 
+	
 
 	public static JdbcSqlTypeMap getInstance() {
 		return instance;
 	}
 
 }
-

@@ -1,13 +1,21 @@
 package com.asksunny.tool;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.Reader;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 
 import com.asksunny.schema.Entity;
@@ -80,7 +88,7 @@ public class DomainObjectGenerator {
 		String javaEntityVarName = JavaIdentifierUtil.toVariableName(entity
 				.getName());
 		for (Field field : fields) {
-			String name = field.getObjname() != null ? field.getObjname()
+			String name = field.getVarname() != null ? field.getVarname()
 					: field.getName();
 			javaFieldName.add(name);
 			String fname = field.getName();
@@ -108,14 +116,14 @@ public class DomainObjectGenerator {
 		
 		
 		if(primaryKey!=null){
-			String pname = primaryKey.getObjname() != null ? primaryKey
-					.getObjname() : primaryKey.getName();
+			String pname = primaryKey.getVarname() != null ? primaryKey
+					.getVarname() : primaryKey.getName();
 			String javaPKName = JavaIdentifierUtil.toObjectName(pname);
 			String javaPKVarName = JavaIdentifierUtil.toVariableName(pname);
 			
 			out.printf("    @RequestMapping(value = \"/{%s}\" method = { RequestMethod.GET })\n", javaPKVarName);
 			out.println("   @ResponseBody");
-			out.printf("    public %1$s get%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName, javaPKName,  JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()),  javaPKVarName);
+			out.printf("    public %1$s get%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName, javaPKName,  JdbcSqlTypeMap.toJavaTypeName(primaryKey),  javaPKVarName);
 			out.printf("        %1$s ret = this.%2$sMapper.get%1$sBy%3$s(%4$s);\n",	javaEntityName, javaEntityVarName, javaPKName, javaPKVarName);
 			out.printf("        return ret;\n", javaEntityName, javaEntityVarName);
 			out.println("    }");
@@ -130,7 +138,7 @@ public class DomainObjectGenerator {
 			
 			out.printf("    @RequestMapping(value = \"/{%s}\" method = { RequestMethod.DELETE })\n", javaPKVarName);
 			out.println("   @ResponseBody");
-			out.printf("    public %3$s delete%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName, javaPKName,  JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()),  javaPKVarName);
+			out.printf("    public %3$s delete%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName, javaPKName,  JdbcSqlTypeMap.toJavaTypeName(primaryKey),  javaPKVarName);
 			out.printf("        this.%2$sMapper.delete%1$sBy%3$s(%4$s);\n",	javaEntityName, javaEntityVarName, javaPKName, javaPKVarName);
 			out.printf("        return %2$s;\n", javaEntityName, javaEntityVarName);
 			out.println("    }");
@@ -165,7 +173,7 @@ public class DomainObjectGenerator {
 		String javaEntityVarName = JavaIdentifierUtil.toVariableName(entity
 				.getName());
 		for (Field field : fields) {
-			String name = field.getObjname() != null ? field.getObjname()
+			String name = field.getVarname() != null ? field.getVarname()
 					: field.getName();
 			javaFieldName.add(name);
 			String fname = field.getName();
@@ -183,21 +191,21 @@ public class DomainObjectGenerator {
 		out.printf(" java.util.List<%s> get%s();\n", javaEntityName,
 				javaEntityName, javaEntityVarName);
 		if (primaryKey != null) {
-			String pname = primaryKey.getObjname() != null ? primaryKey
-					.getObjname() : primaryKey.getName();
+			String pname = primaryKey.getVarname() != null ? primaryKey
+					.getVarname() : primaryKey.getName();
 			String javaPKName = JavaIdentifierUtil.toObjectName(pname);
 			String javaPKVarName = JavaIdentifierUtil.toVariableName(pname);
 			out.printf(" %s get%sBy%s(%s %s);\n", javaEntityName,
 					javaEntityName, javaPKName,
-					JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(primaryKey),
 					javaPKVarName);
 			out.printf(" void update%sBy%s(%s %s);\n", javaEntityName,
 					javaPKName,
-					JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(primaryKey),
 					javaPKVarName);
 			out.printf(" void delete%sBy%s(%s %s);\n", javaEntityName,
 					javaPKName,
-					JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(primaryKey),
 					javaPKVarName);
 
 		}
@@ -210,8 +218,7 @@ public class DomainObjectGenerator {
 
 	protected String toJavaDomainObjectMyBatisMapper(Entity entity,
 			String packageName) throws IOException {
-		String text = IOUtils.toString(getClass().getResourceAsStream(
-				"MyBatis.tmpl"));
+		
 		StringWriter buf = new StringWriter();
 		PrintWriter out = new PrintWriter(buf);
 		out.printf("<resultMap id=\"%sResultMap\" type=\"%s\">\n",
@@ -221,7 +228,7 @@ public class DomainObjectGenerator {
 		List<String> fieldNames = new ArrayList<>();
 		Field primaryKey = null;
 		for (Field field : fields) {
-			String name = field.getObjname() != null ? field.getObjname()
+			String name = field.getVarname() != null ? field.getVarname()
 					: field.getName();
 			String fname = field.getName();
 			fieldNames.add(fname);
@@ -242,7 +249,7 @@ public class DomainObjectGenerator {
 		out.println("    VALUES (");
 		for (int i = 0; i < fields.size(); i++) {
 			Field field = fields.get(i);
-			String name = field.getObjname() != null ? field.getObjname()
+			String name = field.getVarname() != null ? field.getVarname()
 					: field.getName();
 			String fname = field.getName();
 			fieldNames.add(fname);
@@ -268,14 +275,14 @@ public class DomainObjectGenerator {
 		out.println("</select>");
 
 		if (primaryKey != null) {
-			String name = primaryKey.getObjname() != null ? primaryKey
-					.getObjname() : primaryKey.getName();
+			String name = primaryKey.getVarname() != null ? primaryKey
+					.getVarname() : primaryKey.getName();
 			String fname = primaryKey.getName();
 			out.printf(
 					"<select id=\"get%sBy%s\" parameterType=\"%s\" resultMap=\"%sResultMap\">\n",
 					JavaIdentifierUtil.toObjectName(entity.getName()),
 					JavaIdentifierUtil.toObjectName(name),
-					JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(primaryKey),
 					JavaIdentifierUtil.toVariableName(entity.getName()));
 			out.println("    SELECT");
 			out.println("     " + selectList);
@@ -299,7 +306,7 @@ public class DomainObjectGenerator {
 				Field field = fields.get(i);
 				if (field.isPrimaryKey())
 					continue;
-				String fxname = field.getObjname() != null ? field.getObjname()
+				String fxname = field.getVarname() != null ? field.getVarname()
 						: field.getName();
 				String fxfname = field.getName();
 				fieldNames.add(fname);
@@ -327,7 +334,7 @@ public class DomainObjectGenerator {
 			out.printf("<delete id=\"delete%sBy%s\" parameterType=\"%s\">\n",
 					JavaIdentifierUtil.toObjectName(entity.getName()),
 					JavaIdentifierUtil.toObjectName(name),
-					JdbcSqlTypeMap.toJavaTypeName(primaryKey.getJdbcType()));
+					JdbcSqlTypeMap.toJavaTypeName(primaryKey));
 			out.println(String.format(
 					"    DELETE FROM %s WHERE  %s=#{%s,jdbcType=%s}",
 					JavaIdentifierUtil.toObjectName(entity.getName()),
@@ -338,7 +345,8 @@ public class DomainObjectGenerator {
 			out.println("</delete>");
 
 		}
-
+		String text = IOUtils.toString(getClass().getResourceAsStream(
+				"MyBatis.tmpl"));
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("SQLMAP", buf.toString());
 		params.put(
@@ -381,20 +389,20 @@ public class DomainObjectGenerator {
 		out.println(" ");
 		List<Field> fields = entity.getFields();
 		for (Field field : fields) {
-			String name = field.getObjname() != null ? field.getObjname()
+			String name = field.getVarname() != null ? field.getVarname()
 					: field.getName();
 			out.printf("     private %s %s;\n",
-					JdbcSqlTypeMap.toJavaTypeName(field.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(field),
 					JavaIdentifierUtil.toVariableName(name));
 			out.println(" ");
 		}
 		out.println(" ");
 		out.println(" ");
 		for (Field field : fields) {
-			String name = field.getObjname() != null ? field.getObjname()
+			String name = field.getVarname() != null ? field.getVarname()
 					: field.getName();
 			out.printf("     public %s get%s(){\n",
-					JdbcSqlTypeMap.toJavaTypeName(field.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(field),
 					JavaIdentifierUtil.toObjectName(name));
 			out.printf("         return this.%s;\n",
 					JavaIdentifierUtil.toVariableName(name));
@@ -402,7 +410,7 @@ public class DomainObjectGenerator {
 
 			out.printf("     public void set%s(%s %s){\n",
 					JavaIdentifierUtil.toObjectName(name),
-					JdbcSqlTypeMap.toJavaTypeName(field.getJdbcType()),
+					JdbcSqlTypeMap.toJavaTypeName(field),
 					JavaIdentifierUtil.toVariableName(name));
 			out.printf("          this.%1$s = %1$s;\n",
 					JavaIdentifierUtil.toVariableName(name));
