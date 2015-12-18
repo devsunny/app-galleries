@@ -18,9 +18,10 @@ create table account
 
 create table orders1
 (
-	order_id number(16, 0) not null primary key, --#SEQUENCE,min=1,step=1
+	order_id number(16, 0) not null , --#SEQUENCE,min=1,step=1
 	account_id number(16, 0) not null,  --#REF,ref=account.id,min=0,max=100
-	created_date timestamp not null, --#TIMESTAMP
-	total_price number(16, 2) not null --#UDOUBLE,max=1000
+	created_date timestamp not null,    --#TIMESTAMP
+	total_price number(16, 2) not null, --#UDOUBLE,max=1000
+	primary key(order_id, account_id)
 );
 
