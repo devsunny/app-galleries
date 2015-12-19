@@ -1,5 +1,6 @@
 package com.asksunny.schema.dg;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,6 +14,11 @@ import java.util.UUID;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
 import com.asksunny.codegen.FileNameGenerator;
 
@@ -71,17 +77,17 @@ public class FileGenerator {
 		if (!f.getParentFile().exists()) {
 			f.getParentFile().mkdirs();
 		}
-
 		long size = maxSize == 0 ? fixedSize : (Math.abs(random.nextLong()) % (maxSize - minSize)) + minSize;
-
 		if (ext.equalsIgnoreCase("zip")) {
 			genZip(f, size);
-		} else if (ext.equalsIgnoreCase("gz")  || ext.equalsIgnoreCase("gzip")) {
+		} else if (ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("gzip")) {
 			genGZip(f, size);
-		} else if (ext.equalsIgnoreCase("tar.gz")) {
+		} else if (ext.equalsIgnoreCase("tar.gz") || ext.equalsIgnoreCase("tgz")) {
 			genTGZ(f, size);
+		} else if (ext.equalsIgnoreCase("tar")) {
+			genTAR(f, size);
 		} else if (ext.equalsIgnoreCase("bz2")) {
-			//genBZ2(f, size);
+			genBZ2(f, size);
 		} else if (ext.equalsIgnoreCase("txt")) {
 			genText(f, size);
 		} else {
@@ -90,53 +96,52 @@ public class FileGenerator {
 
 	}
 
-	private long ZIP_SIZE_MAX = 1024L * 1024L * 10;
-
-	protected void genZip(File f, long size) throws IOException {
+	protected void genBZ2(File f, long size) throws IOException {
 		FileOutputStream fw = new FileOutputStream(f);
-		ZipOutputStream zipOut = new ZipOutputStream(fw);
+		BufferedOutputStream bout = new BufferedOutputStream(fw);
+		BZip2CompressorOutputStream bzout = new BZip2CompressorOutputStream(bout);
 		long count = calnum(size);
-		System.out.println("Creaing zip file with mumber of file:" + count);
+		System.out.printf("Creaing gzip file  %s with size of %d:", f.getName(), size);
 		try {
 			for (long j = 0; j < count; j++) {
-				String fileName = String.format("test_%04d.txt", j);
-				System.out.println("Zipping:" + fileName);
-				ZipEntry ze = new ZipEntry(fileName);
-				zipOut.putNextEntry(ze);				
 				if (size < ZIP_SIZE_MAX) {
 					StringBuilder buf = new StringBuilder();
 					for (long k = 0; k < size; k++) {
 						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
 					}
 					System.out.println("Text created");
-					zipOut.write(buf.toString().getBytes());
-					System.out.println("Writed to Zip");
+					bzout.write(buf.toString().getBytes());
+					System.out.println("Writed to BZip2");
 				} else {
 					StringBuilder buf = new StringBuilder();
 					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
 						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
 					}
 					System.out.println("Text created");
-					zipOut.write(buf.toString().getBytes());
-					System.out.println("Writed to Zip");
-				}				
-				zipOut.closeEntry();
+					bzout.write(buf.toString().getBytes());
+					System.out.println("Writed to BZip2");
+				}
 			}
-			zipOut.flush();
+			bzout.flush();
+			bout.flush();
 		} finally {
-			zipOut.close();
+			bzout.close();
+			bout.close();
 			fw.close();
 		}
+
 	}
+
+	private long ZIP_SIZE_MAX = 1024L * 1024L * 10;
 
 	private long calnum(long size) {
 		return (size / (ZIP_SIZE_MAX)) + 1;
 	}
 
-	protected void genGZip(File f, long size) throws IOException 
-	{
+	protected void genGZip(File f, long size) throws IOException {
 		FileOutputStream fw = new FileOutputStream(f);
-		GZIPOutputStream zipOut = new GZIPOutputStream(fw);
+		BufferedOutputStream bout = new BufferedOutputStream(fw);
+		GZIPOutputStream zipOut = new GZIPOutputStream(bout);
 		long count = calnum(size);
 		System.out.printf("Creaing gzip file  %s with size of %d:", f.getName(), size);
 		try {
@@ -157,7 +162,46 @@ public class FileGenerator {
 					System.out.println("Text created");
 					zipOut.write(buf.toString().getBytes());
 					System.out.println("Writed to GZip");
-				}		
+				}
+			}
+			zipOut.flush();
+			bout.flush();
+		} finally {
+			zipOut.close();
+			bout.close();
+			fw.close();
+		}
+	}
+
+	protected void genZip(File f, long size) throws IOException {
+		FileOutputStream fw = new FileOutputStream(f);
+		ZipOutputStream zipOut = new ZipOutputStream(fw);
+		long count = calnum(size);
+		System.out.println("Creaing zip file with mumber of file:" + count);
+		try {
+			for (long j = 0; j < count; j++) {
+				String fileName = String.format("test_%04d.txt", j);
+				System.out.printf("Add %s to Zip file %s\n", fileName, f.getAbsolutePath());
+				ZipEntry ze = new ZipEntry(fileName);
+				zipOut.putNextEntry(ze);
+				if (size < ZIP_SIZE_MAX) {
+					StringBuilder buf = new StringBuilder();
+					for (long k = 0; k < size; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					zipOut.write(buf.toString().getBytes());
+					System.out.println("Writed to Zip");
+				} else {
+					StringBuilder buf = new StringBuilder();
+					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					zipOut.write(buf.toString().getBytes());
+					System.out.println("Writed to Zip");
+				}
+				zipOut.closeEntry();
 			}
 			zipOut.flush();
 		} finally {
@@ -166,11 +210,93 @@ public class FileGenerator {
 		}
 	}
 
-	protected void genTGZ(File f, long size) throws IOException {
+	protected void genTAR(File f, long size) throws IOException {
+		FileOutputStream fw = new FileOutputStream(f);
+		BufferedOutputStream bout = new BufferedOutputStream(fw);
+		TarArchiveOutputStream tOut = new TarArchiveOutputStream(bout);
+		long count = calnum(size);
+		System.out.println("Creaing tar.gzip file with mumber of file:" + count);
+		try {
+			for (long j = 0; j < count; j++) {
+				String fileName = String.format("test_%04d.txt", j);
+				System.out.printf("Add %s to TAR file %s\n", fileName, f.getAbsolutePath());
+				StringBuilder buf = new StringBuilder();
+				if (size < ZIP_SIZE_MAX) {	
+					for (long k = 0; k < size; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					tOut.write(buf.toString().getBytes());
+					System.out.println("Writed to TAR file");
+				} else {
+					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");					
+				}
+				TarArchiveEntry entry = new TarArchiveEntry(fileName);
+				byte[] cnt = buf.toString().getBytes();
+				entry.setSize(cnt.length);
+				tOut.putArchiveEntry(entry);	
+				tOut.write(cnt);
+				System.out.println("Writed to TAR file");
+				tOut.flush();
+				tOut.closeArchiveEntry();
+			}
+			bout.flush();
+		} finally {			
+			tOut.close();
+			bout.close();
+			fw.close();
+		}
 
 	}
 
-	
+	protected void genTGZ(File f, long size) throws IOException {
+		System.out.printf("Creaing tar.gzip %s file with size %d:\n", f, size);
+		FileOutputStream fw = new FileOutputStream(f);
+		BufferedOutputStream bout = new BufferedOutputStream(fw);
+		GzipCompressorOutputStream gzOut = new GzipCompressorOutputStream(bout);
+		TarArchiveOutputStream tOut = new TarArchiveOutputStream(gzOut);
+		long count = calnum(size);
+		System.out.println("Creaing tar.gzip file with mumber of file:" + count);
+		try {
+			for (long j = 0; j < count; j++) {
+				String fileName = String.format("test_%04d.txt", j);
+				System.out.printf("Add %s to TAR GZIP file %s\n", fileName, f.getAbsolutePath());
+				StringBuilder buf = new StringBuilder();
+				if (size < ZIP_SIZE_MAX) {	
+					for (long k = 0; k < size; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					tOut.write(buf.toString().getBytes());
+					System.out.println("Writed to TGZip");
+				} else {
+					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");					
+				}
+				TarArchiveEntry entry = new TarArchiveEntry(fileName);
+				byte[] cnt = buf.toString().getBytes();
+				entry.setSize(cnt.length);
+				tOut.putArchiveEntry(entry);	
+				tOut.write(cnt);
+				System.out.println("Writed to TGZip");
+				tOut.flush();
+				tOut.closeArchiveEntry();
+			}
+			gzOut.flush();
+			bout.flush();
+		} finally {			
+			tOut.close();
+			gzOut.close();
+			bout.close();
+			fw.close();
+		}
+
+	}
 
 	protected void genText(File f, long size) throws IOException {
 		BufferedWriter fw = new BufferedWriter(new FileWriter(f));
@@ -186,11 +312,28 @@ public class FileGenerator {
 
 	protected void genBinary(File f, long size) throws IOException {
 		FileOutputStream fw = new FileOutputStream(f);
+		BufferedOutputStream bout = new BufferedOutputStream(fw);
 		try {
-			for (long i = 0; i < size; i++) {
-				fw.write((byte) random.nextInt(256));
+			long count = calnum(size)-1;			
+			for (long i = 0; i < count; i++) {
+				byte[]  bar = new byte[(int)ZIP_SIZE_MAX];
+				for (int k = 0; k < ZIP_SIZE_MAX ; k++) {
+					bar[k] = (byte) random.nextInt(256);
+				}
+				bout.write(bar);
 			}
+			int left  = (int)(size % ZIP_SIZE_MAX);
+			if(left >0)
+			{
+				byte[]  bar = new byte[left];
+				for (int k = 0; k < left ; k++) {
+					bar[k] = (byte) random.nextInt(256);
+				}
+				bout.write(bar);
+			}			
+			bout.flush();
 		} finally {
+			bout.close();
 			fw.close();
 		}
 	}
