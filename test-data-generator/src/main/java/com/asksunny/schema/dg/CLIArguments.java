@@ -87,9 +87,9 @@ public class CLIArguments extends HashMap<String, String> {
 				}
 			} else if (cmdArg.startsWith(PREFIX1)) {
 				String next = (i < nextMax) ? cmdArgs[i + 1] : null;
-				//System.out.println(cmdArg);
-				//System.out.println(next);
-				//System.out.println("-------------------");
+				// System.out.println(cmdArg);
+				// System.out.println(next);
+				// System.out.println("-------------------");
 				if (next == null || next.startsWith(PREFIX1)) {
 					this.put(cmdArg.substring(1), "TRUE");
 				} else if (next.startsWith(PREFIX_ESCAPE)) {
@@ -352,7 +352,7 @@ public class CLIArguments extends HashMap<String, String> {
 	public boolean getBooleanOption(String optionKey) {
 		String ret = this.get(optionKey);
 		if (ret == null) {
-			throw new IllegalArgumentException(String.format(INVALID_KEY_MSG, optionKey));
+			return false;
 		} else {
 			return BOOLEAN_TRUE_VALUES.contains(ret.toUpperCase());
 		}

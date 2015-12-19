@@ -59,17 +59,20 @@ public class EntityCodeGen {
 	public void genCode() throws IOException {
 
 		if (config.genDomainObject) {
-			writeCode(new File(config.getJavaBaseDir()), config.getDomainPackageName(), "",  "java", toJavaDomainObject());
+			writeCode(new File(config.getJavaBaseDir()), config.getDomainPackageName(), "", "java",
+					toJavaDomainObject());
 		}
 
 		if (config.genMyBatisMapper) {
-			writeCode(new File(config.getJavaBaseDir()), config.getMapperPackageName(), "Mapper", "java", toMyBatisJavaMapper());
-			writeCode(new File(config.getMyBatisXmlBaseDir()), config.getMapperPackageName(), "Mapper",  "xml",
+			writeCode(new File(config.getJavaBaseDir()), config.getMapperPackageName(), "Mapper", "java",
+					toMyBatisJavaMapper());
+			writeCode(new File(config.getMyBatisXmlBaseDir()), config.getMapperPackageName(), "Mapper", "xml",
 					toMyBatisXmlMapper());
 		}
 
 		if (config.genRestController) {
-			writeCode(new File(config.getJavaBaseDir()), config.getRestPackageName(), "RestController", "java", toRestController());
+			writeCode(new File(config.getJavaBaseDir()), config.getRestPackageName(), "RestController", "java",
+					toRestController());
 		}
 
 	}
@@ -80,25 +83,19 @@ public class EntityCodeGen {
 		if (!f.exists() && !f.mkdirs()) {
 			throw new IOException("Unable to wtite to directory:" + f.toString());
 		}
-		String name = String.format("%s%s.%s", javaEntityName, suffix,  ext);
+		String name = String.format("%s%s.%s", javaEntityName, suffix, ext);
 		File fj = new File(f, name);
 		if (config.suffixSequenceIfExists == false && fj.exists()) {
 			throw new IOException("File exists:" + fj.toString());
-		}
-
-		FileWriter fw = null;
-		if (!fj.exists()) {
-			fw = new FileWriter(fj);
-		} else {
-			for (int i = 0; i < Integer.MAX_VALUE; i++) {
-				String namen = String.format("%s%s.%s.%d", javaEntityName, suffix,  ext, i);
-				File fjn = new File(f, namen);
-				if (!fjn.exists()) {
-					fw = new FileWriter(fjn);
+		} else if (fj.exists()) {
+			for (int i = 1; i < Integer.MAX_VALUE; i++) {
+				fj = new File(f, String.format("%s.%03d", name, i));
+				if (!fj.exists()) {
 					break;
 				}
 			}
 		}
+		FileWriter fw = new FileWriter(fj);		
 		try {
 			fw.write(code);
 			fw.flush();
@@ -362,11 +359,11 @@ public class EntityCodeGen {
 		params.put("javaEntityName", javaEntityName);
 		params.put("javaEntityVarName", javaEntityVarName);
 		params.put("JAVA_MAPPER_IMPLS", buf.toString());
-		params.put("IMPORT", String.format("import %1$s.%3$s;\nimport %2$s.%3$sMapper;\n\n", config.getDomainPackageName(),
-				config.getMapperPackageName(), javaEntityName));
+		params.put("IMPORT", String.format("import %1$s.%3$s;\nimport %2$s.%3$sMapper;\n\n",
+				config.getDomainPackageName(), config.getMapperPackageName(), javaEntityName));
 
 		String cntrl = SearchReplaceUtils.searchAndReplace(text, params);
-		System.out.println(cntrl);
+		//System.out.println(cntrl);
 		return cntrl;
 	}
 

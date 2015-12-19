@@ -1,20 +1,164 @@
 package com.asksunny.codegen;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+
+import com.asksunny.schema.Entity;
+import com.asksunny.schema.Schema;
 import com.asksunny.schema.dg.CLIArguments;
+import com.asksunny.schema.parser.SQLScriptParser;
 
 public class JavaCodeGen {
+
+	CodeGenConfig configureation = new CodeGenConfig();
 
 	public JavaCodeGen() {
 	}
 
-	public void doCodeGen(CLIArguments cliArgs) {
+	public void doCodeGen() throws Exception {
+		String schemaFiles = configureation.getSchemaFiles();
+		Schema schema = null;
+		String[] sfs = schemaFiles.split("\\s*[,;]\\s*");
+		for (int i = 0; i < sfs.length; i++) {
+			InputStream in = getClass().getResourceAsStream(sfs[i]);
+			if (in == null) {
+				in = new FileInputStream(sfs[i]);
+			}
+			try {
+				SQLScriptParser parser = new SQLScriptParser(new InputStreamReader(in));
+				Schema schemax = parser.parseSql();
+				if (schema == null) {
+					schema = schemax;
+				} else {
+					schema.getAllEntities().addAll(schemax.getAllEntities());
+				}
+			} finally {
+				in.close();
+			}
+		}
+		doCodeGen(schema);
 
+	}
+
+	public void doCodeGen(Schema schema) throws Exception {
+		schema.buildRelationship();
+		List<Entity> entites = schema.getAllEntities();
+		for (Entity entity : entites) {
+			if (configureation.getIgnores().contains(entity.getName().toUpperCase())) {
+				continue;
+			}
+			EntityCodeGen codeGen = new EntityCodeGen(configureation, entity);
+			codeGen.genCode();
+		}
+
+		if (configureation.isGenSpringContext()) {
+			SourceCodeUtil.getSpringContext(configureation);
+		}
+
+	}
+
+	public boolean validateArguments(CLIArguments cliArgs) {
+		boolean valid = true;
+		StringBuilder buf = new StringBuilder();
+		String sfs = cliArgs.getOption("s");
+		boolean good = sfs != null;
+		if (!good) {
+			valid = good;
+			buf.append("Missing schema files with argment -s\n");
+		} else {
+			configureation.setSchemaFiles(sfs);
+		}
+		String d = cliArgs.getOption("d");
+		configureation.setGenDomainObject(d != null);
+		if (configureation.isGenDomainObject()) {
+			configureation.setDomainPackageName(d);
+		}
+		String m = cliArgs.getOption("m");
+		configureation.setGenMyBatisMapper(m != null);
+		if (configureation.isGenMyBatisMapper()) {
+			configureation.setMapperPackageName(m);
+		}
+
+		String r = cliArgs.getOption("r");
+		configureation.setGenRestController(r != null);
+		if (configureation.isGenRestController()) {
+			configureation.setRestPackageName(r);
+		}
+
+		if (!configureation.isGenDomainObject() && !configureation.isGenMyBatisMapper()
+				&& !configureation.isGenRestController()) {
+			valid = false;
+			buf.append("Need at least one code options with argment -d, -m or -r\n");
+		}
+
+		if (!valid) {
+			System.err.println(buf.toString());
+			System.err.println("Usage: JavaCodeGen <options>...");
+			System.err.println("                   -s  <schema_files> - comma separted file paths");
+			System.err.println(
+					"                   -d  <domain_pkg_name> - domain object package names, ie 'com.asksunny.domain'");
+			System.err.println(
+					"                   -m  <mapper_pkg_name> - myBatis mapper package names, ie 'com.asksunny.mapper'");
+			System.err.println(
+					"                   -r  <rest_pkg_name> - rest controller package names, ie 'com.asksunny.rest.controller'");
+			System.err.println(
+					"                   -i  <ignore_tbnames> - comma separated list of table names to be ignored");
+			System.err.println(
+					"                   -S                    - generated new file with sequence number suffix if already exist.");
+
+			System.err.println("                   -j  <java_source_dir> - default 'src/main/java'");
+
+			System.err.println("                   -x  <mybatis_xml_dir> - default 'src/main/resources'");
+			System.err
+					.println("                   -spring  <spring_xml_dir|true|false> - default 'src/main/resources'");
+		} else {
+			String ig = cliArgs.getOption("i");
+			if (ig != null) {
+				configureation.setIgnores(ig);
+			}
+			if (cliArgs.getOption("S") != null) {
+				configureation.setSuffixSequenceIfExists(cliArgs.getBooleanOption("S"));
+			}
+			String spring = cliArgs.getOption("spring");
+			if (spring != null) {
+				if (spring.equalsIgnoreCase("true")) {
+					configureation.setGenSpringContext(true);
+				} else if (spring.equalsIgnoreCase("false")) {
+					configureation.setGenSpringContext(false);
+				} else {
+					configureation.setGenSpringContext(true);
+					configureation.setSpringXmlBaseDir(spring);
+				}
+			}
+
+			if (cliArgs.getOption("j") != null) {
+				configureation.setJavaBaseDir(cliArgs.getOption("j"));
+			}
+
+			if (cliArgs.getOption("x") != null) {
+				configureation.setMyBatisXmlBaseDir(cliArgs.getOption("x"));
+			}
+		}
+
+		return valid;
 	}
 
 	public static void main(String[] args) throws Exception {
 		CLIArguments cliArgs = new CLIArguments(args);
 		JavaCodeGen jcg = new JavaCodeGen();
-		jcg.doCodeGen(cliArgs);
+		if (jcg.validateArguments(cliArgs)) {
+			jcg.doCodeGen();
+		}
+	}
+
+	public CodeGenConfig getConfigureation() {
+		return configureation;
+	}
+
+	public void setConfigureation(CodeGenConfig configureation) {
+		this.configureation = configureation;
 	}
 
 }

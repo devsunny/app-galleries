@@ -10,6 +10,7 @@ public class CodeGenConfig {
 	Set<String> ignores = new HashSet<>();
 	String javaBaseDir = "src/main/java";
 	String myBatisXmlBaseDir = "src/main/resources";
+	String springXmlBaseDir = "src/main/resources";
 	String domainPackageName;
 	String mapperPackageName;
 	String restPackageName;
@@ -20,6 +21,7 @@ public class CodeGenConfig {
 	boolean genRestController = true;
 	boolean genAngularUIElement = false;
 	boolean genSpringContext = false;
+	
 	boolean suffixSequenceIfExists = true;
 
 	public CodeGenConfig() {
@@ -135,6 +137,14 @@ public class CodeGenConfig {
 
 	public void setSuffixSequenceIfExists(boolean suffixSequenceIfExists) {
 		this.suffixSequenceIfExists = suffixSequenceIfExists;
+	}
+
+	public String getSpringXmlBaseDir() {
+		return springXmlBaseDir;
+	}
+
+	public void setSpringXmlBaseDir(String springXmlBaseDir) {
+		this.springXmlBaseDir = springXmlBaseDir;
 	}
 
 }

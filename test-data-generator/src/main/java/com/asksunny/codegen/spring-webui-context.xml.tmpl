@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:cache="http://www.springframework.org/schema/cache" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans    
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/jdbc
+    http://www.springframework.org/schema/jdbc/spring-jdbc.xsd   
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc.xsd   
+    http://www.springframework.org/schema/task
+    http://www.springframework.org/schema/task/spring-task.xsd  
+    http://www.springframework.org/schema/cache
+    http://www.springframework.org/schema/cache/spring-cache.xsd   
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd   
+    ">
+
+	<!-- <context:property-placeholder location="classpath:web-app.properties" />  -->
+	
+	<mvc:annotation-driven />
+	<mvc:resources location="classpath:/META-INF/app/"		
+		mapping="/app/**" />		
+		<mvc:resources location="classpath:/META-INF/bower_components/"
+		mapping="/bower_components/**" />
+
+	<!-- Internationalization -->
+	<!--<bean id="messageSource" -->
+	<!--	class="org.springframework.context.support.ResourceBundleMessageSource"> -->
+	<!--	<property name="basename" value="Messages" />-->
+	<!--</bean>-->
+
+	<!-- conversion-service="conversionService"  -->
+	<!-- <bean id="conversionService"-->
+	<!-- 	class="org.springframework.format.support.FormattingConversionServiceFactoryBean">-->
+	<!-- 	<property name="formatters">-->
+	<!-- 		<set>-->
+	<!-- 			<bean class="thymeleafexamples.stsm.web.conversion.DateFormatter" />-->
+	<!-- 		</set>-->
+	<!-- 	</property>-->
+	<!-- </bean>-->
+		
+		
+	<!-- <bean id="templateResolver"-->
+	<!-- 	class="org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver">-->
+	<!-- 	<property name="prefix" value="classpath:/META-INF/views/" />-->
+	<!-- 	<property name="suffix" value=".html" />-->
+	<!-- 	<property name="templateMode" value="HTML5" />-->
+	<!-- 	<property name="order" value="0" />-->
+	<!-- </bean>-->
+
+	<!--<bean id="templateEngine" class="org.thymeleaf.spring4.SpringTemplateEngine">-->
+	<!--	<property name="templateResolver" ref="templateResolver" />-->
+	<!--</bean>-->
+
+	<!--<bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">-->
+	<!--	<property name="templateEngine" ref="templateEngine" />-->
+	<!--</bean>-->
+
+
+	<bean id="contentNegotiationManager"
+		class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
+		<property name="favorPathExtension" value="false" />
+		<property name="favorParameter" value="true" />
+		<property name="parameterName" value="mediaType" />
+		<property name="ignoreAcceptHeader" value="true" />
+		<property name="useJaf" value="false" />
+		<property name="defaultContentType" value="application/json" />
+		<property name="mediaTypes">
+			<map>
+				<entry key="json" value="application/json" />
+				<entry key="txt" value="text/plain" />
+				<entry key="xml" value="application/xml" />
+				<entry key="html" value="text/html" />
+			</map>
+		</property>
+	</bean>
+
+
+
+	<mvc:annotation-driven
+		content-negotiation-manager="contentNegotiationManager">
+		<mvc:message-converters register-defaults="true">
+			<!-- <bean id="customTextConverterExample" class="com.asksunny.rest.converters.PlainTextConverter"></bean> -->
+			<!-- <bean id="customYamlConverterExample" class="com.asksunny.rest.converters.MappingJackson2YamlHttpMessageConverter"></bean> -->
+			<bean id="jacksonMessageXmlConverter"
+				class="org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter"></bean>
+			<bean id="jacksonMessageJsonConverter"
+				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"></bean>
+			<bean id="stringHttpMessageConverter"
+				class="org.springframework.http.converter.StringHttpMessageConverter" />
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+
+</beans>
