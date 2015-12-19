@@ -1,4 +1,4 @@
-package com.asksunny.schema.dg;
+package com.asksunny;
 
 import java.util.ArrayList;
 import java.util.Arrays;

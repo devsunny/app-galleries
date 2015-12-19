@@ -20,6 +20,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
+import com.asksunny.CLIArguments;
 import com.asksunny.codegen.FileNameGenerator;
 
 public class FileGenerator {
@@ -299,11 +300,26 @@ public class FileGenerator {
 	}
 
 	protected void genText(File f, long size) throws IOException {
+		System.out.printf("Creaing text %s file with size %d:\n", f, size);
 		BufferedWriter fw = new BufferedWriter(new FileWriter(f));
 		try {
+			StringBuilder buf = new StringBuilder();
+			long wlen = 0;
 			for (long i = 0; i < size; i++) {
-				fw.write(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+				buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+				wlen++;
+				if(wlen%ZIP_SIZE_MAX==0){
+					fw.write(buf.toString());
+					buf.setLength(0);
+					wlen = 0;
+				}				
 			}
+			if(wlen>0){
+				fw.write(buf.toString());
+				buf.setLength(0);
+				wlen = 0;
+			}
+			fw.flush();
 		} finally {
 			fw.close();
 		}
@@ -311,6 +327,7 @@ public class FileGenerator {
 	}
 
 	protected void genBinary(File f, long size) throws IOException {
+		System.out.printf("Creaing binary %s file with size %d:\n", f, size);
 		FileOutputStream fw = new FileOutputStream(f);
 		BufferedOutputStream bout = new BufferedOutputStream(fw);
 		try {
@@ -338,7 +355,7 @@ public class FileGenerator {
 		}
 	}
 
-	protected static void usage() {
+	public static void usage() {
 		System.err.println("Desc : FileGenerator is used to generated meanless files for testing");
 		System.err.println("       purpose of file handling\n");
 		System.err.println("Usage: FileGenerator <options>...");

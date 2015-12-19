@@ -5,9 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import com.asksunny.CLIArguments;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Schema;
-import com.asksunny.schema.dg.CLIArguments;
 import com.asksunny.schema.parser.SQLScriptParser;
 
 public class JavaCodeGen {
@@ -95,24 +95,7 @@ public class JavaCodeGen {
 
 		if (!valid) {
 			System.err.println(buf.toString());
-			System.err.println("Usage: JavaCodeGen <options>...");
-			System.err.println("                   -s  <schema_files> - comma separted file paths");
-			System.err.println(
-					"                   -d  <domain_pkg_name> - domain object package names, ie 'com.asksunny.domain'");
-			System.err.println(
-					"                   -m  <mapper_pkg_name> - myBatis mapper package names, ie 'com.asksunny.mapper'");
-			System.err.println(
-					"                   -r  <rest_pkg_name> - rest controller package names, ie 'com.asksunny.rest.controller'");
-			System.err.println(
-					"                   -i  <ignore_tbnames> - comma separated list of table names to be ignored");
-			System.err.println(
-					"                   -S                    - generated new file with sequence number suffix if already exist.");
-
-			System.err.println("                   -j  <java_source_dir> - default 'src/main/java'");
-
-			System.err.println("                   -x  <mybatis_xml_dir> - default 'src/main/resources'");
-			System.err
-					.println("                   -spring  <spring_xml_dir|true|false> - default 'src/main/resources'");
+			usage();
 		} else {
 			String ig = cliArgs.getOption("i");
 			if (ig != null) {
@@ -145,6 +128,29 @@ public class JavaCodeGen {
 		return valid;
 	}
 
+	
+	public static void usage()
+	{
+		System.err.println("Usage: JavaCodeGen <options>...");
+		System.err.println("                   -s  <schema_files> - comma separted file paths");
+		System.err.println(
+				"                   -d  <domain_pkg_name> - domain object package names, ie 'com.asksunny.domain'");
+		System.err.println(
+				"                   -m  <mapper_pkg_name> - myBatis mapper package names, ie 'com.asksunny.mapper'");
+		System.err.println(
+				"                   -r  <rest_pkg_name> - rest controller package names, ie 'com.asksunny.rest.controller'");
+		System.err.println(
+				"                   -i  <ignore_tbnames> - comma separated list of table names to be ignored");
+		System.err.println(
+				"                   -S                    - generated new file with sequence number suffix if already exist.");
+
+		System.err.println("                   -j  <java_source_dir> - default 'src/main/java'");
+
+		System.err.println("                   -x  <mybatis_xml_dir> - default 'src/main/resources'");
+		System.err
+				.println("                   -spring  <spring_xml_dir|true|false> - default 'src/main/resources'");
+	}
+	
 	public static void main(String[] args) throws Exception {
 		CLIArguments cliArgs = new CLIArguments(args);
 		JavaCodeGen jcg = new JavaCodeGen();
