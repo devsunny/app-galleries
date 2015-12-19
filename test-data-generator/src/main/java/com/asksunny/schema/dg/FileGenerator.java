@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -46,7 +47,7 @@ public class FileGenerator {
 		this.maxSize = maxSizes == null ? 0 : Long.valueOf(maxSizes);
 	}
 
-	public void genFiles() throws IOException{
+	public void genFiles() throws IOException {
 
 		for (long i = 0; i < numOfFiles; i++) {
 			Map<String, String> params = new HashMap<String, String>();
@@ -61,7 +62,7 @@ public class FileGenerator {
 					params.clear();
 				}
 			} while (true);
-			genFile( f, ext);
+			genFile(f, ext);
 		}
 
 	}
@@ -75,12 +76,12 @@ public class FileGenerator {
 
 		if (ext.equalsIgnoreCase("zip")) {
 			genZip(f, size);
-		} else if (ext.equalsIgnoreCase("gz")) {
+		} else if (ext.equalsIgnoreCase("gz")  || ext.equalsIgnoreCase("gzip")) {
 			genGZip(f, size);
 		} else if (ext.equalsIgnoreCase("tar.gz")) {
 			genTGZ(f, size);
 		} else if (ext.equalsIgnoreCase("bz2")) {
-			genBZ2(f, size);
+			//genBZ2(f, size);
 		} else if (ext.equalsIgnoreCase("txt")) {
 			genText(f, size);
 		} else {
@@ -89,29 +90,87 @@ public class FileGenerator {
 
 	}
 
+	private long ZIP_SIZE_MAX = 1024L * 1024L * 10;
+
 	protected void genZip(File f, long size) throws IOException {
 		FileOutputStream fw = new FileOutputStream(f);
 		ZipOutputStream zipOut = new ZipOutputStream(fw);
+		long count = calnum(size);
+		System.out.println("Creaing zip file with mumber of file:" + count);
 		try {
-			for (long i = 0; i < size; i++) {
-				fw.write((byte) random.nextInt(256));
+			for (long j = 0; j < count; j++) {
+				String fileName = String.format("test_%04d.txt", j);
+				System.out.println("Zipping:" + fileName);
+				ZipEntry ze = new ZipEntry(fileName);
+				zipOut.putNextEntry(ze);				
+				if (size < ZIP_SIZE_MAX) {
+					StringBuilder buf = new StringBuilder();
+					for (long k = 0; k < size; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					zipOut.write(buf.toString().getBytes());
+					System.out.println("Writed to Zip");
+				} else {
+					StringBuilder buf = new StringBuilder();
+					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					zipOut.write(buf.toString().getBytes());
+					System.out.println("Writed to Zip");
+				}				
+				zipOut.closeEntry();
 			}
+			zipOut.flush();
 		} finally {
+			zipOut.close();
 			fw.close();
 		}
 	}
 
-	protected void genGZip(File f, long size) throws IOException {
+	private long calnum(long size) {
+		return (size / (ZIP_SIZE_MAX)) + 1;
+	}
 
+	protected void genGZip(File f, long size) throws IOException 
+	{
+		FileOutputStream fw = new FileOutputStream(f);
+		GZIPOutputStream zipOut = new GZIPOutputStream(fw);
+		long count = calnum(size);
+		System.out.printf("Creaing gzip file  %s with size of %d:", f.getName(), size);
+		try {
+			for (long j = 0; j < count; j++) {
+				if (size < ZIP_SIZE_MAX) {
+					StringBuilder buf = new StringBuilder();
+					for (long k = 0; k < size; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					zipOut.write(buf.toString().getBytes());
+					System.out.println("Writed to GZip");
+				} else {
+					StringBuilder buf = new StringBuilder();
+					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
+						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
+					}
+					System.out.println("Text created");
+					zipOut.write(buf.toString().getBytes());
+					System.out.println("Writed to GZip");
+				}		
+			}
+			zipOut.flush();
+		} finally {
+			zipOut.close();
+			fw.close();
+		}
 	}
 
 	protected void genTGZ(File f, long size) throws IOException {
 
 	}
 
-	protected void genBZ2(File f, long size) throws IOException {
-
-	}
+	
 
 	protected void genText(File f, long size) throws IOException {
 		BufferedWriter fw = new BufferedWriter(new FileWriter(f));
@@ -154,7 +213,7 @@ public class FileGenerator {
 		System.err.println("                           NNNNN - SEQUENCE number, number of 'N' means number of digit");
 	}
 
-	public static void main(String[] args) throws Exception{
+	public static void main(String[] args) throws Exception {
 		CLIArguments cliArgs = new CLIArguments(args);
 		if (cliArgs.getOption("exts") == null || cliArgs.getOption("name") == null) {
 			usage();
