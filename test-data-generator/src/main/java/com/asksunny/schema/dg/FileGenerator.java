@@ -359,18 +359,25 @@ public class FileGenerator {
 		System.err.println("Desc : FileGenerator is used to generated meanless files for testing");
 		System.err.println("       purpose of file handling\n");
 		System.err.println("Usage: FileGenerator <options>...");
-		System.err.println("                   -fixedSize  <integer_size> - fixed file size");
-		System.err.println("                   -minSize  <integer_size> - for random size file, min filesize");
-		System.err.println("                   -maxSize  <integer_size> - for random size file, max file size");
+		System.err.println("       Required:");		
 		System.err.println("                   -exts  <ext_csv> - required a list file extension without period '.'");
-		System.err.println("                   -n  <integer_number> - number of file to be generated, default 1");
-		System.err.println("                   -d <out_dir> - output directory default 'generated'");
-		System.err.println(
-				"                   -name  <naming_pattern> - required xxx_yyyy_#{DATE}_#{NNNNNN}  default random");
+		System.err.println("                           zip, gz, tgz, tar.gz, bz2, and txt are functionally supported.");
+		System.err.println("                           Anything else is tream as binary format.");
+		System.err.println("                   -name  <naming_pattern> - required xxx_yyyy_#{DATE}_#{NNNNNN}  default random");
 		System.err.println("                           DATE - YYYYMMDD or CCYYMMDD");
 		System.err.println("                           TIME - HHMMSS");
 		System.err.println("                           TIMESTAMP - YYYYMMDD_HHMMSS");
 		System.err.println("                           NNNNN - SEQUENCE number, number of 'N' means number of digit");
+		System.err.println("       Optional:");			
+		System.err.println("                   -n  <integer_number> - number of file to be generated, default 1");
+		System.err.println("                   -fixedSize  <integer_size> - fixed file size");
+		System.err.println("                   -minSize  <integer_size> - for random size file, min filesize");
+		System.err.println("                   -maxSize  <integer_size> - for random size file, max file size");
+		System.err.println("                   -d <out_dir> - output directory default 'generated'");
+		System.err.println("examples:");		
+		System.err.println("         FileGenerator -exts zip,tiff,tgz,bz2 -name myprefix_MB_loan_#{DATE}_#{NNN} -fixedSize 1000000");
+		System.err.println("         FileGenerator -exts zip -name CCB_DMA_ICDW_#{TIMESTAMP} -fixedSize 1000000 -n 10000000");
+		
 	}
 
 	public static void main(String[] args) throws Exception {

@@ -131,8 +131,16 @@ public class JavaCodeGen {
 	
 	public static void usage()
 	{
+		System.err.println("Desc : JavaCodeGen is a tool to generate scaffold of CRUD type Restful service.");
+		System.err.println("       It takes raltional database schema DDL file as input; it can generate ");
+		System.err.println("       domain object java source file, mybatis Mapper java source and xml  ");
+		System.err.println("       mapping files, spring restful service based rest controll, maven and");
+		System.err.println("       maven pom file, jetty booststrap spring context xml and restful application");
+		System.err.println("       spring context\n");
 		System.err.println("Usage: JavaCodeGen <options>...");
+		System.err.println("       Required:");
 		System.err.println("                   -s  <schema_files> - comma separted file paths");
+		System.err.println("       Optional:");
 		System.err.println(
 				"                   -d  <domain_pkg_name> - domain object package names, ie 'com.asksunny.domain'");
 		System.err.println(

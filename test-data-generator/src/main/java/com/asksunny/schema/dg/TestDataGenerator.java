@@ -10,6 +10,10 @@ import com.asksunny.schema.parser.SQLScriptParser;
 public class TestDataGenerator {
 
 	public static void usage() {
+		System.err.println("Desc : TestDataGenerator is a tool to generate sample according to raltional");
+		System.err.println("       database schema DDL file as input; it can generate sample data with relationship,");
+		System.err.println("       the output type can be sql insert statement, CSV file and planned JDBC target. \n");	
+		System.err.println("       schema file can be annotated to geneated more specific data. \n");			
 		System.err.println("Usage: TestDataGenerator <option>...");
 		System.err.println("         Required:");
 		System.err.println("                    -s <path_to_ddl>");
@@ -21,6 +25,8 @@ public class TestDataGenerator {
 		System.err.println("	                -url <jdbc_url>");
 		System.err.println("	                -user <jdbc_user>");
 		System.err.println("	                -password <jdbc_password>");
+		System.err.println("examples:");		
+		System.err.println("         TestDataGenerator -s myschema.ddl.sql -t INSERT -n 100000");		
 	}
 
 	public static void main(String[] args) throws Exception {
