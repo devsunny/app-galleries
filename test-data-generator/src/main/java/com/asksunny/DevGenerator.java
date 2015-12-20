@@ -33,7 +33,7 @@ public class DevGenerator {
 			return;
 		} else {
 			String[] params = new String[args.length - 1];
-			System.arraycopy(args, 0, params, 0, args.length - 1);
+			System.arraycopy(args, 1, params, 0, args.length - 1);
 			if (args[0].equalsIgnoreCase(SOURCE_GEN)) {
 				JavaCodeGen.main(params);
 			} else if (args[0].equalsIgnoreCase(DATA_GEN)) {
