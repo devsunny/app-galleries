@@ -86,6 +86,33 @@ public class SQLScriptParser {
 			}
 			break;
 		case ALTER:
+			if (peekMatch(0, Keyword.TABLE) && peekMatch(2, Keyword.ADD)) {
+				tokenReader.read();
+				Token table = tokenReader.read();
+				tokenReader.read();
+				if (peekMatch(0, Keyword.FOREIGN) && peekMatch(1, Keyword.KEY)) {
+					tokenReader.read();
+					tokenReader.read();
+					List<Token> fkCOls = consumeItemList();
+					tokenReader.read();
+					Token reftable = tokenReader.read();
+					List<Token> refCOls = consumeItemList();
+					Entity fkTable = schema.get(table.getImage());
+					Field fd = fkTable.findField(fkCOls.get(0).image);
+					Entity refTable = schema.get(reftable.getImage());
+					Field rfd = refTable.findField(refCOls.get(0).getImage());
+					fd.setReference(rfd);					
+				} else if (peekMatch(0, Keyword.PRIMARY) && peekMatch(1, Keyword.KEY)) {
+					tokenReader.read();
+					tokenReader.read();
+					List<Token> pkCOls = consumeItemList();
+					Entity pkTable = schema.get(table.getImage());
+					for (Token pkT : pkCOls) {
+						Field fd = pkTable.findField(pkT.getImage());
+						fd.setPrimaryKey(true);
+					}
+				}
+			}
 			ignoreStatement();
 			break;
 		default:

@@ -42,7 +42,7 @@ public class SchemaDataGenerator {
 		schema.buildRelationship();
 		List<Entity> entityes = schema.getIndependentEntities();
 		for (Entity entity : entityes) {
-			EntityDataGenerator entGen = new EntityDataGenerator(this, entity, creatorFieldGenerator(entity));
+			EntityDataGenerator entGen = new EntityDataGenerator(this, entity, createFieldGenerator(entity));
 			entGen.setOutputUri(this.outputUri);
 			entGen.setOutputType(this.outputType);
 			entGen.open();
@@ -59,7 +59,7 @@ public class SchemaDataGenerator {
 		RefereeDataGenerator generator = null;
 		generator = this.cacheRefereeGenerators.get(entity.getName().toUpperCase());
 		if (generator == null) {
-			List<Generator<?>> gens = creatorFieldGenerator(entity);
+			List<Generator<?>> gens = createFieldGenerator(entity);
 			generator = new RefereeDataGenerator(entity, refBy, gens);
 			generator.setOutputUri(this.outputUri);
 			generator.setOutputType(this.outputType);
@@ -70,7 +70,7 @@ public class SchemaDataGenerator {
 
 	}
 
-	protected List<Generator<?>> creatorFieldGenerator(Entity entity) {
+	protected List<Generator<?>> createFieldGenerator(Entity entity) {
 
 		List<Generator<?>> generators = null;
 		generators = cacheGenerators.get(entity.getName().toUpperCase());
@@ -78,7 +78,7 @@ public class SchemaDataGenerator {
 			generators = new ArrayList<>();
 			List<Field> fields = entity.getFields();
 			for (Field field : fields) {
-				Generator<?> gen = creatorFieldGenerator(field);
+				Generator<?> gen = createFieldGenerator(field);
 				generators.add(gen);
 			}
 			cacheGenerators.put(entity.getName().toUpperCase(), generators);
@@ -87,7 +87,7 @@ public class SchemaDataGenerator {
 
 	}
 
-	protected Generator<?> creatorFieldGenerator(Field field) {
+	protected Generator<?> createFieldGenerator(Field field) {
 		Generator<?> gen = createExtendFieldGenerator(field);
 		if (gen == null) {
 			gen = createJdbcFieldGenerator(field);

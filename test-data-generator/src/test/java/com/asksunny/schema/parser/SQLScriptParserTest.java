@@ -16,10 +16,9 @@ public class SQLScriptParserTest {
 		SQLScriptLexer lexer = new SQLScriptLexer(getClass().getResourceAsStream("/test.schema.ddl.sql"));
 		SQLScriptParser tokenReader = new SQLScriptParser(lexer);
 		Schema schema = tokenReader.parseSql();
-		lexer.close();	
-		
-		System.out.println(schema);
-		
+		schema.buildRelationship();
+		lexer.close();			
+		System.out.println(schema);		
 		assertEquals(Types.VARCHAR, JdbcSqlTypeMap.getInstance().findJdbcType("varchar").intValue());
 	}
 

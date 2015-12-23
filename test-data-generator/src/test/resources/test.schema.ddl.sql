@@ -25,3 +25,8 @@ create table orders1
 	primary key(order_id, account_id)
 );
 
+
+ALTER TABLE orders1
+ADD FOREIGN KEY (account_id)
+REFERENCES account(id);
+

@@ -181,10 +181,23 @@ public class Field {
 
 	@Override
 	public String toString() {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		if (this.referencedBy != null) {
+			for (Field fd : this.referencedBy) {
+				sb.append(String.format("%s.%s", fd.getContainer().getName(), fd.getName())).append(", ");
+			}
+		}
+		if (sb.length() > 2) {
+			sb.deleteCharAt(sb.length() - 1);
+			sb.deleteCharAt(sb.length() - 1);
+		}
+		sb.append("]");
 		return "Field [container=" + container.getName() + ", name=" + name + ", jdbcType=" + jdbcType + ", precision="
 				+ precision + ", scale=" + scale + ", displaySize=" + displaySize + ", nullable=" + nullable
 				+ ", dataType=" + dataType + ", format=" + format + ", minValue=" + minValue + ", maxValue=" + maxValue
-				+ ", reference=" + reference + ", step=" + step + ", referencedBy=" + referencedBy + "]";
+				+ ", reference=" + reference + ", step=" + step + ", referencedBy=" + sb.toString() + "]\n";
 	}
 
 	public String getEnumValues() {
