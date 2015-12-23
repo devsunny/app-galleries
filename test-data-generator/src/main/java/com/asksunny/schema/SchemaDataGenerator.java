@@ -42,6 +42,7 @@ public class SchemaDataGenerator {
 		schema.buildRelationship();
 		List<Entity> entityes = schema.getIndependentEntities();
 		for (Entity entity : entityes) {
+			
 			EntityDataGenerator entGen = new EntityDataGenerator(this, entity, createFieldGenerator(entity));
 			entGen.setOutputUri(this.outputUri);
 			entGen.setOutputType(this.outputType);

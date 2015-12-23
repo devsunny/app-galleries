@@ -9,8 +9,6 @@ public class Entity {
 
 	private final List<Field> fields = new ArrayList<>();;
 
-	
-
 	public String getName() {
 		return name;
 	}
@@ -36,7 +34,7 @@ public class Entity {
 
 	public void setFields(List<Field> fields) {
 
-		for (Field fd : fields) {			
+		for (Field fd : fields) {
 			fd.setContainer(this);
 			fd.setFieldIndex(this.fields.size());
 		}
@@ -66,11 +64,33 @@ public class Entity {
 		return refs;
 	}
 
+	public boolean hasReferencedBy() {
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getReferencedBy() != null && fd.getReferencedBy().size() > 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public boolean hasMultiReferencedBy() {
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getReferencedBy() != null && fd.getReferencedBy().size() > 1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public boolean hasReference() {
 		if (this.fields != null) {
-			for (Field fd : this.fields) {				
-				if (fd.reference != null) {					
-					return true;					
+			for (Field fd : this.fields) {
+				if (fd.reference != null) {
+					return true;
 				}
 			}
 		}
@@ -81,8 +101,5 @@ public class Entity {
 	public String toString() {
 		return "Entity [name=" + name + ", fields=\n" + fields + "\n]";
 	}
-	
-	
-	
 
 }
