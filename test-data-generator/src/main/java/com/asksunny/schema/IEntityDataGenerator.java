@@ -19,15 +19,5 @@ public interface IEntityDataGenerator {
 
 	public void close();
 
-	public long getTotalRecordCount();
-
-	public void setTotalRecordCount(long totalRecordCount);
-
-	public SchemaOutputType getOutputType();
-
-	public void setOutputType(SchemaOutputType outputType);
-
-	public String getOutputUri();
-
-	public void setOutputUri(String outputUri);
+	
 }

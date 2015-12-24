@@ -79,17 +79,17 @@ public class Schema extends HashMap<String, Entity> {
 	public void buildRelationship() {
 		List<Entity> entities = new ArrayList<Entity>(this.values());
 		for (Entity entity : entities) {
-			List<Field> refColumn = entity.getAllReferences();
-			if (refColumn != null && refColumn.size() > 0) {
-				for (Field field : refColumn) {
-					Field fd = field.getReference();
-					Entity refEntity = this.get(fd.getContainer().getName());
-					if (refEntity == null) {
-						throw new IllegalArgumentException(
-								String.format("Invalid ref at %s:%s", entity.getName(), field.getName()));
+			List<Field> refColumns = entity.getAllReferences();
+			if (refColumns != null && refColumns.size() > 0) {
+				for (Field refField : refColumns) {
+					Entity referenceEntity = null;
+					if (refField.getContainer().getFields() == null
+							|| refField.getContainer().getFields().size() == 0) {
+						referenceEntity = this.get(refField.getContainer().getName());
+						refField.setContainer(referenceEntity);
+					} else {
+						referenceEntity = refField.getContainer();
 					}
-					Field refField = refEntity.findField(fd.getName());
-					refField.addReferencedBy(field);
 				}
 
 			}

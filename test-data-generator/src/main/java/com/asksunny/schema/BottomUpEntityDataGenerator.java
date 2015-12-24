@@ -10,51 +10,66 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.asksunny.schema.generator.ForeignKeyFieldGenerator;
 import com.asksunny.schema.generator.Generator;
 
 public class BottomUpEntityDataGenerator implements IEntityDataGenerator {
 
-	private Entity entity;
-	private List<BottomUpEntityDataGenerator> parentEntityGenerators;
 	protected static SecureRandom rand = new SecureRandom(UUID.randomUUID().toString().getBytes());
 	protected static final int MAX_SET_SIZE = 24;
 
-	private SchemaOutputType outputType;
-	private String outputUri;
-	private PrintWriter out = null;
+	private Entity entity;
+	private SchemaDataConfig config;
+	private List<Generator<?>> fieldGenerators = null;
+	private List<BottomUpEntityDataGenerator> parentEntityGenerators = new ArrayList<>();
+
 	private String insertTemplate = "";
 	private long totalRecordCount = 0;
+	private PrintWriter out = null;
+	private AtomicBoolean openned = new AtomicBoolean(false);
 
 	public List<List<String>> generateDataSet() {
-		int size = Math.abs(rand.nextInt(MAX_SET_SIZE));
-		List<List<String>> dataSet = new ArrayList<>();
+		int size = totalRecordCount <= MAX_SET_SIZE ? (int) totalRecordCount : Math.abs(rand.nextInt(MAX_SET_SIZE));
+
 		Map<String, List<List<String>>> parentDataSets = new HashMap<>();
-		if (parentEntityGenerators != null && parentEntityGenerators.size() > 0) {
+		if (parentEntityGenerators.size() > 0) {
 			for (BottomUpEntityDataGenerator egen : parentEntityGenerators) {
-				parentDataSets.put(egen.getEntity().getName().toUpperCase(), egen.generateDataSet());
+				List<List<String>> refData = egen.generateDataSet();
+				if (this.config.isDebug()) {
+					System.out.println(
+							String.format("FK reference %s values [%s] ", egen.getEntity().getName(), refData));
+				}
+				parentDataSets.put(egen.getEntity().getName().toUpperCase(), refData);
 			}
-			List<Generator<?>> generators = FieldGeneratorFactory.createFieldGenerator(entity);
 			List<Field> fields = entity.getFields();
-			for (int i = 0; i < generators.size(); i++) {
-				if (generators.get(i) instanceof ForeignKeyFieldGenerator) {
+			for (int i = 0; i < fieldGenerators.size(); i++) {
+				if (fieldGenerators.get(i) instanceof ForeignKeyFieldGenerator) {
 					Field fd = fields.get(i);
-					int refidx = fd.getReference().getFieldIndex();
 					List<List<String>> pds = parentDataSets
 							.get(fd.getReference().getContainer().getName().toUpperCase());
+					int refidx = fd.getReference().getFieldIndex();
 					List<String> pvalues = new ArrayList<>();
 					for (List<String> record : pds) {
-						pvalues.add(record.get(refidx));
+						if (record.size() > refidx) {
+							pvalues.add(record.get(refidx));
+						}
 					}
-					((ForeignKeyFieldGenerator) generators.get(i)).setValues(pvalues);
+					((ForeignKeyFieldGenerator) fieldGenerators.get(i)).setValues(pvalues);
 				}
 			}
 		}
+
+		List<List<String>> dataSet = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
-			dataSet.add(generateRecord());
+			List<String> record = generateRecord();
+			dataSet.add(record);
 		}
 		totalRecordCount = totalRecordCount - size;
+		if (this.config.isDebug()) {
+			System.out.println(String.format("%s dataset [%s] ", getEntity().getName(), dataSet));
+		}
 		return dataSet;
 	}
 
@@ -63,11 +78,17 @@ public class BottomUpEntityDataGenerator implements IEntityDataGenerator {
 	 */
 	public void generateFullDataSet() {
 		while (this.totalRecordCount > 0) {
+			if (this.config.isDebug()) {
+				System.out.println(String.format("%s [%d]", this.entity.getName(), this.totalRecordCount));
+			}
 			generateDataSet();
 		}
 	}
 
 	protected List<String> generateRecord() {
+		if (this.config.isDebug()) {
+			System.out.println(String.format("Generate a record for [%s]", this.entity.getName()));
+		}
 		List<Field> fields = entity.getFields();
 		int size = fields.size();
 		List<String> values = new ArrayList<>();
@@ -77,17 +98,26 @@ public class BottomUpEntityDataGenerator implements IEntityDataGenerator {
 			String val = gen.nextStringValue();
 			values.add(val);
 		}
+		if (this.config.isDebug()) {
+			System.out.println(String.format("a %s record %s ", this.entity.getName(), values));
+		}
 		doOutput(fields, values);
 		return values;
 	}
 
 	protected void doOutput(List<Field> fields, List<String> values) {
-		if (outputType == SchemaOutputType.INSERT) {
+
+		if (this.getConfig().getOutputType() == SchemaOutputType.INSERT) {
+			if (this.config.isDebug()) {
+				System.out.println(String.format("Output a %s INSERT record %s ", this.entity.getName(), values));
+			}
 			doInsertOutput(fields, values);
-		} else if (outputType == SchemaOutputType.CSV) {
+		} else if (this.getConfig().getOutputType() == SchemaOutputType.CSV) {
+			if (this.config.isDebug()) {
+				System.out.println(String.format("Output a %s CSV record %s ", this.entity.getName(), values));
+			}
 			doCsvOutput(fields, values);
 		}
-		values.clear();
 	}
 
 	protected void doCsvOutput(List<Field> fields, List<String> values) {
@@ -148,40 +178,69 @@ public class BottomUpEntityDataGenerator implements IEntityDataGenerator {
 	}
 
 	public void open() {
-		try {
-			if (outputUri != null) {
-				String fileName = String.format("%s.%s", entity.getName(), "csv");
-				if (outputType == SchemaOutputType.INSERT) {
-					fileName = String.format("%s.%s", entity.getName(), "sql");
-					StringBuilder buf = new StringBuilder();
-					buf.append("INSERT INTO ").append(entity.getName());
-					buf.append(" (");
-					int cnt = 0;
-					int size = entity.getFields().size();
-					for (Field fd : entity.getFields()) {
-						cnt++;
-						buf.append(fd.getName());
-						if (cnt < size) {
-							buf.append(",");
-						}
+		if (this.openned.compareAndSet(false, true)) {
+			try {
+				for (Field f : entity.getAllReferences()) {
+					if (config.isDebug()) {
+						System.out.println(String.format("Reference:%s.%s", f.getContainer().getName(), f.getName()));
 					}
-					buf.append(") VALUES (%s);");
-					insertTemplate = buf.toString();
+					BottomUpEntityDataGenerator buGen = EntityGeneratorFactory.createEntityGenerator(f.getContainer(),
+							getConfig());
+					parentEntityGenerators.add(buGen);
 				}
-				File fout = new File(outputUri, fileName);
-				out = new PrintWriter(fout);
-			} else {
-				out = new PrintWriter(System.out);
-			}
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Failed to open output file");
-		}
+				this.totalRecordCount = this.getConfig().getNumberOfRecords();
+				if (this.getConfig().getOutputUri() != null) {
+					String fileName = String.format("%s.%s", entity.getName(), "csv");
+					if (this.getConfig().getOutputType() == SchemaOutputType.INSERT) {
+						fileName = String.format("%s.%s", entity.getName(), "sql");
+					}
+					File fout = new File(this.getConfig().getOutputUri(), fileName);
+					out = new PrintWriter(fout);
+				} else {
+					out = new PrintWriter(System.out);
+				}
 
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException("Failed to open output file");
+			}
+
+			if (this.getConfig().getOutputType() == SchemaOutputType.INSERT) {
+				StringBuilder buf = new StringBuilder();
+				buf.append("INSERT INTO ").append(entity.getName());
+				buf.append(" (");
+				int cnt = 0;
+				int size = entity.getFields().size();
+				for (Field fd : entity.getFields()) {
+					cnt++;
+					buf.append(fd.getName());
+					if (cnt < size) {
+						buf.append(",");
+					}
+				}
+				buf.append(") VALUES (%s);");
+				insertTemplate = buf.toString();
+				if (config.isDebug()) {
+					System.out.println(String.format("SQL INSERT TEMPLATE :%s", insertTemplate));
+				}
+			}
+
+		}
+	}
+
+	public BottomUpEntityDataGenerator() {
+		super();
+	}
+
+	public BottomUpEntityDataGenerator(Entity entity) {
+		super();
+		this.entity = entity;
 	}
 
 	public void close() {
-		if (this.outputUri != null && this.out != null) {
-			this.out.close();
+		if (this.openned.compareAndSet(true, false)) {
+			if (this.getConfig().getOutputUri() != null && this.out != null) {
+				this.out.close();
+			}
 		}
 	}
 
@@ -193,28 +252,28 @@ public class BottomUpEntityDataGenerator implements IEntityDataGenerator {
 		this.totalRecordCount = totalRecordCount;
 	}
 
-	public SchemaOutputType getOutputType() {
-		return outputType;
-	}
-
-	public void setOutputType(SchemaOutputType outputType) {
-		this.outputType = outputType;
-	}
-
-	public String getOutputUri() {
-		return outputUri;
-	}
-
-	public void setOutputUri(String outputUri) {
-		this.outputUri = outputUri;
-	}
-
 	public String getInsertTemplate() {
 		return insertTemplate;
 	}
 
 	public void setInsertTemplate(String insertTemplate) {
 		this.insertTemplate = insertTemplate;
+	}
+
+	public SchemaDataConfig getConfig() {
+		return config;
+	}
+
+	public void setConfig(SchemaDataConfig config) {
+		this.config = config;
+	}
+
+	public List<Generator<?>> getFieldGenerators() {
+		return fieldGenerators;
+	}
+
+	public void setFieldGenerators(List<Generator<?>> fieldGenerators) {
+		this.fieldGenerators = fieldGenerators;
 	}
 
 }

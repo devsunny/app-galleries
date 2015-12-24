@@ -57,7 +57,10 @@ public class Entity {
 		if (this.fields != null) {
 			for (Field fd : this.fields) {
 				if (fd.reference != null) {
-					refs.add(fd);
+					if (!fd.reference.getReferencedBy().contains(fd)) {
+						fd.reference.addReferencedBy(fd);
+					}
+					refs.add(fd.reference);
 				}
 			}
 		}

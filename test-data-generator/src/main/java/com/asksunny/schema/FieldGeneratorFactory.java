@@ -18,13 +18,17 @@ import com.asksunny.schema.generator.FormattedStringGenerator;
 import com.asksunny.schema.generator.Generator;
 import com.asksunny.schema.generator.IntegerGenerator;
 import com.asksunny.schema.generator.LastNameGenerator;
+import com.asksunny.schema.generator.LuxuryPriceGenerator;
+import com.asksunny.schema.generator.PriceGenerator;
 import com.asksunny.schema.generator.RefValueGenerator;
 import com.asksunny.schema.generator.SequenceGenerator;
+import com.asksunny.schema.generator.SmallIntGenerator;
 import com.asksunny.schema.generator.StateGenerator;
 import com.asksunny.schema.generator.StreetGenerator;
 import com.asksunny.schema.generator.TextGenerator;
 import com.asksunny.schema.generator.TimeGenerator;
 import com.asksunny.schema.generator.TimestampGenerator;
+import com.asksunny.schema.generator.TinyIntGenerator;
 import com.asksunny.schema.generator.UIntegerGenerator;
 import com.asksunny.schema.generator.ZipGenerator;
 
@@ -48,7 +52,7 @@ public class FieldGeneratorFactory {
 
 	}
 
-	public static synchronized Generator<?> createFieldGenerator(Field field) {
+	public static synchronized Generator<?> createFieldGenerator(Field field) {			
 		Generator<?> gen = createExtendFieldGenerator(field);
 		if (gen == null) {
 			gen = createJdbcFieldGenerator(field);
@@ -61,10 +65,16 @@ public class FieldGeneratorFactory {
 		switch (field.getJdbcType()) {
 		case Types.BIGINT:
 		case Types.INTEGER:
-		case Types.SMALLINT:
-		case Types.TINYINT:
-		case Types.BIT:
 			gen = new IntegerGenerator(field);
+			break;
+		case Types.SMALLINT:
+			gen = new SmallIntGenerator();
+			break;
+		case Types.TINYINT:
+			gen = new TinyIntGenerator();
+			break;
+		case Types.BIT:
+			gen = new TinyIntGenerator();
 			break;
 		case Types.DOUBLE:
 		case Types.FLOAT:
@@ -99,13 +109,13 @@ public class FieldGeneratorFactory {
 	public static synchronized Generator<?> createExtendFieldGenerator(Field field) {
 		Generator<?> gen = null;
 		AddressHolder addressHolder = new AddressHolder();
-		
-		if(field.getReference()!=null){
+
+		if (field.getReference() != null) {
 			return new ForeignKeyFieldGenerator();
-		}else  if (field.getDataType() == null) {
+		} else if (field.getDataType() == null) {
 			return null;
-		}	
-		
+		}
+
 		switch (field.getDataType()) {
 		case SEQUENCE:
 			int seqmin = field.getMinValue() == null ? 0 : Integer.valueOf(field.getMinValue());
@@ -154,6 +164,12 @@ public class FieldGeneratorFactory {
 			break;
 		case ULONG:
 			gen = new IntegerGenerator(field);
+			break;
+		case PRICE:
+			gen = new PriceGenerator();
+			break;
+		case LUXURY_PRICE:
+			gen = new LuxuryPriceGenerator();
 			break;
 		case INT:
 			gen = new IntegerGenerator(field);

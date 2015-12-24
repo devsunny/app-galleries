@@ -98,10 +98,14 @@ public class SQLScriptParser {
 					Token reftable = tokenReader.read();
 					List<Token> refCOls = consumeItemList();
 					Entity fkTable = schema.get(table.getImage());
-					Field fd = fkTable.findField(fkCOls.get(0).image);
+					Field fk = fkTable.findField(fkCOls.get(0).image);
+					
 					Entity refTable = schema.get(reftable.getImage());
 					Field rfd = refTable.findField(refCOls.get(0).getImage());
-					fd.setReference(rfd);					
+					rfd.setContainer(refTable);					
+					fk.setReference(rfd);
+					rfd.addReferencedBy(fk);
+					
 				} else if (peekMatch(0, Keyword.PRIMARY) && peekMatch(1, Keyword.KEY)) {
 					tokenReader.read();
 					tokenReader.read();
