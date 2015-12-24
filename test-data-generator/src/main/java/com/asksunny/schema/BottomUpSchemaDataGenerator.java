@@ -53,4 +53,14 @@ public class BottomUpSchemaDataGenerator {
 		this.config = config;
 	}
 
+	public void close() {
+		for (BottomUpEntityDataGenerator entityGen : EntityGeneratorFactory.getAllCachedEntityGenerators()) {
+			try {
+				entityGen.close();
+			} catch (Exception e) {
+				;
+			}
+		}
+	}
+
 }
