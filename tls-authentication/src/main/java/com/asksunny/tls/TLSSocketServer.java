@@ -10,6 +10,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -44,13 +45,8 @@ public class TLSSocketServer {
 
 	protected void handleConnection(SSLSocket socket) {
 		try {
-			Certificate[] certs = socket.getSession().getPeerCertificates();
-			for (int i = 0; i < certs.length; i++) {				
-				if(certs[i] instanceof X509Certificate){
-					System.out.println(((X509Certificate)certs[i]).getIssuerDN());
-				}
-				
-			}
+			String  principal = getPrincipal(socket);
+			System.out.println(principal);
 			InputStream in = socket.getInputStream();
 			OutputStream out = socket.getOutputStream();
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
@@ -77,6 +73,20 @@ public class TLSSocketServer {
 			}
 		}
 
+	}
+	
+	
+	protected String getPrincipal(SSLSocket socket) throws SSLPeerUnverifiedException
+	{
+		String principal = null;
+		Certificate[] certs = socket.getSession().getPeerCertificates();
+		for (int i = 0; i < certs.length; i++) {				
+			if(certs[i] instanceof X509Certificate){
+				principal = ((X509Certificate)certs[i]).getIssuerDN().getName();
+				break;
+			}			
+		}
+		return principal;
 	}
 
 	public static void main(String[] args) throws Exception {
