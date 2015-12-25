@@ -12,8 +12,21 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 
+
+/**
+ * Create self-signed X.509 Certificated for TLS
+ * <pre>
+ * keytool -genKey -keyalg RSA -alias socketserver -keystore server_keystore.jks -storepass changeit -validity 3650 -keysize 2048
+ * </pre>
+ * 
+ * <pre>
+ * keytool -genKey -keyalg RSA -alias socketclient -keystore client_keystore.jks -storepass changeit -validity 3650 -keysize 2048
+ * </pre>
+ * 
+ * @author SunnyLiu
+ *
+ */
 public final class AliasSpecificSSLSocketFactory {
 
 	public static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
