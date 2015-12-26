@@ -70,6 +70,7 @@ public class FileGenerator {
 				}
 			} while (true);
 			genFile(f, ext);
+			System.out.printf("File [%d] %s created\n", i+1, f.toString());
 		}
 
 	}
@@ -266,19 +267,10 @@ public class FileGenerator {
 				String fileName = String.format("test_%04d.txt", j);
 				System.out.printf("Add %s to TAR GZIP file %s\n", fileName, f.getAbsolutePath());
 				StringBuilder buf = new StringBuilder();
-				if (size < ZIP_SIZE_MAX) {	
-					for (long k = 0; k < size; k++) {
-						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
-					}
-					System.out.println("Text created");
-					tOut.write(buf.toString().getBytes());
-					System.out.println("Writed to TGZip");
-				} else {
-					for (long k = 0; k < ZIP_SIZE_MAX; k++) {
-						buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
-					}
-					System.out.println("Text created");					
+				for (long k = 0; k < ZIP_SIZE_MAX; k++) {
+					buf.append(TEXT_CHARS[Math.abs(random.nextInt(Integer.MAX_VALUE)) % TEXT_CHARS.length]);
 				}
+				System.out.println("Text created");		
 				TarArchiveEntry entry = new TarArchiveEntry(fileName);
 				byte[] cnt = buf.toString().getBytes();
 				entry.setSize(cnt.length);
