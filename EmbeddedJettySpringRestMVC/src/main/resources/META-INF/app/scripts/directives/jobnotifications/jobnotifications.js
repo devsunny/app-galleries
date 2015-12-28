@@ -13,12 +13,12 @@ angular.module('sbAdminApp', [])
 	    number: 0
 	  };
 	  
-	  $interval(function(){
-		  $http.get('/spring/s1.json').then(function(json) {
-			  console.log(json.data.payload);
-			  $scope.job.number = json.data.payload;
-	      });		  
-	  }, 2000);
+	 // $interval(function(){
+	//	  $http.get('/spring/s1.json').then(function(json) {
+	//		  console.log(json.data.payload);
+	//		  $scope.job.number = json.data.payload;
+	 //     });		  
+	 // }, 2000);
 	  
 	}])
 	.directive('jobnotifications',function(){

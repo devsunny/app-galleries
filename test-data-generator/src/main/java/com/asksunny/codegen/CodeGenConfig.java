@@ -6,6 +6,8 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 
 public class CodeGenConfig {
+	
+	public static enum CodeOverwriteStrategy {OVERWRITE, IGNORE, SUFFIX_SEQUENCE};
 
 	Set<String> ignores = new HashSet<>();
 	String javaBaseDir = "src/main/java";
@@ -23,6 +25,8 @@ public class CodeGenConfig {
 	boolean genSpringContext = false;
 	
 	boolean suffixSequenceIfExists = true;
+	
+	CodeOverwriteStrategy overwriteStrategy = CodeOverwriteStrategy.IGNORE;
 
 	public CodeGenConfig() {
 
@@ -145,6 +149,14 @@ public class CodeGenConfig {
 
 	public void setSpringXmlBaseDir(String springXmlBaseDir) {
 		this.springXmlBaseDir = springXmlBaseDir;
+	}
+
+	public CodeOverwriteStrategy getOverwriteStrategy() {
+		return overwriteStrategy;
+	}
+
+	public void setOverwriteStrategy(CodeOverwriteStrategy overwriteStrategy) {
+		this.overwriteStrategy = overwriteStrategy;
 	}
 
 }

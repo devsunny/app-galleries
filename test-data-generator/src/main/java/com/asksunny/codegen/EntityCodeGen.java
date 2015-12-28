@@ -13,6 +13,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
+import com.asksunny.codegen.CodeGenConfig.CodeOverwriteStrategy;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
 import com.asksunny.schema.parser.JdbcSqlTypeMap;
@@ -85,16 +86,16 @@ public class EntityCodeGen {
 		}
 		String name = String.format("%s%s.%s", javaEntityName, suffix, ext);
 		File fj = new File(f, name);
-		if (config.suffixSequenceIfExists == false && fj.exists()) {
-			throw new IOException("File exists:" + fj.toString());
-		} else if (fj.exists()) {
+		if(config.getOverwriteStrategy()==CodeOverwriteStrategy.IGNORE && fj.exists()){
+			return;
+		}else if (config.getOverwriteStrategy()==CodeOverwriteStrategy.SUFFIX_SEQUENCE && fj.exists()){
 			for (int i = 1; i < Integer.MAX_VALUE; i++) {
 				fj = new File(f, String.format("%s.%03d", name, i));
 				if (!fj.exists()) {
 					break;
 				}
-			}
-		}
+			}			
+		}		
 		FileWriter fw = new FileWriter(fj);		
 		try {
 			fw.write(code);
@@ -295,12 +296,12 @@ public class EntityCodeGen {
 			String javaPKVarName = JavaIdentifierUtil.toVariableName(pname);
 			String keyJavaTypeName = JdbcSqlTypeMap.toJavaTypeName(primaryKey);
 
-			out.printf("%1$s@RequestMapping(value = \"/{%2$s}\" method = { RequestMethod.GET })\n", INDENDENT_1,
+			out.printf("%1$s@RequestMapping(value = \"/{%2$s}\", method = { RequestMethod.GET })\n", INDENDENT_1,
 					javaPKVarName);
 			out.printf("%1$s@ResponseBody\n", INDENDENT_1);
 			out.printf("%5$spublic %1$s get%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName,
 					javaPKName, keyJavaTypeName, javaPKVarName, INDENDENT_1);
-			out.printf("%5$sret = this.%2$sMapper.get%1$sBy%3$s(%4$s);\n", javaEntityName, javaEntityVarName,
+			out.printf("%5$s%1$s  ret = this.%2$sMapper.get%1$sBy%3$s(%4$s);\n", javaEntityName, javaEntityVarName,
 					javaPKName, javaPKVarName, INDENDENT_2);
 			out.printf("%3$sreturn ret;\n", javaEntityName, javaEntityVarName, INDENDENT_2);
 			out.printf("%1$s}\n\n", INDENDENT_1);
@@ -311,17 +312,16 @@ public class EntityCodeGen {
 					javaEntityVarName, INDENDENT_1);
 			out.printf("%4$sthis.%2$sMapper.update%1$sBy%3$s(%2$s);\n", javaEntityName, javaEntityVarName, javaPKName,
 					INDENDENT_2);
-			out.printf("%1$sreturn ret;\n", INDENDENT_2);
+			out.printf("%1$sreturn %2$s;\n", INDENDENT_2, javaEntityVarName);
 			out.printf("%1$s}\n\n", INDENDENT_1);
 
-			out.printf("%1$s@RequestMapping(value = \"/{%2$s}\" method = { RequestMethod.DELETE })\n", INDENDENT_1,
+			out.printf("%1$s@RequestMapping(value = \"/{%2$s}\", method = { RequestMethod.DELETE })\n", INDENDENT_1,
 					javaPKVarName);
 			out.printf("%1$s@ResponseBody\n", INDENDENT_1);
-			out.printf("%5$spublic %3$s delete%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName,
+			out.printf("%5$spublic void delete%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName,
 					javaPKName, keyJavaTypeName, javaPKVarName, INDENDENT_1);
 			out.printf("%5$sthis.%2$sMapper.delete%1$sBy%3$s(%4$s);\n", javaEntityName, javaEntityVarName, javaPKName,
-					javaPKVarName, INDENDENT_2);
-			out.printf("%1$sreturn %2$s;\n", INDENDENT_2, javaEntityVarName);
+					javaPKVarName, INDENDENT_2);			
 			out.printf("%1$s}\n\n", INDENDENT_1);
 
 		} else if (this.primaryKeys.size() > 1) {
@@ -330,7 +330,7 @@ public class EntityCodeGen {
 			out.printf("%1$s@ResponseBody\n", INDENDENT_1);
 			out.printf("%3$spublic %1$s get%1$sByKey(@RequestBody %1$s %2$s){\n", javaEntityName, javaEntityVarName,
 					INDENDENT_1);
-			out.printf("%3$sret = this.%2$sMapper.get%1$sByKey(%2$s);\n", javaEntityName, javaEntityVarName,
+			out.printf("%3$s%1$s ret = this.%2$sMapper.get%1$sByKey(%2$s);\n", javaEntityName, javaEntityVarName,
 					INDENDENT_2);
 			out.printf("%1$sreturn ret;\n", INDENDENT_2);
 			out.printf("%1$s}\n\n", INDENDENT_1);
@@ -340,7 +340,7 @@ public class EntityCodeGen {
 			out.printf("%3$spublic %1$s update%1$sByKey(@RequestBody %1$s %2$s){\n", javaEntityName, javaEntityVarName,
 					INDENDENT_1);
 			out.printf("%3$sthis.%2$sMapper.update%1$sByKey(%2$s);\n", javaEntityName, javaEntityVarName, INDENDENT_2);
-			out.printf("%1$sreturn ret;\n", INDENDENT_2);
+			out.printf("%1$sreturn %2$s;\n", INDENDENT_2, javaEntityVarName);
 			out.printf("%1$s}\n\n", INDENDENT_1);
 
 			out.printf("%1$s@RequestMapping(method = { RequestMethod.DELETE })\n", INDENDENT_1);
