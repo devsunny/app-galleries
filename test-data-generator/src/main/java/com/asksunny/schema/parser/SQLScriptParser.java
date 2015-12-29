@@ -95,12 +95,18 @@ public class SQLScriptParser {
 					tokenReader.read();
 					List<Token> fkCOls = consumeItemList();
 					tokenReader.read();
-					Token reftable = tokenReader.read();
-					List<Token> refCOls = consumeItemList();
+					Token reftable = tokenReader.read();					
+					List<Token> refCOls = consumeItemList();					
 					Entity fkTable = schema.get(table.getImage());
-					Field fk = fkTable.findField(fkCOls.get(0).image);
-					
+					//System.out.println(">>>>>>>>>>>>>>>>" + table.getImage());
+					//System.out.println(fkTable);
+					//System.out.println(fkCOls.get(0).image);
+					Field fk = fkTable.findField(fkCOls.get(0).image);					
+					//System.out.println(">>>>>>>>>>>>>>>>" + reftable.getImage());
 					Entity refTable = schema.get(reftable.getImage());
+					//System.out.println(">>>>>>>>>>>>>>>>");
+					//System.out.println(refTable);
+					//System.out.println("<<<<<<<<<<<<<<<<<<<<");
 					Field rfd = refTable.findField(refCOls.get(0).getImage());
 					rfd.setContainer(refTable);					
 					fk.setReference(rfd);
@@ -135,7 +141,7 @@ public class SQLScriptParser {
 			consume();
 		}
 		Field field = null;
-		while ((field = parseField()) != null) {
+		while ((field = parseField(entity)) != null) {
 			entity.addField(field);
 		}
 		while (tokenReader.peek(0) != null) {
@@ -191,12 +197,13 @@ public class SQLScriptParser {
 		ignoreStatement();
 	}
 
-	protected Field parseField() throws IOException {
+	protected Field parseField(Entity entity) throws IOException {
 		Field ret = null;
+		
 		if (peekMatch(0, LexerTokenKind.IDENTIFIER)) {
 			ret = new Field();
-			ret.setName(tokenReader.read().image);
-			String tname = consume().image;
+			ret.setName(tokenReader.read().image);			
+			String tname = consume().image;			
 			// if(ret.getName().equals("house_number")){
 			// System.out.println(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
 			// System.out.println(tname);

@@ -114,7 +114,7 @@ public class SQLScriptLexer {
 				buf.append((char) c);
 				if (Character.isJavaIdentifierStart((char) c)) {
 					readIdentifier(buf);
-					ret = new Token(buf.toString(), line, column);
+					ret = new Token(buf.toString(), line, column);					
 					Keyword kw = kdict.get(ret.getImage());
 					if (kw != null) {
 						ret.setKind(LexerTokenKind.KEYWORD);
