@@ -46,7 +46,10 @@ public class JavaCodeGen {
 		schema.buildRelationship();
 		List<Entity> entites = schema.getAllEntities();
 		for (Entity entity : entites) {
-			if (configureation.getIgnores().contains(entity.getName().toUpperCase())) {
+			if(configureation.getIncludes().size()>0 && !configureation.shouldInclude(entity.getName())){
+				continue;
+			}			
+			if (configureation.shouldIgnore(entity.getName())) {
 				continue;
 			}
 			EntityCodeGen codeGen = new EntityCodeGen(configureation, entity);

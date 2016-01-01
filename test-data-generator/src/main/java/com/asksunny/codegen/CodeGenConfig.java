@@ -5,11 +5,14 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
-public class CodeGenConfig {
-	
-	public static enum CodeOverwriteStrategy {OVERWRITE, IGNORE, SUFFIX_SEQUENCE};
+import com.asksunny.collections.CaselessHashSet;
 
-	Set<String> ignores = new HashSet<>();
+public class CodeGenConfig {
+
+	public static enum CodeOverwriteStrategy {
+		OVERWRITE, IGNORE, SUFFIX_SEQUENCE
+	};
+
 	String javaBaseDir = "src/main/java";
 	String myBatisXmlBaseDir = "src/main/resources";
 	String springXmlBaseDir = "src/main/resources";
@@ -23,9 +26,12 @@ public class CodeGenConfig {
 	boolean genRestController = true;
 	boolean genAngularUIElement = false;
 	boolean genSpringContext = false;
-	
+
 	boolean suffixSequenceIfExists = true;
-	
+
+	CaselessHashSet includes = new CaselessHashSet();
+	CaselessHashSet excludes = new CaselessHashSet();
+
 	CodeOverwriteStrategy overwriteStrategy = CodeOverwriteStrategy.IGNORE;
 
 	public CodeGenConfig() {
@@ -33,18 +39,31 @@ public class CodeGenConfig {
 	}
 
 	public Set<String> getIgnores() {
-		return ignores;
+		return excludes;
 	}
 
 	public void setIgnores(String ignoresCsv) {
 		String[] igs = ignoresCsv.split("\\s*[,;]\\s*");
 		for (int i = 0; i < igs.length; i++) {
-			ignores.add(igs[i].toUpperCase());
+			excludes.add(igs[i]);
 		}
 	}
 
+	public void setIncludes(String includessCsv) {
+		String[] igs = includessCsv.split("\\s*[,;]\\s*");
+		for (int i = 0; i < igs.length; i++) {
+			includes.add(igs[i]);
+		}
+	}
+	
+	
+
 	public boolean shouldIgnore(String tableName) {
-		return tableName == null || StringUtils.isBlank(tableName) || this.ignores.contains(tableName.toUpperCase());
+		return tableName == null || StringUtils.isBlank(tableName) || this.excludes.contains(tableName);
+	}
+
+	public boolean shouldInclude(String tableName) {
+		return tableName != null && (!StringUtils.isBlank(tableName)) && this.includes.contains(tableName);
 	}
 
 	public String getJavaBaseDir() {
@@ -157,6 +176,14 @@ public class CodeGenConfig {
 
 	public void setOverwriteStrategy(CodeOverwriteStrategy overwriteStrategy) {
 		this.overwriteStrategy = overwriteStrategy;
+	}
+
+	public CaselessHashSet getIncludes() {
+		return includes;
+	}
+
+	public CaselessHashSet getExcludes() {
+		return excludes;
 	}
 
 }
