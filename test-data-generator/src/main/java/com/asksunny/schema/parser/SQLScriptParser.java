@@ -5,13 +5,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.asksunny.schema.DataGenType;
+import com.asksunny.codegen.CodeGenType;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
 import com.asksunny.schema.Schema;
@@ -19,7 +20,36 @@ import com.asksunny.schema.Schema;
 public class SQLScriptParser {
 
 	private final SQLScriptLookaheadTokenReader tokenReader;
-
+	private boolean debug = false;
+	private PrintWriter debugWriter = null;
+	
+	public void debug(Object... args)
+	{
+		if(this.debug){
+			if(debugWriter==null){
+				debugWriter = new PrintWriter(System.out);
+			}
+			for (int i = 0; i < args.length; i++) {
+				if(args[i] instanceof Token){
+					Token t= (Token)args[i];
+					debugWriter.println(String.format("%d:%d [%s] [%s] [%s]", t.getLine(), t.getColumn(), t.getImage(), t.getKind(), t.getKeyword()));
+					debugWriter.flush();
+				}else{
+					if(args[i] instanceof String && args.length>0){
+						debugWriter.print(args[i]);
+						debugWriter.print(" ");
+					}else{
+						debugWriter.println(args[i]);
+					}					
+					debugWriter.flush();
+				}
+				
+			}
+		}
+	}
+	
+	
+	
 	public SQLScriptParser(SQLScriptLexer sqlLexer) throws IOException {
 		super();
 		this.tokenReader = new SQLScriptLookaheadTokenReader(3, sqlLexer);
@@ -47,8 +77,10 @@ public class SQLScriptParser {
 		try {
 			Token t = null;
 			while ((t = tokenReader.read()) != null) {
+				debug(t);
 				switch (t.getKind()) {
 				case KEYWORD:
+					debug("Parse satetement");
 					parseStatement(schema, t);
 					break;
 				default:
@@ -79,9 +111,10 @@ public class SQLScriptParser {
 					throw new InvalidSQLException("<table_name>", "null", ct.getLine(), ct.getColumn());
 				}
 				Entity entity = new Entity(tb.image);
+				debug("parse Table body", entity);
 				parseCreateTableBody(entity);
 				schema.put(entity.getName(), entity);
-			} else {
+			}  else {
 				ignoreStatement();
 			}
 			break;
@@ -95,23 +128,25 @@ public class SQLScriptParser {
 					tokenReader.read();
 					List<Token> fkCOls = consumeItemList();
 					tokenReader.read();
-					Token reftable = tokenReader.read();					
-					List<Token> refCOls = consumeItemList();					
+					Token reftable = tokenReader.read();
+					List<Token> refCOls = consumeItemList();
 					Entity fkTable = schema.get(table.getImage());
-					//System.out.println(">>>>>>>>>>>>>>>>" + table.getImage());
-					//System.out.println(fkTable);
-					//System.out.println(fkCOls.get(0).image);
-					Field fk = fkTable.findField(fkCOls.get(0).image);					
-					//System.out.println(">>>>>>>>>>>>>>>>" + reftable.getImage());
+					// System.out.println(">>>>>>>>>>>>>>>>" +
+					// table.getImage());
+					// System.out.println(fkTable);
+					// System.out.println(fkCOls.get(0).image);
+					Field fk = fkTable.findField(fkCOls.get(0).image);
+					// System.out.println(">>>>>>>>>>>>>>>>" +
+					// reftable.getImage());
 					Entity refTable = schema.get(reftable.getImage());
-					//System.out.println(">>>>>>>>>>>>>>>>");
-					//System.out.println(refTable);
-					//System.out.println("<<<<<<<<<<<<<<<<<<<<");
+					// System.out.println(">>>>>>>>>>>>>>>>");
+					// System.out.println(refTable);
+					// System.out.println("<<<<<<<<<<<<<<<<<<<<");
 					Field rfd = refTable.findField(refCOls.get(0).getImage());
-					rfd.setContainer(refTable);					
+					rfd.setContainer(refTable);
 					fk.setReference(rfd);
 					rfd.addReferencedBy(fk);
-					
+
 				} else if (peekMatch(0, Keyword.PRIMARY) && peekMatch(1, Keyword.KEY)) {
 					tokenReader.read();
 					tokenReader.read();
@@ -144,71 +179,124 @@ public class SQLScriptParser {
 		while ((field = parseField(entity)) != null) {
 			entity.addField(field);
 		}
-		while (tokenReader.peek(0) != null) {
-			Token kk = tokenReader.peek(0);
-			if (kk.getKind() == LexerTokenKind.KEYWORD) {
-				if (kk.getKeyword() == Keyword.CONSTRAINT) {
-					consume();
-					consume();
-				} else if (kk.getKeyword() == Keyword.PRIMARY) {
-					consume();
-					consume();
-					List<Token> toks = consumeItemList();
-					if (toks != null) {
-						for (Token token : toks) {
-							Field fd = entity.findField(token.image);
-							if (fd != null) {
-								fd.setPrimaryKey(true);
-							}
-						}
-					}
-				} else if (kk.getKeyword() == Keyword.FOREIGN) {
-					consume();
-					consume();
-					List<Token> ftoks = consumeItemList();
-					consume();
-					Token tb = consume(); // refrence table name
-					List<Token> rtoks = consumeItemList();
-					int size = ftoks.size();
-
-					for (int i = 0; i < size; i++) {
-						Token fk = ftoks.get(i);
-						Token rk = rtoks.get(i);
-						Field fd = entity.findField(fk.image);
-						Entity e = new Entity(tb.image);
-						Field rd = new Field();
-						rd.setContainer(e);
-						rd.setName(rk.getImage());
-						fd.setReference(rd);
-					}
-				}
-			} else if (kk.getKind() == LexerTokenKind.COMMA) {
-				consume();
-			} else if (kk.getKind() == LexerTokenKind.RPAREN) {
-				break;
-			} else {
-				consume();
-			}
-		}
-
+		debug("All field parsed.");
+		parseEntityClause(entity);
+		
 		if (peekMatch(0, LexerTokenKind.RPAREN)) {
 			consume();
 		}
 		ignoreStatement();
 	}
 
+	
+	
+	protected void parseUniqueConstraint(Entity entity)  throws IOException 
+	{		
+		consume();					
+		List<Token> utoks = consumeItemList();
+		if (utoks != null) {
+			for (Token token : utoks) {
+				Field fd = entity.findField(token.image);
+				if (fd != null) {
+					fd.setUnique(true);
+					debug(fd);
+				}
+			}
+		}
+		
+	}
+	
+	protected void parsePKConstraint(Entity entity)  throws IOException 
+	{		
+		drain(2);
+		List<Token> toks = consumeItemList();
+		if (toks != null) {
+			for (Token token : toks) {
+				Field fd = entity.findField(token.image);
+				if (fd != null) {
+					fd.setPrimaryKey(true);
+				}
+			}
+		}		
+	}
+	
+	protected void parseFKConstraint(Entity entity)  throws IOException 
+	{		
+		drain(2);
+		List<Token> ftoks = consumeItemList();	
+		debug("Hello FK reference:", ftoks);
+		Token reference = consume();
+		debug("Hello FK reference:", reference);
+		Token tb = consume(); // refrence table name
+		debug("Hello FK reference:", tb);
+		debug("before FK token:", tokenReader.peek(0));
+		List<Token> rtoks = consumeItemList();
+		int size = ftoks.size();
+		debug("Hello FK reference:", rtoks);
+		for (int i = 0; i < size; i++) {
+			Token fk = ftoks.get(i);
+			Token rk = rtoks.get(i);
+			Field fd = entity.findField(fk.image);
+			Entity e = new Entity(tb.image);
+			Field rd = new Field();
+			rd.setContainer(e);
+			rd.setName(rk.getImage());
+			fd.setReference(rd);
+		}
+		debug("after FK token:" , tokenReader.peek(0));
+	}
+	
+	
+	protected void parseEntityClause(Entity entity)  throws IOException 
+	{
+		while (tokenReader.peek(0) != null) {
+			Token kk = tokenReader.peek(0);
+			debug(kk, kk.getKind());			
+			if (kk.getKind() == LexerTokenKind.KEYWORD) {
+				switch(kk.getKeyword())
+				{
+				case CONSTRAINT:
+					drain(2);	
+					break;				
+				case PRIMARY:
+					parsePKConstraint(entity);
+					break;
+				case FOREIGN:
+					parseFKConstraint(entity);
+					break;
+				case UNIQUE:
+					parseUniqueConstraint(entity);
+					break;
+				default:
+					debug(kk.getKeyword());
+					consume();
+				}
+			} else if (kk.getKind() == LexerTokenKind.COMMA) {
+				consume();
+			} else if (kk.getKind() == LexerTokenKind.RPAREN) {
+				break;
+			} else {
+				Token tok = consume();
+				debug("Not handled token:" + tok);
+			}
+		}
+
+	}
+	
+	
 	protected Field parseField(Entity entity) throws IOException {
 		Field ret = null;
-		
+
 		if (peekMatch(0, LexerTokenKind.IDENTIFIER)) {
 			ret = new Field();
-			ret.setName(tokenReader.read().image);			
-			String tname = consume().image;			
+			ret.setName(tokenReader.read().image);
+			String tname = consume().image;
 			// if(ret.getName().equals("house_number")){
 			// System.out.println(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
 			// System.out.println(tname);
 			// }
 			ret.setJdbcType(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
+
 			if (peekMatch(0, LexerTokenKind.LPAREN)) {
 				consume();
 				Token num1 = consume();
@@ -251,6 +339,8 @@ public class SQLScriptParser {
 						}
 					} else if (att.getKeyword() == Keyword.NULL) {
 						ret.setNullable(true);
+					} else if (att.getKeyword() == Keyword.UNIQUE) {
+						ret.setUnique(true);
 					} else if (att.getKeyword() == Keyword.PRIMARY) {
 						if (!peekMatch(0, Keyword.KEY)) {
 							Token p = tokenReader.peek(0);
@@ -284,7 +374,7 @@ public class SQLScriptParser {
 	protected void parseAnnotationComment(Field field, String commentText) {
 		String[] ps = commentText.split("\\s*[,]\\s*");
 		if (ps.length > 0) {
-			DataGenType genType = ps[0].length() == 0 ? DataGenType.OTHER : DataGenType.valueOf(ps[0].toUpperCase());
+			CodeGenType genType = ps[0].length() == 0 ? CodeGenType.OTHER : CodeGenType.valueOf(ps[0].toUpperCase());
 			field.setDataType(genType);
 			if (ps.length > 1) {
 				for (int i = 1; i < ps.length; i++) {
@@ -330,17 +420,31 @@ public class SQLScriptParser {
 		return tt;
 	}
 
+	protected void drain(int number) throws IOException {
+		int d = number;
+		while (d > 0) {
+			Token tt = tokenReader.read();
+			if (tt == null) {
+				throw new InvalidSQLException("Unexpected end of token stream");
+			} else {
+				d--;
+			}
+		}
+	}
+
 	protected List<Token> consumeItemList() throws IOException {
 		List<Token> toks = new ArrayList<>();
 		if (peekMatch(0, LexerTokenKind.LPAREN)) {
 			consume();
 			while (!peekMatch(0, LexerTokenKind.RPAREN)) {
 				Token t = consume();
+				debug("consumeItemList", t);
 				if (t.kind != LexerTokenKind.COMMA) {
 					toks.add(t);
 				}
 			}
-			consume();
+			Token tt = consume();
+			debug("RPAREN", tt);
 		}
 		return toks;
 	}
@@ -396,6 +500,22 @@ public class SQLScriptParser {
 				break;
 			}
 		}
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
+
+	public PrintWriter getDebugWriter() {
+		return debugWriter;
+	}
+
+	public void setDebugWriter(PrintWriter debugWriter) {
+		this.debugWriter = debugWriter;
 	}
 
 }

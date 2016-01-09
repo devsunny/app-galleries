@@ -35,6 +35,8 @@ public class KeywordDictionary extends HashMap<String, Keyword> {
 		this.put("CONSTRAINT", Keyword.CONSTRAINT);
 		this.put("FOREIGN", Keyword.FOREIGN);
 		this.put("REFERENCES", Keyword.REFERENCES);
+		this.put("UNIQUE", Keyword.UNIQUE);
+		this.put("INDEX", Keyword.INDEX);
 	}
 	
 	
@@ -42,6 +44,7 @@ public class KeywordDictionary extends HashMap<String, Keyword> {
 
 	@Override
 	public Keyword get(Object key) {
+		
 		return super.get(key.toString().toUpperCase());
 	}
 

@@ -3,7 +3,8 @@ package com.asksunny.schema;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.asksunny.codegen.JavaIdentifierUtil;
+import com.asksunny.codegen.CodeGenType;
+import com.asksunny.codegen.java.JavaIdentifierUtil;
 
 public class Field {
 
@@ -18,7 +19,7 @@ public class Field {
 	String varname;
 	String uiname;
 
-	DataGenType dataType;
+	CodeGenType dataType;
 	String format;
 	String maxValue;
 	String minValue;
@@ -28,13 +29,14 @@ public class Field {
 
 	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
+	boolean unique;
 
 	public Field() {
 		super();
 	}
 
 	public Field(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
-			DataGenType dataType, String minValue, String maxValue, String format, String step) {
+			CodeGenType dataType, String minValue, String maxValue, String format, String step) {
 		super();
 		this.jdbcType = jdbcType;
 		this.scale = scale;
@@ -58,7 +60,7 @@ public class Field {
 	}
 
 	public static Field newField(int jdbcType, int scale, int precision, int displaySize, boolean nullable, String name,
-			DataGenType dataType, String minValue, String maxValue, String format, String step) {
+			CodeGenType dataType, String minValue, String maxValue, String format, String step) {
 		return new Field(jdbcType, scale, precision, displaySize, nullable, name, dataType, minValue, maxValue, format,
 				step);
 	}
@@ -131,11 +133,11 @@ public class Field {
 		this.name = name;
 	}
 
-	public DataGenType getDataType() {
+	public CodeGenType getDataType() {
 		return dataType;
 	}
 
-	public void setDataType(DataGenType dataType) {
+	public void setDataType(CodeGenType dataType) {
 		this.dataType = dataType;
 	}
 
@@ -234,6 +236,14 @@ public class Field {
 
 	public void setUiname(String uiname) {
 		this.uiname = uiname;
+	}
+
+	public boolean isUnique() {
+		return unique;
+	}
+
+	public void setUnique(boolean unique) {
+		this.unique = unique;
 	}
 
 }

@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 
+import com.asksunny.parser.LookaheadReader;
+
 public class SQLScriptLexer {
 
 	private LookaheadReader lhReader = null;
@@ -31,6 +33,7 @@ public class SQLScriptLexer {
 		StringBuilder buf = new StringBuilder();
 		while (ret == null) {
 			int c = lhReader.read();
+			System.err.println(String.format("%d:%d [%c]", line, column,  (char)c));
 			column++;
 			switch (c) {
 			case -1:

@@ -2,9 +2,9 @@ package com.asksunny;
 
 import java.util.Arrays;
 
-import com.asksunny.codegen.JavaCodeGen;
-import com.asksunny.schema.dg.FileGenerator;
-import com.asksunny.schema.dg.TestDataGenerator;
+import com.asksunny.codegen.data.TestDataGenerator;
+import com.asksunny.codegen.file.FileGenerator;
+import com.asksunny.codegen.java.JavaCodeGen;
 
 public class DevGenerator {
 

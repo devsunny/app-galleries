@@ -1,13 +1,16 @@
 package com.asksunny.schema;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Entity {
 
 	private String name;
 
-	private final List<Field> fields = new ArrayList<>();;
+	private final List<Field> fields = new ArrayList<>();
+	private final Map<String, Field> fieldMaps = new HashMap<>();
 
 	public String getName() {
 		return name;
@@ -30,6 +33,7 @@ public class Entity {
 		field.setContainer(this);
 		field.setFieldIndex(this.fields.size());
 		this.fields.add(field);
+		this.fieldMaps.put(field.getName().toUpperCase(), field);
 	}
 
 	public void setFields(List<Field> fields) {
@@ -37,17 +41,14 @@ public class Entity {
 		for (Field fd : fields) {
 			fd.setContainer(this);
 			fd.setFieldIndex(this.fields.size());
+			this.fieldMaps.put(fd.getName().toUpperCase(), fd);
 		}
 		this.fields.addAll(fields);
 	}
 
 	public Field findField(String name) {
-		if (this.fields != null) {
-			for (Field fd : this.fields) {
-				if (fd.name != null && fd.name.equalsIgnoreCase(name)) {
-					return fd;
-				}
-			}
+		if (name != null) {
+			return fieldMaps.get(name.trim().toUpperCase());
 		}
 		return null;
 	}
