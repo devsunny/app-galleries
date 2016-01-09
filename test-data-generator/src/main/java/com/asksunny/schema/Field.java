@@ -165,6 +165,10 @@ public class Field {
 		this.minValue = minValue;
 	}
 
+	public boolean isUnqiueEnum() {
+		return getDataType() == CodeGenType.ENUM && (isPrimaryKey() || isUnique());
+	}
+
 	public String getStep() {
 		return step;
 	}
@@ -196,10 +200,11 @@ public class Field {
 			sb.deleteCharAt(sb.length() - 1);
 		}
 		sb.append("]");
-		return "Field [container=" + container.getName() + ", name=" + name + ", fieldIndex=" + fieldIndex  + ", jdbcType=" + jdbcType + ", precision="
-				+ precision + ", scale=" + scale + ", displaySize=" + displaySize + ", nullable=" + nullable
-				+ ", dataType=" + dataType + ", format=" + format + ", minValue=" + minValue + ", maxValue=" + maxValue
-				+ ", reference=" + reference + ", step=" + step + ", referencedBy=" + sb.toString() + "]\n";
+		return "Field [container=" + container.getName() + ", name=" + name + ", fieldIndex=" + fieldIndex
+				+ ", jdbcType=" + jdbcType + ", precision=" + precision + ", scale=" + scale + ", displaySize="
+				+ displaySize + ", nullable=" + nullable + ", dataType=" + dataType + ", format=" + format
+				+ ", minValue=" + minValue + ", maxValue=" + maxValue + ", reference=" + reference + ", step=" + step
+				+ ", referencedBy=" + sb.toString() + "]\n";
 	}
 
 	public String getEnumValues() {

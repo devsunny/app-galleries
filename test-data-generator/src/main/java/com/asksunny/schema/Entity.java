@@ -36,6 +36,16 @@ public class Entity {
 		this.fieldMaps.put(field.getName().toUpperCase(), field);
 	}
 
+	public Field getUniqueEnumField() {
+
+		for (Field fd : fields) {
+			if (fd.isUnqiueEnum()) {
+				return fd;
+			}
+		}
+		return null;
+	}
+
 	public void setFields(List<Field> fields) {
 
 		for (Field fd : fields) {
