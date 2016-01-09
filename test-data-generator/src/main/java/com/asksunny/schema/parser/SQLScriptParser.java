@@ -17,39 +17,38 @@ import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
 import com.asksunny.schema.Schema;
 
+@SuppressWarnings("unused")
 public class SQLScriptParser {
 
 	private final SQLScriptLookaheadTokenReader tokenReader;
 	private boolean debug = false;
 	private PrintWriter debugWriter = null;
-	
-	public void debug(Object... args)
-	{
-		if(this.debug){
-			if(debugWriter==null){
+
+	public void debug(Object... args) {
+		if (this.debug) {
+			if (debugWriter == null) {
 				debugWriter = new PrintWriter(System.out);
 			}
 			for (int i = 0; i < args.length; i++) {
-				if(args[i] instanceof Token){
-					Token t= (Token)args[i];
-					debugWriter.println(String.format("%d:%d [%s] [%s] [%s]", t.getLine(), t.getColumn(), t.getImage(), t.getKind(), t.getKeyword()));
+				if (args[i] instanceof Token) {
+					Token t = (Token) args[i];
+					debugWriter.println(String.format("%d:%d [%s] [%s] [%s]", t.getLine(), t.getColumn(), t.getImage(),
+							t.getKind(), t.getKeyword()));
 					debugWriter.flush();
-				}else{
-					if(args[i] instanceof String && args.length>0){
+				} else {
+					if (args[i] instanceof String && args.length > 1) {
 						debugWriter.print(args[i]);
 						debugWriter.print(" ");
-					}else{
+					} else {
 						debugWriter.println(args[i]);
-					}					
+					}
 					debugWriter.flush();
 				}
-				
+
 			}
 		}
 	}
-	
-	
-	
+
 	public SQLScriptParser(SQLScriptLexer sqlLexer) throws IOException {
 		super();
 		this.tokenReader = new SQLScriptLookaheadTokenReader(3, sqlLexer);
@@ -80,7 +79,7 @@ public class SQLScriptParser {
 				debug(t);
 				switch (t.getKind()) {
 				case KEYWORD:
-					debug("Parse satetement");
+					debug("Parse satetement\n");
 					parseStatement(schema, t);
 					break;
 				default:
@@ -100,65 +99,112 @@ public class SQLScriptParser {
 		}
 	}
 
-	protected void parseStatement(Schema schema, Token startToken) throws IOException {
+	protected void parseAlterTable(Schema schema) throws IOException {
+		Token ct = consume();
+		Token tb = consume();
+		if (tb == null) {
+			throw new InvalidSQLException("<table_name>", "null", ct.getLine(), ct.getColumn());
+		}
+		Entity entity = new Entity(tb.image);
+		debug("parse Table body", entity);
+		parseCreateTableBody(entity);
+		schema.put(entity.getName(), entity);
+	}
 
+	protected void parseUniqueIndex(Schema schema) throws IOException {
+		Token idxName = consume();
+
+		Token on = consume();
+		Token tb = consume();
+		Entity entity = schema.get(tb.getImage());
+		List<Token> idxTokens = consumeItemList();
+		for (Token token : idxTokens) {
+			Field fd = entity.findField(token.getImage());
+			fd.setUnique(true);
+		}
+	}
+
+	protected void parseAlterTableStatement(Schema schema) throws IOException {
+
+		Token table = consume();
+		Token action = consume();
+		Entity entity = schema.get(table.getImage());
+
+		if (action.getKeyword() == Keyword.ADD) {
+			Token actName = tokenReader.peek(0);
+			switch (actName.getKeyword()) {
+			case UNIQUE:
+				parseUniqueConstraint(entity);
+				break;
+			case PRIMARY:
+				parsePKConstraint(entity);
+				break;
+			case FOREIGN:
+				parseFKConstraint(entity);
+				break;
+			case CONSTRAINT:
+				drain(2);
+				Token constx = tokenReader.peek(0);
+				switch (constx.getKeyword()) {
+				case UNIQUE:
+					parseUniqueConstraint(entity);
+					break;
+				case PRIMARY:
+					parsePKConstraint(entity);
+					break;
+				case FOREIGN:
+					parseFKConstraint(entity);
+					break;
+				default:
+					ignoreStatement();
+				}
+				break;
+			default:
+				ignoreStatement();
+			}
+		} else {
+			ignoreStatement();
+		}
+
+	}
+
+	protected void parseStatement(Schema schema, Token startToken) throws IOException {
+		debug("----------------------parseStatement", startToken, tokenReader.peek(0));
 		switch (startToken.getKeyword()) {
 		case CREATE:
-			if (peekMatch(0, Keyword.TABLE)) {
-				Token ct = tokenReader.read();
-				Token tb = tokenReader.read();
-				if (tb == null) {
-					throw new InvalidSQLException("<table_name>", "null", ct.getLine(), ct.getColumn());
+			Token nxtTok = tokenReader.peek(0);
+			switch (nxtTok.getKeyword()) {
+			case TABLE:
+				parseAlterTable(schema);
+				break;
+			case UNIQUE:
+				if (tokenReader.peek(1).getKeyword() == Keyword.INDEX) {
+					drain(2);
+					parseUniqueIndex(schema);
+					ignoreStatement();
+				} else {
+					ignoreStatement();
 				}
-				Entity entity = new Entity(tb.image);
-				debug("parse Table body", entity);
-				parseCreateTableBody(entity);
-				schema.put(entity.getName(), entity);
-			}  else {
+				break;
+			case INDEX:
 				ignoreStatement();
+				break;
+			default:
+				ignoreStatement();
+				break;
 			}
 			break;
 		case ALTER:
-			if (peekMatch(0, Keyword.TABLE) && peekMatch(2, Keyword.ADD)) {
-				tokenReader.read();
-				Token table = tokenReader.read();
-				tokenReader.read();
-				if (peekMatch(0, Keyword.FOREIGN) && peekMatch(1, Keyword.KEY)) {
-					tokenReader.read();
-					tokenReader.read();
-					List<Token> fkCOls = consumeItemList();
-					tokenReader.read();
-					Token reftable = tokenReader.read();
-					List<Token> refCOls = consumeItemList();
-					Entity fkTable = schema.get(table.getImage());
-					// System.out.println(">>>>>>>>>>>>>>>>" +
-					// table.getImage());
-					// System.out.println(fkTable);
-					// System.out.println(fkCOls.get(0).image);
-					Field fk = fkTable.findField(fkCOls.get(0).image);
-					// System.out.println(">>>>>>>>>>>>>>>>" +
-					// reftable.getImage());
-					Entity refTable = schema.get(reftable.getImage());
-					// System.out.println(">>>>>>>>>>>>>>>>");
-					// System.out.println(refTable);
-					// System.out.println("<<<<<<<<<<<<<<<<<<<<");
-					Field rfd = refTable.findField(refCOls.get(0).getImage());
-					rfd.setContainer(refTable);
-					fk.setReference(rfd);
-					rfd.addReferencedBy(fk);
-
-				} else if (peekMatch(0, Keyword.PRIMARY) && peekMatch(1, Keyword.KEY)) {
-					tokenReader.read();
-					tokenReader.read();
-					List<Token> pkCOls = consumeItemList();
-					Entity pkTable = schema.get(table.getImage());
-					for (Token pkT : pkCOls) {
-						Field fd = pkTable.findField(pkT.getImage());
-						fd.setPrimaryKey(true);
-					}
-				}
+			Token anxtTok = tokenReader.peek(0);
+			switch (anxtTok.getKeyword()) {
+			case TABLE:
+				drain(1);
+				parseAlterTableStatement(schema);
+				break;
+			default:
+				ignoreStatement();
+				break;
 			}
-			ignoreStatement();
 			break;
 		default:
 			ignoreStatement();
@@ -181,18 +227,15 @@ public class SQLScriptParser {
 		}
 		debug("All field parsed.");
 		parseEntityClause(entity);
-		
+
 		if (peekMatch(0, LexerTokenKind.RPAREN)) {
 			consume();
 		}
 		ignoreStatement();
 	}
 
-	
-	
-	protected void parseUniqueConstraint(Entity entity)  throws IOException 
-	{		
-		consume();					
+	protected void parseUniqueConstraint(Entity entity) throws IOException {
+		consume();
 		List<Token> utoks = consumeItemList();
 		if (utoks != null) {
 			for (Token token : utoks) {
@@ -203,11 +246,10 @@ public class SQLScriptParser {
 				}
 			}
 		}
-		
+
 	}
-	
-	protected void parsePKConstraint(Entity entity)  throws IOException 
-	{		
+
+	protected void parsePKConstraint(Entity entity) throws IOException {
 		drain(2);
 		List<Token> toks = consumeItemList();
 		if (toks != null) {
@@ -217,13 +259,12 @@ public class SQLScriptParser {
 					fd.setPrimaryKey(true);
 				}
 			}
-		}		
+		}
 	}
-	
-	protected void parseFKConstraint(Entity entity)  throws IOException 
-	{		
+
+	protected void parseFKConstraint(Entity entity) throws IOException {
 		drain(2);
-		List<Token> ftoks = consumeItemList();	
+		List<Token> ftoks = consumeItemList();
 		debug("Hello FK reference:", ftoks);
 		Token reference = consume();
 		debug("Hello FK reference:", reference);
@@ -243,21 +284,18 @@ public class SQLScriptParser {
 			rd.setName(rk.getImage());
 			fd.setReference(rd);
 		}
-		debug("after FK token:" , tokenReader.peek(0));
+		debug("after FK token:", tokenReader.peek(0));
 	}
-	
-	
-	protected void parseEntityClause(Entity entity)  throws IOException 
-	{
+
+	protected void parseEntityClause(Entity entity) throws IOException {
 		while (tokenReader.peek(0) != null) {
 			Token kk = tokenReader.peek(0);
-			debug(kk, kk.getKind());			
+			debug(kk, kk.getKind());
 			if (kk.getKind() == LexerTokenKind.KEYWORD) {
-				switch(kk.getKeyword())
-				{
+				switch (kk.getKeyword()) {
 				case CONSTRAINT:
-					drain(2);	
-					break;				
+					drain(2);
+					break;
 				case PRIMARY:
 					parsePKConstraint(entity);
 					break;
@@ -282,8 +320,7 @@ public class SQLScriptParser {
 		}
 
 	}
-	
-	
+
 	protected Field parseField(Entity entity) throws IOException {
 		Field ret = null;
 

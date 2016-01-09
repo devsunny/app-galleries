@@ -33,7 +33,7 @@ public class SQLScriptLexer {
 		StringBuilder buf = new StringBuilder();
 		while (ret == null) {
 			int c = lhReader.read();
-			System.err.println(String.format("%d:%d [%c]", line, column,  (char)c));
+			//System.err.println(String.format("%d:%d [%c]", line, column,  (char)c));
 			column++;
 			switch (c) {
 			case -1:
