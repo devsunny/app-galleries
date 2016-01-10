@@ -17,7 +17,7 @@ public class Field {
 	boolean primaryKey;
 	String name;
 	String varname;
-	String uiname;
+	String label;
 
 	CodeGenType dataType;
 	String format;
@@ -235,12 +235,12 @@ public class Field {
 		}
 	}
 
-	public String getUiname() {
-		return uiname;
+	public String getLabel() {
+		return label;
 	}
 
-	public void setUiname(String uiname) {
-		this.uiname = uiname;
+	public void setLabel(String uiname) {
+		this.label = uiname;
 	}
 
 	public boolean isUnique() {

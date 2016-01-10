@@ -1,10 +1,10 @@
-package com.asksunny.parser;
+package com.asksunny.io;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
-public class LookaheadReader extends Reader {
+public class LHReader extends Reader {
 
 	private Reader reader;
 	private int[] buffer = null;
@@ -13,7 +13,7 @@ public class LookaheadReader extends Reader {
 	private int bufferLength = 0;
 	private boolean eof = false;
 
-	public LookaheadReader(int lhCnt, Reader preader) throws IOException {
+	public LHReader(int lhCnt, Reader preader) throws IOException {
 		buffer = new int[lhCnt];
 		this.reader = (preader instanceof BufferedReader) ? preader : new BufferedReader(preader);
 		this.bufferLength = lhCnt;
@@ -24,7 +24,7 @@ public class LookaheadReader extends Reader {
 
 		for (int i = 0; i < num; i++) {
 			int widx = windex % bufferLength;
-			buffer[widx] = reader.read();
+			buffer[widx] = reader.read();			
 			if (buffer[widx] == -1) {
 				eof = true;
 				break;

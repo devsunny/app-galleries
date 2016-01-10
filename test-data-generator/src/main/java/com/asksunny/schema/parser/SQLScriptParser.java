@@ -427,7 +427,7 @@ public class SQLScriptParser {
 					} else if (nvp[0].equalsIgnoreCase("varname")) {
 						field.setVarname(nvp[1]);
 					} else if (nvp[0].equalsIgnoreCase("uiname")) {
-						field.setUiname(nvp[1]);
+						field.setLabel(nvp[1]);
 					} else if (nvp[0].equalsIgnoreCase("ref")) {
 						String[] refs = nvp[1].split("\\.");
 						if (refs.length != 2) {

@@ -13,7 +13,8 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
-import com.asksunny.codegen.java.CodeGenConfig.CodeOverwriteStrategy;
+import com.asksunny.codegen.CodeGenConfig;
+import com.asksunny.codegen.CodeGenConfig.CodeOverwriteStrategy;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
 import com.asksunny.schema.parser.JdbcSqlTypeMap;
@@ -57,19 +58,19 @@ public class EntityCodeGen {
 
 	public void genCode() throws IOException {
 
-		if (config.genDomainObject) {
+		if (config.isGenDomainObject()) {
 			writeCode(new File(config.getJavaBaseDir()), config.getDomainPackageName(), "", "java",
 					toJavaDomainObject());
 		}
 
-		if (config.genMyBatisMapper) {
+		if (config.isGenMyBatisMapper()) {
 			writeCode(new File(config.getJavaBaseDir()), config.getMapperPackageName(), "Mapper", "java",
 					toMyBatisJavaMapper());
 			writeCode(new File(config.getMyBatisXmlBaseDir()), config.getMapperPackageName(), "Mapper", "xml",
 					toMyBatisXmlMapper());
 		}
 
-		if (config.genRestController) {
+		if (config.isGenRestController()) {
 			writeCode(new File(config.getJavaBaseDir()), config.getRestPackageName(), "RestController", "java",
 					toRestController());
 		}
@@ -84,17 +85,17 @@ public class EntityCodeGen {
 		}
 		String name = String.format("%s%s.%s", javaEntityName, suffix, ext);
 		File fj = new File(f, name);
-		if(config.getOverwriteStrategy()==CodeOverwriteStrategy.IGNORE && fj.exists()){
+		if (config.getOverwriteStrategy() == CodeOverwriteStrategy.IGNORE && fj.exists()) {
 			return;
-		}else if (config.getOverwriteStrategy()==CodeOverwriteStrategy.SUFFIX_SEQUENCE && fj.exists()){
+		} else if (config.getOverwriteStrategy() == CodeOverwriteStrategy.SUFFIX_SEQUENCE && fj.exists()) {
 			for (int i = 1; i < Integer.MAX_VALUE; i++) {
 				fj = new File(f, String.format("%s.%03d", name, i));
 				if (!fj.exists()) {
 					break;
 				}
-			}			
-		}		
-		FileWriter fw = new FileWriter(fj);		
+			}
+		}
+		FileWriter fw = new FileWriter(fj);
 		try {
 			fw.write(code);
 			fw.flush();
@@ -319,7 +320,7 @@ public class EntityCodeGen {
 			out.printf("%5$spublic void delete%1$sBy%2$s(@PathVariable(\"%4$s\") %3$s %4$s){\n", javaEntityName,
 					javaPKName, keyJavaTypeName, javaPKVarName, INDENDENT_1);
 			out.printf("%5$sthis.%2$sMapper.delete%1$sBy%3$s(%4$s);\n", javaEntityName, javaEntityVarName, javaPKName,
-					javaPKVarName, INDENDENT_2);			
+					javaPKVarName, INDENDENT_2);
 			out.printf("%1$s}\n\n", INDENDENT_1);
 
 		} else if (this.primaryKeys.size() > 1) {
@@ -361,7 +362,7 @@ public class EntityCodeGen {
 				config.getDomainPackageName(), config.getMapperPackageName(), javaEntityName));
 
 		String cntrl = SearchReplaceUtils.searchAndReplace(text, params);
-		//System.out.println(cntrl);
+		// System.out.println(cntrl);
 		return cntrl;
 	}
 

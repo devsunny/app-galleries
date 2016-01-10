@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 import com.asksunny.CLIArguments;
+import com.asksunny.codegen.CodeGenConfig;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Schema;
 import com.asksunny.schema.parser.SQLScriptParser;

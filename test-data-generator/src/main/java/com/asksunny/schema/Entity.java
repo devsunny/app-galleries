@@ -8,10 +8,17 @@ import java.util.Map;
 public class Entity {
 
 	private String name;
+	
+	private String entityObjectName;
+	private String entityUIName;
+	
 
 	private final List<Field> fields = new ArrayList<>();
 	private final Map<String, Field> fieldMaps = new HashMap<>();
 
+	
+	
+	
 	public String getName() {
 		return name;
 	}
@@ -114,6 +121,26 @@ public class Entity {
 	@Override
 	public String toString() {
 		return "Entity [name=" + name + ", fields=\n" + fields + "\n]";
+	}
+
+	public String getEntityObjectName() {
+		return entityObjectName;
+	}
+
+	public void setEntityObjectName(String entityObjectName) {
+		this.entityObjectName = entityObjectName;
+	}
+
+	public String getEntityUIName() {
+		return entityUIName;
+	}
+
+	public void setEntityUIName(String entityUIName) {
+		this.entityUIName = entityUIName;
+	}
+
+	public Map<String, Field> getFieldMaps() {
+		return fieldMaps;
 	}
 
 }

@@ -1,6 +1,5 @@
-package com.asksunny.codegen.java;
+package com.asksunny.codegen;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;

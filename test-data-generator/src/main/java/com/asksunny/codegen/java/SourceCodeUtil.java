@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
+import com.asksunny.codegen.CodeGenConfig;
+
 
 
 public class SourceCodeUtil {
@@ -23,7 +25,7 @@ public class SourceCodeUtil {
 
 		String text = IOUtils.toString(SourceCodeUtil.class.getResourceAsStream(templateName));
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("MAPPER_PACKAGE_PATH", config.mapperPackageName.replaceAll("\\.", "/"));
+		params.put("MAPPER_PACKAGE_PATH", config.getMapperPackageName().replaceAll("\\.", "/"));
 		params.put("DOMAIN_PACKAGE", config.getDomainPackageName());
 		params.put("MAPPER_PACKAGE", config.getMapperPackageName());
 		params.put("REST_CONTROLLER_PACKAGE", config.getRestPackageName());
@@ -35,7 +37,7 @@ public class SourceCodeUtil {
 
 	public static void writeCode(CodeGenConfig config, File dir, String fileName, String code) throws IOException {
 		File fj = new File(dir, fileName);
-		if (config.suffixSequenceIfExists == false && fj.exists()) {
+		if (config.isSuffixSequenceIfExists() == false && fj.exists()) {
 			throw new IOException("File exists:" + fj.toString());
 		} else if (fj.exists()) {
 			for (int i = 1; i < Integer.MAX_VALUE; i++) {
