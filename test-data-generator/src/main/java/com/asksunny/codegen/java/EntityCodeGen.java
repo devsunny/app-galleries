@@ -15,6 +15,8 @@ import org.apache.commons.lang.StringUtils;
 
 import com.asksunny.codegen.CodeGenConfig;
 import com.asksunny.codegen.CodeGenConfig.CodeOverwriteStrategy;
+import com.asksunny.codegen.utils.JavaIdentifierUtil;
+import com.asksunny.codegen.utils.SearchReplaceUtils;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
 import com.asksunny.schema.parser.JdbcSqlTypeMap;

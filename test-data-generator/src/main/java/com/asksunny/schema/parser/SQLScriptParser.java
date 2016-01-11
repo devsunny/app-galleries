@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.asksunny.codegen.CodeGenAnnotation;
 import com.asksunny.codegen.CodeGenType;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
@@ -409,42 +410,31 @@ public class SQLScriptParser {
 	}
 
 	protected void parseAnnotationComment(Field field, String commentText) {
-		String[] ps = commentText.split("\\s*[,]\\s*");
-		if (ps.length > 0) {
-			CodeGenType genType = ps[0].length() == 0 ? CodeGenType.OTHER : CodeGenType.valueOf(ps[0].toUpperCase());
-			field.setDataType(genType);
-			if (ps.length > 1) {
-				for (int i = 1; i < ps.length; i++) {
-					String[] nvp = ps[i].split("\\s*[=]\\s*");
-					if (nvp.length != 2)
-						continue;
-					if (nvp[0].equalsIgnoreCase("format")) {
-						field.setFormat(nvp[1]);
-					} else if (nvp[0].equalsIgnoreCase("min")) {
-						field.setMinValue(nvp[1]);
-					} else if (nvp[0].equalsIgnoreCase("max")) {
-						field.setMaxValue(nvp[1]);
-					} else if (nvp[0].equalsIgnoreCase("varname")) {
-						field.setVarname(nvp[1]);
-					} else if (nvp[0].equalsIgnoreCase("uiname")) {
-						field.setLabel(nvp[1]);
-					} else if (nvp[0].equalsIgnoreCase("ref")) {
-						String[] refs = nvp[1].split("\\.");
-						if (refs.length != 2) {
-							throw new InvalidSQLException(String.format("Invalid ref format [%s]", nvp[1]));
-						}
-						Field xf = new Field();
-						xf.setName(refs[1]);
-						xf.setContainer(new Entity(refs[0]));
-						field.setReference(xf);
-					} else if (nvp[0].equalsIgnoreCase("values")) {
-						field.setEnumValues(nvp[1]);
-					} else if (nvp[0].equalsIgnoreCase("step")) {
-						field.setStep(nvp[1]);
-					}
-
+		try {
+			CodeGenAnnoParser parser = new CodeGenAnnoParser(new CodeGenAnnoLexer(new StringReader(commentText), 0, 0));
+			CodeGenAnnotation anno = parser.parseCodeAnnotation();
+			field.setDataType(anno.getCodeGenType());
+			if (anno.getRef() != null) {
+				String[] refs = anno.getRef().split("\\.");
+				if (refs.length != 2) {
+					throw new InvalidSQLException(String.format("Invalid ref format[%s]", anno.getRef()));
 				}
+				Field xf = new Field();
+				xf.setName(refs[1]);
+				xf.setContainer(new Entity(refs[0]));
+				field.setReference(xf);
 			}
+			field.setEnumValues(anno.getEnumValues());
+			field.setFormat(anno.getFormat());
+			field.setLabel(anno.getLabel());
+			field.setMaxValue(anno.getMaxValue());
+			field.setMinValue(anno.getMinValue());
+			field.setStep(anno.getStep());
+			field.setUitype(anno.getUitype());
+			field.setVarname(anno.getVarname());
+			parser.close();
+		} catch (Exception ex) {
+			throw new RuntimeException("Invalid Annotation:" + commentText, ex);
 		}
 
 	}

@@ -1,4 +1,4 @@
-package com.asksunny.codegen.java;
+package com.asksunny.codegen.utils;
 
 import java.util.Map;
 import java.util.regex.Matcher;

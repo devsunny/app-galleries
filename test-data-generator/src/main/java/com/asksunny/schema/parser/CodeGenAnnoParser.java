@@ -2,6 +2,7 @@ package com.asksunny.schema.parser;
 
 import java.io.IOException;
 
+import com.asksunny.codegen.CodeGenAnnotation;
 import com.asksunny.codegen.CodeGenAttrName;
 import com.asksunny.codegen.CodeGenTokenKind;
 import com.asksunny.codegen.CodeGenType;
@@ -21,7 +22,7 @@ public class CodeGenAnnoParser {
 		while ((token = peek(0)) != null) {
 			switch (token.getKind()) {
 			case IDENTIFIER:
-				if (peek(1).getKind() == CodeGenTokenKind.COMMA || peek(1) == null) {
+				if (peek(1) == null || peek(1).getKind() == CodeGenTokenKind.COMMA) {
 					CodeGenAnnoToken tok = consume();
 					try {
 						anno.setCodeGenType(CodeGenType.valueOf(tok.getImage().toUpperCase()));
@@ -73,6 +74,12 @@ public class CodeGenAnnoParser {
 			break;
 		case VARNAME:
 			anno.setVarname(val.getImage());
+			break;
+		case REF:
+			anno.setRef(val.getImage());
+			break;
+		case UITYPE:
+			anno.setUitype(val.getImage());
 			break;
 		}
 

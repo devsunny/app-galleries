@@ -1,6 +1,4 @@
-package com.asksunny.schema.parser;
-
-import com.asksunny.codegen.CodeGenType;
+package com.asksunny.codegen;
 
 public class CodeGenAnnotation {
 
@@ -13,6 +11,9 @@ public class CodeGenAnnotation {
 	String enumValues;
 	String varname;
 	String label;
+	String uitype;
+	String ref;
+	
 	public CodeGenType getCodeGenType() {
 		return codeGenType;
 	}
@@ -60,6 +61,18 @@ public class CodeGenAnnotation {
 	}
 	public void setLabel(String label) {
 		this.label = label;
+	}
+	public String getUitype() {
+		return uitype;
+	}
+	public void setUitype(String uitype) {
+		this.uitype = uitype;
+	}
+	public String getRef() {
+		return ref;
+	}
+	public void setRef(String ref) {
+		this.ref = ref;
 	}
 	
 	

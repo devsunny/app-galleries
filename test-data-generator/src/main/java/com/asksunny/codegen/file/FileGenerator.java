@@ -21,7 +21,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
 import com.asksunny.CLIArguments;
-import com.asksunny.codegen.java.FileNameGenerator;
+import com.asksunny.codegen.utils.FileNameGenerator;
 
 public class FileGenerator {
 	private static final SecureRandom random = new SecureRandom(UUID.randomUUID().toString().getBytes());

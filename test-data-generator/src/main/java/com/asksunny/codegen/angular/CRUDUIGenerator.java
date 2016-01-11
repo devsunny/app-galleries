@@ -1,5 +1,8 @@
 package com.asksunny.codegen.angular;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import com.asksunny.codegen.CodeGenConfig;
 import com.asksunny.schema.Entity;
 
@@ -13,10 +16,25 @@ public class CRUDUIGenerator {
 		this.configuration = configuration;
 		this.entity = entity;
 	}
-	
-	
-	
-	
+
+	String genForm() {
+		StringWriter buf = new StringWriter();
+		PrintWriter out = new PrintWriter(buf);
+
+		out.flush();
+		return buf.toString();
+	}
+
+	String genController() {
+		StringWriter buf = new StringWriter();
+		PrintWriter out = new PrintWriter(buf);
+		
+		
+		
+		
+		out.flush();
+		return buf.toString();
+	}
 
 	public CodeGenConfig getConfiguration() {
 		return configuration;

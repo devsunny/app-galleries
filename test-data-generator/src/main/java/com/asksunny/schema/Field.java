@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.asksunny.codegen.CodeGenType;
-import com.asksunny.codegen.java.JavaIdentifierUtil;
+import com.asksunny.codegen.utils.JavaIdentifierUtil;
 
 public class Field {
 
@@ -26,6 +26,7 @@ public class Field {
 	String step;
 	int fieldIndex;
 	String enumValues;
+	String uitype;
 
 	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
@@ -228,7 +229,7 @@ public class Field {
 	}
 
 	public void setVarname(String varname) {
-		if (varname.indexOf("_") != -1) {
+		if (varname!=null && varname.indexOf("_") != -1) {
 			this.varname = JavaIdentifierUtil.toVariableName(varname);
 		} else {
 			this.varname = varname;
@@ -249,6 +250,14 @@ public class Field {
 
 	public void setUnique(boolean unique) {
 		this.unique = unique;
+	}
+
+	public String getUitype() {
+		return uitype;
+	}
+
+	public void setUitype(String uitype) {
+		this.uitype = uitype;
 	}
 
 }
