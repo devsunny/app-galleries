@@ -1,0 +1,13 @@
+.state('dashboard.#{VIEW_NAME}',{
+        url:'/#{VIEW_NAME}',
+        controller: '#{ENTITY_NAME}Ctrl',
+        templateUrl:'views/#{VIEW_NAME}.html',
+        resolve: {
+          loadMyFiles:function($ocLazyLoad) {
+            return $ocLazyLoad.load({
+              name:'#{ANGULAR_APP_NAME}',
+              files:['scripts/controllers/#{ENTITY_NAME}}Contoller.js']
+            });
+          }
+        }
+})

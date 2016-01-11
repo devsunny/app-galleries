@@ -7,10 +7,9 @@ import java.util.Map;
 
 public class Entity {
 
-	private String name;
-	
+	private String name;	
 	private String entityObjectName;
-	private String entityUIName;
+	private String label;
 	
 
 	private final List<Field> fields = new ArrayList<>();
@@ -131,16 +130,18 @@ public class Entity {
 		this.entityObjectName = entityObjectName;
 	}
 
-	public String getEntityUIName() {
-		return entityUIName;
-	}
-
-	public void setEntityUIName(String entityUIName) {
-		this.entityUIName = entityUIName;
-	}
+	
 
 	public Map<String, Field> getFieldMaps() {
 		return fieldMaps;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
 	}
 
 }

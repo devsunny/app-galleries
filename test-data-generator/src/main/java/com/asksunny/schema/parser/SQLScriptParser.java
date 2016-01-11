@@ -100,13 +100,25 @@ public class SQLScriptParser {
 		}
 	}
 
-	protected void parseAlterTable(Schema schema) throws IOException {
+	protected void parseCreateTable(Schema schema) throws IOException {
 		Token ct = consume();
 		Token tb = consume();
 		if (tb == null) {
 			throw new InvalidSQLException("<table_name>", "null", ct.getLine(), ct.getColumn());
 		}
 		Entity entity = new Entity(tb.image);
+		if (peekMatch(0, LexerTokenKind.ANNOTATION_COMMENT)) {
+			Token cmt = consume();
+			CodeGenAnnoParser parser = new CodeGenAnnoParser(
+					new CodeGenAnnoLexer(new StringReader(cmt.getImage()), 0, 0));
+			CodeGenAnnotation anno = parser.parseCodeAnnotation();
+			if (anno.getLabel() != null) {
+				entity.setLabel(anno.getLabel());
+			}
+			if (anno.getVarname() != null) {
+				entity.setEntityObjectName(anno.getVarname());
+			}
+		}
 		debug("parse Table body", entity);
 		parseCreateTableBody(entity);
 		schema.put(entity.getName(), entity);
@@ -176,7 +188,7 @@ public class SQLScriptParser {
 			Token nxtTok = tokenReader.peek(0);
 			switch (nxtTok.getKeyword()) {
 			case TABLE:
-				parseAlterTable(schema);
+				parseCreateTable(schema);
 				break;
 			case UNIQUE:
 				if (tokenReader.peek(1).getKeyword() == Keyword.INDEX) {
