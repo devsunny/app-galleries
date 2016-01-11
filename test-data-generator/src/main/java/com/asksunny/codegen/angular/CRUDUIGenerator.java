@@ -1,10 +1,17 @@
 package com.asksunny.codegen.angular;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.apache.commons.io.IOUtils;
+
 import com.asksunny.codegen.CodeGenConfig;
+import com.asksunny.codegen.utils.JavaIdentifierUtil;
+import com.asksunny.codegen.utils.ParamMapBuilder;
+import com.asksunny.codegen.utils.TemplateUtil;
 import com.asksunny.schema.Entity;
+import com.asksunny.schema.Field;
 
 public class CRUDUIGenerator {
 
@@ -17,23 +24,34 @@ public class CRUDUIGenerator {
 		this.entity = entity;
 	}
 
-	String genForm() {
-		StringWriter buf = new StringWriter();
-		PrintWriter out = new PrintWriter(buf);
-
-		out.flush();
-		return buf.toString();
+	public String genForm() throws IOException {
+		StringBuilder fields = new StringBuilder();
+		for (Field field : entity.getFields()) {
+			AngularFieldGenerator fg = new AngularFieldGenerator(entity, field);
+			fields.append(fg.genField()).append("\n");
+		}
+		String label = entity.getLabel() == null ? entity.getName() : entity.getLabel();
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream("angularForm.html.tmpl")),
+				ParamMapBuilder.newBuilder().addMapEntry("FORM_FIELDS", fields.toString())
+						.addMapEntry("ENTITY_NAME", entity.getEntityObjectName()).addMapEntry("ENTITY_LABEL", label)
+						.buildMap());
+		return generated;
 	}
 
-	String genController() {
-		StringWriter buf = new StringWriter();
-		PrintWriter out = new PrintWriter(buf);
-		
-		
-		
-		
-		out.flush();
-		return buf.toString();
+	public String genController() throws IOException {
+		StringBuilder fields = new StringBuilder();
+		for (Field field : entity.getFields()) {
+			AngularFieldGenerator fg = new AngularFieldGenerator(entity, field);
+			fields.append(fg.genField());
+		}
+		String label = entity.getLabel() == null ? entity.getName() : entity.getLabel();
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream("angularForm.html.tmpl")),
+				ParamMapBuilder.newBuilder().addMapEntry("FORM_FIELDS", fields.toString())
+						.addMapEntry("ENTITY_NAME", entity.getEntityObjectName()).addMapEntry("ENTITY_LABEL", label)
+						.buildMap());
+		return generated;
 	}
 
 	public CodeGenConfig getConfiguration() {
