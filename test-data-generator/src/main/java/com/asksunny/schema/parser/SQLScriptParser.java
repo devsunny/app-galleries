@@ -345,8 +345,11 @@ public class SQLScriptParser {
 
 			if (peekMatch(0, LexerTokenKind.LPAREN)) {
 				consume();
-				Token num1 = consume();
-				if (num1.getKind() != LexerTokenKind.NUMBER) {
+				Token num1 = consume();				
+				if (num1.getKeyword() == Keyword.ASTERISK) {
+					ret.setPrecision(16);
+					ret.setDisplaySize(16);
+				} else if (num1.getKind() != LexerTokenKind.NUMBER) {
 					throw new InvalidSQLException("<NUMBER>", num1.image, num1.line, num1.column);
 				} else {
 					ret.setPrecision(Integer.valueOf(num1.image));
@@ -362,6 +365,10 @@ public class SQLScriptParser {
 						ret.setScale(Integer.valueOf(num2.image));
 					}
 				}
+				if (peekMatch(0, Keyword.BYTE)) {
+					consume();
+				} 
+				
 				if (peekMatch(0, LexerTokenKind.RPAREN)) {
 					consume();
 				} else {
