@@ -1,3 +1,5 @@
+package com.asksunny.schema;
+
 import java.util.Comparator;
 
 public class FieldDrillDownComparator implements Comparator<Field> {
