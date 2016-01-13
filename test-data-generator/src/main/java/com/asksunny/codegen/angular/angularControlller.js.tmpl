@@ -3,12 +3,38 @@
  * @ngdoc function
  * @name #{ANGULAR_APP_NAME}.controller:#{ENTITY_NAME}Ctrl
  * @description
- * # MainCtrl
+ * # #{ENTITY_NAME}Ctrl
  * Controller of the #{ANGULAR_APP_NAME}
  */
 angular.module('#{ANGULAR_APP_NAME}')
-  .controller('#{ENTITY_NAME}Ctrl', ['$scope', '$http', '$stateParams', '$timeout', function ($scope, , $http,  $stateParams, $timeout) {
-   
-   
-
+  .controller('#{ENTITY_NAME}Ctrl', ['$scope', '$http', '$stateParams', '$timeout', function ($scope, $http,  $stateParams, $timeout) {
+   $scope.#{PK_FIELD_VAR_NAME}=$stateParams.#{PK_FIELD_VAR_NAME};
+   var queryUri = '/#{WEBCONTEXT}/#{ENTITY_VAR_NAME}.json?ts=' + new Date().getTime();
+   var getUri = '/#{WEBCONTEXT}/#{ENTITY_VAR_NAME}/' + $scope.#{PK_FIELD_VAR_NAME} + '.json?ts=' + new Date().getTime();
+   $scope.query=function(){   	
+   		$http.get(queryUri).then(function(json) {	
+		 	 $scope.#{ENTITY_VAR_NAME} = json.data;	
+		 	 $scope.$digest();  		 	
+	     });  
+   };
+   $scope.get=function(){
+   		$http.get(getUri).then(function(json) {	
+		 	 $scope.#{ENTITY_VAR_NAME} = json.data;	
+		 	 $scope.$digest();  		 	
+	     }); 
+   };
+   $scope.save=function(#{ENTITY_VAR_NAME}){
+  		 $http.post(queryUri, #{ENTITY_VAR_NAME}).then(function(json) {	
+		 	 
+	     }, function(error) {	
+		 	 //handle Error here;
+	     }); 
+   };
+   $scope.update=function(#{ENTITY_VAR_NAME}){
+   		 $http.put(getUri, #{ENTITY_VAR_NAME}).then(function(json) {	
+		 	 
+	     }, function(error) {	
+		 	 //handle Error here;
+	     });
+   };   
 }]);
