@@ -21,6 +21,10 @@ public class CodeGenAnnotation {
 	String groupView;
 	String order;
 	String orderBy;
+	String autogen;
+	String drillDown;
+	
+	
 	
 	public CodeGenType getCodeGenType() {
 		return codeGenType;
@@ -129,6 +133,18 @@ public class CodeGenAnnotation {
 	}
 	public void setGroupView(String groupView) {
 		this.groupView = groupView;
+	}
+	public String getAutogen() {
+		return autogen;
+	}
+	public void setAutogen(String autogen) {
+		this.autogen = autogen;
+	}
+	public String getDrillDown() {
+		return drillDown;
+	}
+	public void setDrillDown(String drillDown) {
+		this.drillDown = drillDown;
 	}
 	
 	

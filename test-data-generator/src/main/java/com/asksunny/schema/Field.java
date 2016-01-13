@@ -36,8 +36,10 @@ public class Field {
 	boolean unique;
 
 	int groupLevel;
+	int drillDown;
 	int order;
 	boolean ignoreView;
+	boolean autogen;
 
 	GroupFunction groupFunction = GroupFunction.NONE;
 	GroupView groupView = GroupView.TABLE;
@@ -238,7 +240,7 @@ public class Field {
 		return varname == null ? JavaIdentifierUtil.toVariableName(name) : varname;
 	}
 
-	public String geObjectname() {
+	public String getObjectname() {
 		return varname == null ? JavaIdentifierUtil.toObjectName(name) : JavaIdentifierUtil.capitalize(varname);
 	}
 
@@ -343,6 +345,20 @@ public class Field {
 		this.ignoreView = ignoreViewstr != null && ignoreViewstr.trim().equalsIgnoreCase("true");
 	}
 
+	
+
+	public boolean isAutogen() {
+		return autogen;
+	}
+
+	public void setAutogen(boolean autogen) {
+		this.autogen = autogen;
+	}
+	
+	public void setAutogen(String autogenstr) {
+		this.autogen =  autogenstr != null && autogenstr.trim().equalsIgnoreCase("true");;
+	}
+	
 	public void setAnnotation(CodeGenAnnotation anno) {
 		this.setEnumValues(anno.getEnumValues());
 		this.setFormat(anno.getFormat());
@@ -357,6 +373,22 @@ public class Field {
 		this.setGroupFunction(anno.getGroupFunction());
 		this.setGroupLevel(anno.getGroupLevel());
 		this.setGroupView(anno.getGroupView());
+		this.setAutogen(anno.getAutogen());
+		this.setDrillDown(anno.getDrillDown());
+	}
+
+	public int getDrillDown() {
+		return drillDown;
+	}
+
+	public void setDrillDown(int drillDown) {
+		this.drillDown = drillDown;
+	}
+	
+	public void setDrillDown(String drillDownStr) {		
+		if (drillDownStr != null && drillDownStr.matches("^\\d+$")) {
+			this.drillDown = Integer.valueOf(drillDownStr);
+		}
 	}
 
 }

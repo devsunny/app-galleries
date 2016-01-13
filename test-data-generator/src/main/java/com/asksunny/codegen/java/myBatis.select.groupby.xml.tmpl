@@ -1,0 +1,8 @@
+<select id="select#{ENTITY_NAME}ByGroup" resultMap="#{ENTITY_VAR_NAME}ResultMap">
+  SELECT 
+  #{FIELD_SELECT_LIST}
+  FROM 
+  #{TABLE_NAME}
+  GROUP BY #{GROUP_BY_FIELD}
+  ORDER BY #{ORDER_BY_FIELD}
+</select>

@@ -11,7 +11,7 @@ import com.asksunny.codegen.utils.JavaIdentifierUtil;
 public class Entity {
 
 	private String name;
-	private String entityObjectName;
+	private String varname;
 	private String label;
 
 	private final List<Field> fields = new ArrayList<>();
@@ -56,14 +56,24 @@ public class Entity {
 		return null;
 	}
 
-	public void setFields(List<Field> fields) {
+	public boolean hasKeyField() {
 
 		for (Field fd : fields) {
+			if (fd.isUnique()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void setFields(List<Field> pfields) {
+
+		for (Field fd : pfields) {
 			fd.setContainer(this);
 			fd.setFieldIndex(this.fields.size());
 			this.fieldMaps.put(fd.getName().toUpperCase(), fd);
 		}
-		this.fields.addAll(fields);
+		this.fields.addAll(pfields);
 	}
 
 	public Field findField(String name) {
@@ -71,6 +81,54 @@ public class Entity {
 			return fieldMaps.get(name.trim().toUpperCase());
 		}
 		return null;
+	}
+
+	public List<Field> getGroupByFields() {
+		List<Field> refs = new ArrayList<Field>();
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getGroupLevel() > 0) {
+					refs.add(fd);
+				}
+			}
+		}
+		return refs;
+	}
+
+	public boolean hasGroupByFields() {
+
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getGroupLevel() > 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public List<Field> getDrillDownFields() {
+		List<Field> refs = new ArrayList<Field>();
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getDrillDown() > 0) {
+					refs.add(fd);
+				}
+			}
+		}
+		return refs;
+	}
+
+	public boolean hasDrillDownFields() {
+
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getDrillDown() > 0) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public List<Field> getAllReferences() {
@@ -127,15 +185,12 @@ public class Entity {
 	}
 
 	public String getEntityObjectName() {
-		return entityObjectName == null ? JavaIdentifierUtil.toObjectName(this.name) : this.entityObjectName;
+		return this.varname == null ? JavaIdentifierUtil.toObjectName(this.name)
+				: JavaIdentifierUtil.capitalize(this.varname);
 	}
 
 	public String getEntityVarName() {
-		return entityObjectName == null ? JavaIdentifierUtil.toObjectName(this.name) : this.entityObjectName;
-	}
-
-	public void setEntityObjectName(String entityObjectName) {
-		this.entityObjectName = entityObjectName;
+		return varname == null ? JavaIdentifierUtil.toVariableName(this.name) : varname;
 	}
 
 	public Map<String, Field> getFieldMaps() {
@@ -143,7 +198,7 @@ public class Entity {
 	}
 
 	public String getLabel() {
-		return label;
+		return label == null ? getEntityObjectName() : label;
 	}
 
 	public void setLabel(String label) {
@@ -202,7 +257,7 @@ public class Entity {
 			this.setLabel(anno.getLabel());
 		}
 		if (anno.getVarname() != null) {
-			this.setEntityObjectName(anno.getVarname());
+			this.setVarname(anno.getVarname());
 		}
 		if (anno.getIgnoreRest() != null) {
 			this.setIgnoreRest(anno.getIgnoreRest());
@@ -214,8 +269,16 @@ public class Entity {
 			this.setIgnoreView(anno.getIgnoreView());
 		}
 		if (anno.getOrderBy() != null) {
-			this.setOrderBy(anno.getOrder());
+			this.setOrderBy(anno.getOrderBy());
 		}
+	}
+
+	public String getVarname() {
+		return varname;
+	}
+
+	public void setVarname(String varname) {
+		this.varname = JavaIdentifierUtil.decapitalize(varname);
 	}
 
 }

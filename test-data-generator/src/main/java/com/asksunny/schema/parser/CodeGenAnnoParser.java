@@ -52,7 +52,9 @@ public class CodeGenAnnoParser {
 			return;
 		}
 		CodeGenAnnoToken val = consume();
+
 		CodeGenAttrName attName = CodeGenAttrName.valueOf(name.getImage().toUpperCase());
+
 		switch (attName) {
 		case FORMAT:
 			anno.setFormat(val.getImage());
@@ -81,8 +83,35 @@ public class CodeGenAnnoParser {
 		case UITYPE:
 			anno.setUitype(val.getImage());
 			break;
+		case ORDER:
+			anno.setOrder(val.getImage());
+			break;
+		case ORDERBY:
+			anno.setOrderBy(val.getImage());
+			break;
 		case GROUPFUNCTION:
-			
+			anno.setGroupFunction(val.getImage());
+			break;
+		case AUTOGEN:
+			anno.setAutogen(val.getImage());
+			break;
+		case GROUPLEVEL:
+			anno.setGroupLevel(val.getImage());
+			break;
+		case GROUPVIEW:
+			anno.setGroupView(val.getImage());
+			break;
+		case IGNOREREST:
+			anno.setIgnoreRest(val.getImage());
+			break;
+		case IGNOREVIEW:
+			anno.setIgnoreView(val.getImage());
+			break;
+		case ITEMSPERPAGE:
+			anno.setItemsPerPage(val.getImage());
+			break;
+		case DRILLDOWN:
+			anno.setDrillDown(val.getImage());
 			break;
 		}
 
@@ -103,9 +132,8 @@ public class CodeGenAnnoParser {
 			}
 		}
 	}
-	
-	public void close() throws IOException
-	{
+
+	public void close() throws IOException {
 		this.peekableTokenReader.close();
 	}
 

@@ -23,9 +23,15 @@ public class CodeGenConfig {
 	boolean genDomainObject = true;
 	boolean genMyBatisMapper = true;
 	boolean genRestController = true;
-	boolean genAngularUIElement = false;
+	
 	boolean genSpringContext = false;
-
+	boolean genMyBatisSpringXml = true;
+	
+	boolean genAngularController = true;
+	boolean genAngularRoute = true;
+	boolean genAngularView = true;
+	
+	
 	boolean suffixSequenceIfExists = true;
 
 	CaselessHashSet includes = new CaselessHashSet();
@@ -137,13 +143,7 @@ public class CodeGenConfig {
 		this.genRestController = genRestController;
 	}
 
-	public boolean isGenAngularUIElement() {
-		return genAngularUIElement;
-	}
-
-	public void setGenAngularUIElement(boolean genAngularUIElement) {
-		this.genAngularUIElement = genAngularUIElement;
-	}
+	
 
 	public boolean isGenSpringContext() {
 		return genSpringContext;
