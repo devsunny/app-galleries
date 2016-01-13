@@ -6,28 +6,18 @@
                 #{ENTITY_LABEL}
             </div>
             <!-- /.panel-heading -->
-            <div class="panel-body">
-                <div class="dataTable_wrapper">
+            <div class="panel-body" ng-controller="#{ENTITY_NAME}Ctrl">
+                <div class="dataTable_wrapper" ng-init="query()">
                     <table class="table table-striped table-bordered table-hover" id="dataTables-#{ENTITY_VAR_NAME}">
-                        <thead>
-                            #{TABLE_HEADER}
+                        <thead>                            
                             <tr>
-                                <th>Rendering engine</th>
-                                <th>Browser</th>
-                                <th>Platform(s)</th>
-                                <th>Engine version</th>
-                                <th>CSS grade</th>
+                                #{TABLE_HEADER}
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr class="odd gradeX">
-                                <td>Trident</td>
-                                <td>Internet Explorer 4.0</td>
-                                <td>Win 95+</td>
-                                <td class="center">4</td>
-                                <td class="center">X</td>
+                        <tbody>                            
+                           <tr ng-repeat="listItem in #{ENTITY_VAR_NAME}">
+                                #{TABLE_BODY}
                             </tr>
-                           #{TABLE_ROWS}
                         </tbody>
                     </table>
                 </div>
