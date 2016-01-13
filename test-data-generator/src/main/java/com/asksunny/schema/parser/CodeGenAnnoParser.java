@@ -81,6 +81,9 @@ public class CodeGenAnnoParser {
 		case UITYPE:
 			anno.setUitype(val.getImage());
 			break;
+		case GROUPFUNCTION:
+			
+			break;
 		}
 
 	}

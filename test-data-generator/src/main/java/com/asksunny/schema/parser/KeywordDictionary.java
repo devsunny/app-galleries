@@ -37,6 +37,10 @@ public class KeywordDictionary extends HashMap<String, Keyword> {
 		this.put("REFERENCES", Keyword.REFERENCES);
 		this.put("UNIQUE", Keyword.UNIQUE);
 		this.put("INDEX", Keyword.INDEX);
+		this.put("BYTE", Keyword.BYTE);
+		this.put("NOPARALLELCREATE", Keyword.CREATE);
+		this.put("NOPARALLEL", Keyword.NOPARALLEL);
+		this.put("PARALLEL", Keyword.PARALLEL);
 	}
 	
 	

@@ -112,12 +112,8 @@ public class SQLScriptParser {
 			CodeGenAnnoParser parser = new CodeGenAnnoParser(
 					new CodeGenAnnoLexer(new StringReader(cmt.getImage()), 0, 0));
 			CodeGenAnnotation anno = parser.parseCodeAnnotation();
-			if (anno.getLabel() != null) {
-				entity.setLabel(anno.getLabel());
-			}
-			if (anno.getVarname() != null) {
-				entity.setEntityObjectName(anno.getVarname());
-			}
+			entity.setAnnotation(anno);
+
 		}
 		debug("parse Table body", entity);
 		parseCreateTableBody(entity);
@@ -403,8 +399,10 @@ public class SQLScriptParser {
 
 				}
 			}
+			boolean gotComma = false;
 			if (peekMatch(0, LexerTokenKind.COMMA)) {
 				consume();
+				gotComma = true;
 			}
 
 			if (peekMatch(0, LexerTokenKind.ANNOTATION_COMMENT)) {
@@ -412,6 +410,11 @@ public class SQLScriptParser {
 				parseAnnotationComment(ret, anno.getImage());
 
 			}
+
+			if (!gotComma && peekMatch(0, LexerTokenKind.COMMA)) {
+				consume();
+			}
+
 		} else if (peekMatch(0, LexerTokenKind.RPAREN) || peekMatch(0, LexerTokenKind.KEYWORD)) {
 			return null;
 		} else {
@@ -436,14 +439,7 @@ public class SQLScriptParser {
 				xf.setContainer(new Entity(refs[0]));
 				field.setReference(xf);
 			}
-			field.setEnumValues(anno.getEnumValues());
-			field.setFormat(anno.getFormat());
-			field.setLabel(anno.getLabel());
-			field.setMaxValue(anno.getMaxValue());
-			field.setMinValue(anno.getMinValue());
-			field.setStep(anno.getStep());
-			field.setUitype(anno.getUitype());
-			field.setVarname(anno.getVarname());
+			field.setAnnotation(anno);
 			parser.close();
 		} catch (Exception ex) {
 			throw new RuntimeException("Invalid Annotation:" + commentText, ex);

@@ -13,6 +13,14 @@ public class CodeGenAnnotation {
 	String label;
 	String uitype;
 	String ref;
+	String itemsPerPage;
+	String ignoreView;
+	String ignoreRest;
+	String groupFunction;
+	String groupLevel;
+	String groupView;
+	String order;
+	String orderBy;
 	
 	public CodeGenType getCodeGenType() {
 		return codeGenType;
@@ -73,6 +81,54 @@ public class CodeGenAnnotation {
 	}
 	public void setRef(String ref) {
 		this.ref = ref;
+	}
+	public String getItemsPerPage() {
+		return itemsPerPage;
+	}
+	public void setItemsPerPage(String itemsPerPage) {
+		this.itemsPerPage = itemsPerPage;
+	}
+	public String getIgnoreView() {
+		return ignoreView;
+	}
+	public void setIgnoreView(String ignoreView) {
+		this.ignoreView = ignoreView;
+	}
+	public String getIgnoreRest() {
+		return ignoreRest;
+	}
+	public void setIgnoreRest(String ignoreRest) {
+		this.ignoreRest = ignoreRest;
+	}
+	public String getGroupFunction() {
+		return groupFunction;
+	}
+	public void setGroupFunction(String groupFunction) {
+		this.groupFunction = groupFunction;
+	}
+	public String getGroupLevel() {
+		return groupLevel;
+	}
+	public void setGroupLevel(String groupLevel) {
+		this.groupLevel = groupLevel;
+	}
+	public String getOrder() {
+		return order;
+	}
+	public void setOrder(String order) {
+		this.order = order;
+	}
+	public String getOrderBy() {
+		return orderBy;
+	}
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
+	}
+	public String getGroupView() {
+		return groupView;
+	}
+	public void setGroupView(String groupView) {
+		this.groupView = groupView;
 	}
 	
 	

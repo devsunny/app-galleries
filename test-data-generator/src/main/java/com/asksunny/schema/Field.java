@@ -3,7 +3,10 @@ package com.asksunny.schema;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.asksunny.codegen.CodeGenAnnotation;
 import com.asksunny.codegen.CodeGenType;
+import com.asksunny.codegen.GroupFunction;
+import com.asksunny.codegen.GroupView;
 import com.asksunny.codegen.utils.JavaIdentifierUtil;
 
 public class Field {
@@ -31,6 +34,13 @@ public class Field {
 	List<Field> referencedBy = new ArrayList<Field>();
 	Field reference;
 	boolean unique;
+
+	int groupLevel;
+	int order;
+	boolean ignoreView;
+
+	GroupFunction groupFunction = GroupFunction.NONE;
+	GroupView groupView = GroupView.TABLE;
 
 	public Field() {
 		super();
@@ -225,15 +235,15 @@ public class Field {
 	}
 
 	public String getVarname() {
-		return varname;
+		return varname == null ? JavaIdentifierUtil.toVariableName(name) : varname;
+	}
+
+	public String geObjectname() {
+		return varname == null ? JavaIdentifierUtil.toObjectName(name) : JavaIdentifierUtil.capitalize(varname);
 	}
 
 	public void setVarname(String varname) {
-		if (varname!=null && varname.indexOf("_") != -1) {
-			this.varname = JavaIdentifierUtil.toVariableName(varname);
-		} else {
-			this.varname = varname;
-		}
+		this.varname = varname;
 	}
 
 	public String getLabel() {
@@ -245,7 +255,7 @@ public class Field {
 	}
 
 	public boolean isUnique() {
-		return unique;
+		return unique || this.primaryKey;
 	}
 
 	public void setUnique(boolean unique) {
@@ -258,6 +268,95 @@ public class Field {
 
 	public void setUitype(String uitype) {
 		this.uitype = uitype;
+	}
+
+	public int getGroupLevel() {
+		return groupLevel;
+	}
+
+	public void setGroupLevel(int groupLevel) {
+		this.groupLevel = groupLevel;
+	}
+
+	public void setGroupLevel(String groupLevelstr) {
+
+		if (groupLevelstr != null && groupLevelstr.matches("^\\d+$")) {
+			this.groupLevel = Integer.valueOf(groupLevelstr);
+		}
+
+	}
+
+	public GroupFunction getGroupFunction() {
+		return groupFunction;
+	}
+
+	public void setGroupFunction(GroupFunction groupFunction) {
+		this.groupFunction = groupFunction;
+	}
+
+	public void setGroupFunction(String groupFunctionStr) {
+		if (groupFunctionStr != null && groupFunctionStr.trim().length() > 0) {
+			this.groupFunction = GroupFunction.valueOf(groupFunctionStr.trim().toUpperCase());
+		}
+
+	}
+
+	public GroupView getGroupView() {
+		return groupView;
+	}
+
+	public void setGroupView(GroupView groupView) {
+		this.groupView = groupView;
+	}
+
+	public void setGroupView(String groupViewstr) {
+
+		if (groupViewstr != null && groupViewstr.trim().length() > 0) {
+			this.groupView = GroupView.valueOf(groupViewstr.trim().toUpperCase());
+		}
+	}
+
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
+	public void setOrder(String orderstr) {
+		if (orderstr != null && orderstr.matches("^\\d+$")) {
+			this.order = Integer.valueOf(orderstr);
+		}
+
+	}
+
+	public boolean isIgnoreView() {
+		return ignoreView;
+	}
+
+	public void setIgnoreView(boolean ignoreView) {
+		this.ignoreView = ignoreView;
+	}
+
+	public void setIgnoreView(String ignoreViewstr) {
+		this.ignoreView = ignoreViewstr != null && ignoreViewstr.trim().equalsIgnoreCase("true");
+	}
+
+	public void setAnnotation(CodeGenAnnotation anno) {
+		this.setEnumValues(anno.getEnumValues());
+		this.setFormat(anno.getFormat());
+		this.setLabel(anno.getLabel());
+		this.setMaxValue(anno.getMaxValue());
+		this.setMinValue(anno.getMinValue());
+		this.setStep(anno.getStep());
+		this.setUitype(anno.getUitype());
+		this.setVarname(anno.getVarname());
+		this.setIgnoreView(anno.getIgnoreView());
+		this.setOrder(anno.getOrder());
+		this.setGroupFunction(anno.getGroupFunction());
+		this.setGroupLevel(anno.getGroupLevel());
+		this.setGroupView(anno.getGroupView());
 	}
 
 }

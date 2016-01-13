@@ -5,19 +5,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.asksunny.codegen.CodeGenAnnotation;
+import com.asksunny.codegen.utils.JavaIdentifierUtil;
+
 public class Entity {
 
-	private String name;	
+	private String name;
 	private String entityObjectName;
 	private String label;
-	
 
 	private final List<Field> fields = new ArrayList<>();
 	private final Map<String, Field> fieldMaps = new HashMap<>();
 
-	
-	
-	
+	private int itemsPerPage;
+	private boolean ignoreView;
+	private boolean ignoreRest;
+	private String orderBy;
+
 	public String getName() {
 		return name;
 	}
@@ -123,14 +127,16 @@ public class Entity {
 	}
 
 	public String getEntityObjectName() {
-		return entityObjectName;
+		return entityObjectName == null ? JavaIdentifierUtil.toObjectName(this.name) : this.entityObjectName;
+	}
+
+	public String getEntityVarName() {
+		return entityObjectName == null ? JavaIdentifierUtil.toObjectName(this.name) : this.entityObjectName;
 	}
 
 	public void setEntityObjectName(String entityObjectName) {
 		this.entityObjectName = entityObjectName;
 	}
-
-	
 
 	public Map<String, Field> getFieldMaps() {
 		return fieldMaps;
@@ -142,6 +148,74 @@ public class Entity {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public int getItemsPerPage() {
+		return itemsPerPage;
+	}
+
+	public void setItemsPerPage(int itemsPerPage) {
+		this.itemsPerPage = itemsPerPage;
+	}
+
+	public void setItemsPerPage(String itemsPerPageStr) {
+		if (itemsPerPageStr != null && itemsPerPageStr.matches("^\\d+$")) {
+			this.itemsPerPage = Integer.valueOf(itemsPerPageStr);
+		}
+	}
+
+	public boolean isIgnoreView() {
+		return ignoreView;
+	}
+
+	public void setIgnoreView(boolean ignoreView) {
+		this.ignoreView = ignoreView;
+	}
+
+	public void setIgnoreView(String ignoreViewstr) {
+		this.ignoreView = ignoreViewstr != null && ignoreViewstr.equalsIgnoreCase("true");
+	}
+
+	public boolean isIgnoreRest() {
+		return ignoreRest;
+	}
+
+	public void setIgnoreRest(boolean ignoreRest) {
+		this.ignoreRest = ignoreRest;
+	}
+
+	public void setIgnoreRest(String ignoreRestStr) {
+		this.ignoreRest = ignoreRestStr != null && ignoreRestStr.equalsIgnoreCase("true");
+	}
+
+	public String getOrderBy() {
+		return orderBy;
+	}
+
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
+	}
+
+	public void setAnnotation(CodeGenAnnotation anno) {
+
+		if (anno.getLabel() != null) {
+			this.setLabel(anno.getLabel());
+		}
+		if (anno.getVarname() != null) {
+			this.setEntityObjectName(anno.getVarname());
+		}
+		if (anno.getIgnoreRest() != null) {
+			this.setIgnoreRest(anno.getIgnoreRest());
+		}
+		if (anno.getItemsPerPage() != null) {
+			this.setItemsPerPage(anno.getItemsPerPage());
+		}
+		if (anno.getIgnoreView() != null) {
+			this.setIgnoreView(anno.getIgnoreView());
+		}
+		if (anno.getOrderBy() != null) {
+			this.setOrderBy(anno.getOrder());
+		}
 	}
 
 }
