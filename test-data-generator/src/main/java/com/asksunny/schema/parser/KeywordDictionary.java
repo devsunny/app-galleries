@@ -41,6 +41,7 @@ public class KeywordDictionary extends HashMap<String, Keyword> {
 		this.put("NOPARALLELCREATE", Keyword.CREATE);
 		this.put("NOPARALLEL", Keyword.NOPARALLEL);
 		this.put("PARALLEL", Keyword.PARALLEL);
+		this.put("*", Keyword.ASTERISK);
 	}
 	
 	
