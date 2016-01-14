@@ -9,7 +9,7 @@ import com.asksunny.collections.CaselessHashSet;
 public class CodeGenConfig {
 
 	public static enum CodeOverwriteStrategy {
-		OVERWRITE, IGNORE, SUFFIX_SEQUENCE
+		OVERWRITE, IGNORE, SUFFIX_SEQUENCE, RENAME_EXISTING
 	};
 
 	String javaBaseDir = "src/main/java";
