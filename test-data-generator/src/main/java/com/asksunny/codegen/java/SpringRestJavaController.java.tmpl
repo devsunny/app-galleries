@@ -1,0 +1,47 @@
+package #{REST_PACKAGE_NAME};
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+
+import #{DOMAIN_PACKAGE_NAME}.#{ENTITY_NAME};
+import #{MAPPER_PACKAGE_NAME}.#{ENTITY_NAME}Mapper;
+
+
+
+@RestController
+@RequestMapping(value = "/#{ENTITY_VAR_NAME}")
+public class #{ENTITY_NAME}RestController {
+
+	@Autowired
+	private #{ENTITY_NAME}Mapper #{ENTITY_VAR_NAME}Mapper;
+	
+    @RequestMapping(method = { RequestMethod.POST })
+    @ResponseBody
+    public #{ENTITY_NAME} add#{ENTITY_NAME}(@RequestBody #{ENTITY_NAME} #{ENTITY_VAR_NAME}){
+        this.#{ENTITY_VAR_NAME}Mapper.insert#{ENTITY_NAME}(#{ENTITY_VAR_NAME});
+        return #{ENTITY_VAR_NAME};
+    }
+
+    @RequestMapping(method = { RequestMethod.GET })
+    @ResponseBody
+    public java.util.List<#{ENTITY_NAME}> get#{ENTITY_NAME}(){
+        java.util.List<#{ENTITY_NAME}> ret = this.#{ENTITY_VAR_NAME}Mapper.select#{ENTITY_NAME}();
+        return ret;
+    }
+
+    
+    #{MORE_REST_METHODS}
+
+	
+	
+}

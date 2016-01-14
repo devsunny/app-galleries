@@ -3,6 +3,7 @@ package com.asksunny.codegen.angular;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.sql.Types;
 
 import org.apache.commons.io.IOUtils;
 

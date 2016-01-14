@@ -19,6 +19,9 @@ public class CodeGenConfig {
 	String mapperPackageName;
 	String restPackageName;
 	String schemaFiles = null;
+	String angularAppName;
+
+	String webappContext;
 
 	boolean genDomainObject = true;
 	boolean genMyBatisMapper = true;
@@ -183,6 +186,62 @@ public class CodeGenConfig {
 
 	public CaselessHashSet getExcludes() {
 		return excludes;
+	}
+
+	public String getWebappContext() {
+		return webappContext;
+	}
+
+	public void setWebappContext(String webappContext) {
+		this.webappContext = webappContext;
+	}
+
+	public String getAngularAppName() {
+		return angularAppName;
+	}
+
+	public void setAngularAppName(String angularAppName) {
+		this.angularAppName = angularAppName;
+	}
+
+	public boolean isGenMyBatisSpringXml() {
+		return genMyBatisSpringXml;
+	}
+
+	public void setGenMyBatisSpringXml(boolean genMyBatisSpringXml) {
+		this.genMyBatisSpringXml = genMyBatisSpringXml;
+	}
+
+	public boolean isGenAngularController() {
+		return genAngularController;
+	}
+
+	public void setGenAngularController(boolean genAngularController) {
+		this.genAngularController = genAngularController;
+	}
+
+	public boolean isGenAngularRoute() {
+		return genAngularRoute;
+	}
+
+	public void setGenAngularRoute(boolean genAngularRoute) {
+		this.genAngularRoute = genAngularRoute;
+	}
+
+	public boolean isGenAngularView() {
+		return genAngularView;
+	}
+
+	public void setGenAngularView(boolean genAngularView) {
+		this.genAngularView = genAngularView;
+	}
+
+	public void setIncludes(CaselessHashSet includes) {
+		this.includes = includes;
+	}
+
+	public void setExcludes(CaselessHashSet excludes) {
+		this.excludes = excludes;
 	}
 
 }

@@ -66,6 +66,28 @@ public class Entity {
 		return false;
 	}
 
+	public List<Field> getKeyFields() {
+		List<Field> refs = new ArrayList<Field>();
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.isUnique()) {
+					refs.add(fd);
+				}
+			}
+		}
+		return refs;
+	}
+
+	public Field getKeyField() {
+
+		for (Field fd : fields) {
+			if (fd.isPrimaryKey()) {
+				return fd;
+			}
+		}
+		return null;
+	}
+
 	public void setFields(List<Field> pfields) {
 
 		for (Field fd : pfields) {
@@ -274,7 +296,7 @@ public class Entity {
 	}
 
 	public String getVarname() {
-		return varname;
+		return varname==null?JavaIdentifierUtil.toVariableName(name):varname;
 	}
 
 	public void setVarname(String varname) {

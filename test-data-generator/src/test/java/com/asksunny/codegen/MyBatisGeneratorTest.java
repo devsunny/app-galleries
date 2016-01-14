@@ -21,6 +21,12 @@ public class MyBatisGeneratorTest {
 		Schema schema = tokenReader.parseSql();
 		Entity entity = schema.get("Persons2");
 		CodeGenConfig config = new CodeGenConfig();
+		config.setMapperPackageName("com.test");
+		config.setDomainPackageName("com.test");
+		config.setJavaBaseDir("target/src/main/java");
+		config.setMyBatisXmlBaseDir("target/src/main/java");
+		config.setSpringXmlBaseDir("target/src/main/java");
+		
 		MyBatisXmlEntityGenerator codegen = new MyBatisXmlEntityGenerator(config, entity);
 		System.out.println(codegen.genSelectByGroup());
 
