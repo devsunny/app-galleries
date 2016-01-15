@@ -21,6 +21,8 @@ public class Field {
 	String name;
 	String varname;
 	String label;
+	String dbTypeName;
+	
 
 	CodeGenType dataType;
 	String format;
@@ -389,6 +391,14 @@ public class Field {
 		if (drillDownStr != null && drillDownStr.matches("^\\d+$")) {
 			this.drillDown = Integer.valueOf(drillDownStr);
 		}
+	}
+
+	public String getDbTypeName() {
+		return dbTypeName;
+	}
+
+	public void setDbTypeName(String dbTypeName) {
+		this.dbTypeName = dbTypeName;
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.asksunny.codegen.java;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -13,13 +14,21 @@ import com.asksunny.schema.parser.SQLScriptParser;
 
 public class JavaCodeGen {
 
-	CodeGenConfig configureation = new CodeGenConfig();
+	private CodeGenConfig configureation = new CodeGenConfig();
 
 	public JavaCodeGen() {
 	}
 
+	public JavaCodeGen(CodeGenConfig configureation) {
+		super();
+		this.configureation = configureation;
+	}
+
 	public void doCodeGen() throws Exception {
 		String schemaFiles = configureation.getSchemaFiles();
+		if (schemaFiles == null) {
+			throw new IOException("Schema DDL file has not been specified");
+		}
 		Schema schema = null;
 		String[] sfs = schemaFiles.split("\\s*[,;]\\s*");
 		for (int i = 0; i < sfs.length; i++) {
@@ -45,21 +54,33 @@ public class JavaCodeGen {
 
 	public void doCodeGen(Schema schema) throws Exception {
 		schema.buildRelationship();
+		
+		if(configureation.isGenSpringContext()){
+			SpringContextGenerator springContext = new SpringContextGenerator(configureation, schema);
+			springContext.doCodeGen();
+		}
+		
 		List<Entity> entites = schema.getAllEntities();
 		for (Entity entity : entites) {
-			if(configureation.getIncludes().size()>0 && !configureation.shouldInclude(entity.getName())){
+			if (configureation.getIncludes().size() > 0 && !configureation.shouldInclude(entity.getName())) {
 				continue;
-			}			
+			}
 			if (configureation.shouldIgnore(entity.getName())) {
 				continue;
 			}
-			EntityCodeGen codeGen = new EntityCodeGen(configureation, entity);
-			codeGen.genCode();
+			
+			JavaMyBatisMapperGenerator myBatisGen = new JavaMyBatisMapperGenerator(configureation, entity);
+			myBatisGen.doCodeGen();
+			
+			JavaRestControllerGenerator restGen = new JavaRestControllerGenerator(configureation, entity);
+			restGen.doCodeGen();
+			
+			MyBatisXmlEntityGenerator myBatisXmlGen = new MyBatisXmlEntityGenerator(configureation, entity);
+			myBatisXmlGen.doCodeGen();
+			
 		}
-
-		if (configureation.isGenSpringContext()) {
-			SourceCodeUtil.getSpringContext(configureation);
-		}
+		
+		
 
 	}
 
@@ -132,9 +153,7 @@ public class JavaCodeGen {
 		return valid;
 	}
 
-	
-	public static void usage()
-	{
+	public static void usage() {
 		System.err.println("Desc : JavaCodeGen is a tool to generate scaffold of CRUD type Restful service.");
 		System.err.println("       It takes raltional database schema DDL file as input; it can generate ");
 		System.err.println("       domain object java source file, mybatis Mapper java source and xml  ");
@@ -151,18 +170,17 @@ public class JavaCodeGen {
 				"                   -m  <mapper_pkg_name> - myBatis mapper package names, ie 'com.asksunny.mapper'");
 		System.err.println(
 				"                   -r  <rest_pkg_name> - rest controller package names, ie 'com.asksunny.rest.controller'");
-		System.err.println(
-				"                   -i  <ignore_tbnames> - comma separated list of table names to be ignored");
+		System.err
+				.println("                   -i  <ignore_tbnames> - comma separated list of table names to be ignored");
 		System.err.println(
 				"                   -S                    - generated new file with sequence number suffix if already exist.");
 
 		System.err.println("                   -j  <java_source_dir> - default 'src/main/java'");
 
 		System.err.println("                   -x  <mybatis_xml_dir> - default 'src/main/resources'");
-		System.err
-				.println("                   -spring  <spring_xml_dir|true|false> - default 'src/main/resources'");
+		System.err.println("                   -spring  <spring_xml_dir|true|false> - default 'src/main/resources'");
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		CLIArguments cliArgs = new CLIArguments(args);
 		JavaCodeGen jcg = new JavaCodeGen();

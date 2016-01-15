@@ -1,10 +1,12 @@
-package com.chase.cb.codegen;
+package com.asksunny.codegen;
 
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.chase.cb.codegen.collections.CaselessHashSet;
+import com.asksunny.collections.CaselessHashSet;
+
+
 
 public class CodeGenConfig {
 

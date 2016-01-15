@@ -342,7 +342,7 @@ public class SQLScriptParser {
 			// System.out.println(tname);
 			// }
 			ret.setJdbcType(JdbcSqlTypeMap.getInstance().findJdbcType(tname));
-
+			ret.setDbTypeName(tname);
 			if (peekMatch(0, LexerTokenKind.LPAREN)) {
 				consume();
 				Token num1 = consume();				

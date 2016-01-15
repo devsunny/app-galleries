@@ -1,3 +1,18 @@
+package com.asksunny.codegen.java;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.commons.io.IOUtils;
+
+import com.asksunny.codegen.CodeGenConfig;
+import com.asksunny.codegen.CodeGenerator;
+import com.asksunny.codegen.utils.ParamMapBuilder;
+import com.asksunny.codegen.utils.TemplateUtil;
+import com.asksunny.schema.Entity;
+import com.asksunny.schema.Schema;
+
 public class SpringContextGenerator extends CodeGenerator {
 
 		

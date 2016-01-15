@@ -1,5 +1,6 @@
 package com.asksunny.codegen.java;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 
 import com.asksunny.codegen.CodeGenConfig;
+import com.asksunny.codegen.CodeGenerator;
 import com.asksunny.codegen.utils.JavaIdentifierUtil;
 import com.asksunny.codegen.utils.ParamMapBuilder;
 import com.asksunny.codegen.utils.TemplateUtil;

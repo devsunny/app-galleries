@@ -1,0 +1,4 @@
+<bean id="#{ENTITY_VAR_NAME}Mapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+  <property name="mapperInterface" value="#{MAPPER_PACKAGE}.#{ENTITY_NAME}Mapper" />
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+</bean>
