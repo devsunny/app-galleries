@@ -18,162 +18,38 @@ import com.asksunny.schema.FieldDrillDownComparator;
 import com.asksunny.schema.FieldGroupLevelComparator;
 import com.asksunny.schema.parser.JdbcSqlTypeMap;
 
-public class JavaRestControllerGenerator {
+public class JavaRestControllerGenerator extends CodeGenerator {
 
 	static final String INDENDENT_1 = "    ";
 	static final String INDENDENT_2 = "        ";
 	static final String INDENDENT_3 = "            ";
 	static final String INDENDENT_4 = "                ";
-	private CodeGenConfig config;
-	private Entity entity;
 
 	public JavaRestControllerGenerator(CodeGenConfig config, Entity entity) {
-		super();
-		this.config = config;
-		this.entity = entity;
+		super(config, entity);
 	}
 
 	public void doCodeGen() throws IOException {
 		List<Field> keyFields = entity.getKeyFields();
-
 		StringBuilder methods = new StringBuilder();
-
 		if (keyFields.size() == 1) {
-			Field keyField = keyFields.get(0);
-
-			methods.append(String
-					.format("%2$s@RequestMapping(value=\"/%1$s\" method = { RequestMethod.GET })\n",
-							keyField.getVarname(), INDENDENT_2));
-			methods.append(INDENDENT_2).append("@ResponseBody\n");
-			methods.append(
-					String.format(
-							"%2$spublic %1$s get%1$sBy%3$s(@PathVariable(\"%4$s\") %5$s %4$s){",
-							entity.getEntityObjectName(), INDENDENT_2,
-							keyField.getObjectname(), keyField.getVarname(),
-							JdbcSqlTypeMap.toJavaTypeName(keyField))).append(
-					"\n");
-			methods.append(
-					String.format(
-							"%2$sreturn this.%6$sMapper.select%1$sBy%3$s(%4$s);",
-							entity.getEntityObjectName(), INDENDENT_2,
-							keyField.getObjectname(), keyField.getVarname(),
-							JdbcSqlTypeMap.toJavaTypeName(keyField),
-							entity.getEntityVarName())).append("\n");
-			methods.append(INDENDENT_2).append("}\n\n");
-
-			methods.append(String.format(
-					"%2$s@RequestMapping(method = { RequestMethod.PUT })\n",
-					keyField.getVarname(), INDENDENT_2));
-			methods.append(INDENDENT_2).append("@ResponseBody\n");
-			methods.append(
-					String.format(
-							"%2$spublic int update%1$sBy%4$s(@RequestBody %1$s %3$s){",
-							entity.getEntityObjectName(), INDENDENT_2,
-							entity.getEntityVarName(), keyField.getObjectname()))
-					.append("\n");
-			methods.append(
-					String.format(
-							"%2$sreturn this.%6$sMapper.update%1$sBy%3$s(%6$s);",
-							entity.getEntityObjectName(), INDENDENT_2,
-							keyField.getObjectname(), keyField.getVarname(),
-							JdbcSqlTypeMap.toJavaTypeName(keyField),
-							entity.getEntityVarName())).append("\n");
-			methods.append(INDENDENT_2).append("}\n\n");
-
-			methods.append(String.format(
-					"%2$s@RequestMapping(method = { RequestMethod.DELETE })\n",
-					keyField.getVarname(), INDENDENT_2));
-			methods.append(INDENDENT_2).append("@ResponseBody\n");
-			methods.append(
-					String.format(
-							"%2$spublic int delete%1$sBy%4$s(@RequestBody %1$s %3$s){",
-							entity.getEntityObjectName(), INDENDENT_2,
-							entity.getEntityVarName(), keyField.getObjectname()))
-					.append("\n");
-			methods.append(
-					String.format(
-							"%2$sreturn this.%6$sMapper.delete%1$sBy%3$s(%6$s);",
-							entity.getEntityObjectName(), INDENDENT_2,
-							keyField.getObjectname(), keyField.getVarname(),
-							JdbcSqlTypeMap.toJavaTypeName(keyField),
-							entity.getEntityVarName())).append("\n");
-			methods.append(INDENDENT_2).append("}\n\n");
-
+			doSingleKey(keyFields.get(0), methods);
 		} else if (keyFields.size() > 1) {
-			StringBuilder uri = new StringBuilder();
-			List<String> params = new ArrayList<>();
-			for (Field kf : keyFields) {
-				uri.append("/{").append(kf.getVarname()).append("}");
-				params.add(String.format("@PathVariable(\"%1$s\")%2$s %1$s",
-						kf.getVarname(), JdbcSqlTypeMap.toJavaTypeName(kf)));
-			}
-			String paramsString = StringUtils.join(params, ", ");
-			methods.append(String
-					.format("%2$s@RequestMapping(value=\"%1$s\" method = { RequestMethod.GET })\n",
-							uri.toString(), INDENDENT_2));
-			methods.append(INDENDENT_2).append("@ResponseBody\n");
-			methods.append(String.format(
-					"%2$spublic %1$s get%1$sByKey(%3$s){\n",
-					entity.getEntityObjectName(), INDENDENT_2, paramsString));
-
-			methods.append(String.format("%2$s%1$s %3$s = new  %1$s();\n",
-					entity.getEntityObjectName(), INDENDENT_2,
-					entity.getEntityVarName()));
-			for (Field kf : keyFields) {
-				methods.append(String.format("%2$s %3$s.set%1$s(%4$s);\n",
-						kf.getObjectname(), INDENDENT_2,
-						entity.getEntityVarName(), kf.getVarname()));
-			}
-			methods.append(
-					String.format(
-							"%2$sreturn this.%3$sMapper.select%1$sByKey(%3$s);",
-							entity.getEntityObjectName(), INDENDENT_2,
-							entity.getEntityVarName())).append("\n");
-			methods.append(INDENDENT_2).append("}\n\n");
-
-			methods.append(String.format(
-					"%1$s@RequestMapping(method = { RequestMethod.PUT })\n",
-					INDENDENT_2));
-			methods.append(INDENDENT_2).append("@ResponseBody\n");
-			methods.append(String
-					.format("%2$spublic int update%1$sByKey(@RequestBody %1$s %3$s){\n",
-							entity.getEntityObjectName(), INDENDENT_2,
-							entity.getEntityVarName()));
-			methods.append(String.format(
-					"%2$sreturn this.%3$sMapper.update%1$sByKey(%3$s);\n",
-					entity.getEntityObjectName(), INDENDENT_2,
-					entity.getEntityVarName()));
-			methods.append(INDENDENT_2).append("}\n\n");
-
-			methods.append(String.format(
-					"%1$s@RequestMapping(method = { RequestMethod.DELETE })\n",
-					INDENDENT_2));
-			methods.append(INDENDENT_2).append("@ResponseBody\n");
-			methods.append(String
-					.format("%2$spublic int delete%1$sByKey(@RequestBody %1$s %3$s){\n",
-							entity.getEntityObjectName(), INDENDENT_2,
-							entity.getEntityVarName()));
-			methods.append(String.format(
-					"%2$sreturn this.%3$sMapper.delete%1$sByKey(%3$s);\n",
-					entity.getEntityObjectName(), INDENDENT_2,
-					entity.getEntityVarName()));
-			methods.append(INDENDENT_2).append("}\n\n");
+			doMultipleKey(keyFields, methods);
 		}
-
 		doGroupBy(methods);
 		doDrillDown(methods);
-
 		String generated = TemplateUtil.renderTemplate(
 				IOUtils.toString(getClass().getResourceAsStream(
 						"SpringRestJavaController.java.tmpl")),
 				ParamMapBuilder
 						.newBuilder()
 						.addMapEntry("MAPPER_PACKAGE_NAME",
-								config.getMapperPackageName())
+								configuration.getMapperPackageName())
 						.addMapEntry("DOMAIN_PACKAGE_NAME",
-								config.getDomainPackageName())
+								configuration.getDomainPackageName())
 						.addMapEntry("REST_PACKAGE_NAME",
-								config.getRestPackageName())
+								configuration.getRestPackageName())
 						.addMapEntry("MORE_REST_METHODS", methods.toString())
 						.addMapEntry("ENTITY_VAR_NAME",
 								entity.getEntityVarName())
@@ -182,8 +58,132 @@ public class JavaRestControllerGenerator {
 						.addMapEntry("ENTITY_LABEL", entity.getLabel())
 						.buildMap());
 
-		System.out.println(generated);
+		String filePath = configuration.getRestPackageName().replaceAll(
+				"[\\.]", "/");
+		writeCode(new File(configuration.getJavaBaseDir(), filePath),
+				String.format("%sRestController.java", entity.getEntityObjectName()),
+				generated);
 
+	}
+
+	protected void doMultipleKey(List<Field> keyFields, StringBuilder methods) {
+		StringBuilder uri = new StringBuilder();
+		List<String> params = new ArrayList<>();
+		for (Field kf : keyFields) {
+			uri.append("/{").append(kf.getVarname()).append("}");
+			params.add(String.format("@PathVariable(\"%1$s\")%2$s %1$s",
+					kf.getVarname(), JdbcSqlTypeMap.toJavaTypeName(kf)));
+		}
+		String paramsString = StringUtils.join(params, ", ");
+		methods.append(String
+				.format("%2$s@RequestMapping(value=\"%1$s\" method = { RequestMethod.GET })\n",
+						uri.toString(), INDENDENT_2));
+		methods.append(INDENDENT_2).append("@ResponseBody\n");
+		methods.append(String.format("%2$spublic %1$s get%1$sByKey(%3$s){\n",
+				entity.getEntityObjectName(), INDENDENT_2, paramsString));
+
+		methods.append(String.format("%2$s%1$s %3$s = new  %1$s();\n",
+				entity.getEntityObjectName(), INDENDENT_2,
+				entity.getEntityVarName()));
+		for (Field kf : keyFields) {
+			methods.append(String.format("%2$s %3$s.set%1$s(%4$s);\n",
+					kf.getObjectname(), INDENDENT_2, entity.getEntityVarName(),
+					kf.getVarname()));
+		}
+		methods.append(
+				String.format(
+						"%2$sreturn this.%3$sMapper.select%1$sByKey(%3$s);",
+						entity.getEntityObjectName(), INDENDENT_2,
+						entity.getEntityVarName())).append("\n");
+		methods.append(INDENDENT_2).append("}\n\n");
+
+		methods.append(String.format(
+				"%1$s@RequestMapping(method = { RequestMethod.PUT })\n",
+				INDENDENT_2));
+		methods.append(INDENDENT_2).append("@ResponseBody\n");
+		methods.append(String.format(
+				"%2$spublic int update%1$sByKey(@RequestBody %1$s %3$s){\n",
+				entity.getEntityObjectName(), INDENDENT_2,
+				entity.getEntityVarName()));
+		methods.append(String.format(
+				"%2$sreturn this.%3$sMapper.update%1$sByKey(%3$s);\n",
+				entity.getEntityObjectName(), INDENDENT_2,
+				entity.getEntityVarName()));
+		methods.append(INDENDENT_2).append("}\n\n");
+
+		methods.append(String.format(
+				"%1$s@RequestMapping(method = { RequestMethod.DELETE })\n",
+				INDENDENT_2));
+		methods.append(INDENDENT_2).append("@ResponseBody\n");
+		methods.append(String.format(
+				"%2$spublic int delete%1$sByKey(@RequestBody %1$s %3$s){\n",
+				entity.getEntityObjectName(), INDENDENT_2,
+				entity.getEntityVarName()));
+		methods.append(String.format(
+				"%2$sreturn this.%3$sMapper.delete%1$sByKey(%3$s);\n",
+				entity.getEntityObjectName(), INDENDENT_2,
+				entity.getEntityVarName()));
+		methods.append(INDENDENT_2).append("}\n\n");
+	}
+
+	protected void doSingleKey(Field keyField, StringBuilder methods)
+			throws IOException {
+		methods.append(String
+				.format("%2$s@RequestMapping(value=\"/%1$s\" method = { RequestMethod.GET })\n",
+						keyField.getVarname(), INDENDENT_2));
+		methods.append(INDENDENT_2).append("@ResponseBody\n");
+		methods.append(
+				String.format(
+						"%2$spublic %1$s get%1$sBy%3$s(@PathVariable(\"%4$s\") %5$s %4$s){",
+						entity.getEntityObjectName(), INDENDENT_2,
+						keyField.getObjectname(), keyField.getVarname(),
+						JdbcSqlTypeMap.toJavaTypeName(keyField))).append("\n");
+		methods.append(
+				String.format(
+						"%2$sreturn this.%6$sMapper.select%1$sBy%3$s(%4$s);",
+						entity.getEntityObjectName(), INDENDENT_2,
+						keyField.getObjectname(), keyField.getVarname(),
+						JdbcSqlTypeMap.toJavaTypeName(keyField),
+						entity.getEntityVarName())).append("\n");
+		methods.append(INDENDENT_2).append("}\n\n");
+
+		methods.append(String.format(
+				"%2$s@RequestMapping(method = { RequestMethod.PUT })\n",
+				keyField.getVarname(), INDENDENT_2));
+		methods.append(INDENDENT_2).append("@ResponseBody\n");
+		methods.append(
+				String.format(
+						"%2$spublic int update%1$sBy%4$s(@RequestBody %1$s %3$s){",
+						entity.getEntityObjectName(), INDENDENT_2,
+						entity.getEntityVarName(), keyField.getObjectname()))
+				.append("\n");
+		methods.append(
+				String.format(
+						"%2$sreturn this.%6$sMapper.update%1$sBy%3$s(%6$s);",
+						entity.getEntityObjectName(), INDENDENT_2,
+						keyField.getObjectname(), keyField.getVarname(),
+						JdbcSqlTypeMap.toJavaTypeName(keyField),
+						entity.getEntityVarName())).append("\n");
+		methods.append(INDENDENT_2).append("}\n\n");
+
+		methods.append(String.format(
+				"%2$s@RequestMapping(method = { RequestMethod.DELETE })\n",
+				keyField.getVarname(), INDENDENT_2));
+		methods.append(INDENDENT_2).append("@ResponseBody\n");
+		methods.append(
+				String.format(
+						"%2$spublic int delete%1$sBy%4$s(@RequestBody %1$s %3$s){",
+						entity.getEntityObjectName(), INDENDENT_2,
+						entity.getEntityVarName(), keyField.getObjectname()))
+				.append("\n");
+		methods.append(
+				String.format(
+						"%2$sreturn this.%6$sMapper.delete%1$sBy%3$s(%6$s);",
+						entity.getEntityObjectName(), INDENDENT_2,
+						keyField.getObjectname(), keyField.getVarname(),
+						JdbcSqlTypeMap.toJavaTypeName(keyField),
+						entity.getEntityVarName())).append("\n");
+		methods.append(INDENDENT_2).append("}\n\n");
 	}
 
 	protected void doGroupBy(StringBuilder methods) throws IOException {
@@ -236,8 +236,7 @@ public class JavaRestControllerGenerator {
 		Collections.sort(ddFields, new FieldDrillDownComparator());
 
 		StringBuilder restPath = new StringBuilder();
-		restPath.append("/drilldown");
-		System.out.println(ddFields.size());
+		restPath.append("/drilldown");		
 		for (int i = 0; i < ddFields.size(); i++) {
 			Field dd0 = ddFields.get(i);
 			restPath.append(String.format("/{%s}", dd0.getVarname()));
@@ -277,22 +276,6 @@ public class JavaRestControllerGenerator {
 			methods.append(INDENDENT_2).append("}\n\n");
 
 		}
-	}
-
-	public CodeGenConfig getConfig() {
-		return config;
-	}
-
-	public void setConfig(CodeGenConfig config) {
-		this.config = config;
-	}
-
-	public Entity getEntity() {
-		return entity;
-	}
-
-	public void setEntity(Entity entity) {
-		this.entity = entity;
 	}
 
 }
