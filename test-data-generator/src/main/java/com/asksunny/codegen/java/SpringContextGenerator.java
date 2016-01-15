@@ -1,1 +1,75 @@
+public class SpringContextGenerator extends CodeGenerator {
+
+	CodeGenConfig configuration = new CodeGenConfig();
+	Schema schema = null;
+
+	public void doCodeGen() throws IOException {
+		StringBuilder mapperBeans = new StringBuilder();
+		List<Entity> entities = schema.getAllEntities();
+		for (Entity entity : entities) {
+			mapperBeans.append(genSpringMyBatisBeanXml(entity)).append("\n");
+		}
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream(
+						"spring-mybatis-context.xml.tmpl")),
+				ParamMapBuilder
+						.newBuilder()
+						.addMapEntry(
+								"MAPPER_PACKAGE_PATH",
+								configuration.getMapperPackageName()
+										.replaceAll("[\\.]", "/"))
+						.addMapEntry("MYBATIS_MAPPERS", mapperBeans.toString())
+						.addMapEntry("DOMAIN_PACKAGE_NAME",
+								configuration.getDomainPackageName())
+						.addMapEntry("REST_PACKAGE_NAME",
+								configuration.getRestPackageName()).buildMap());
+
+		String myBatisSpringContext = String.format("%s-spring-mybatis-context.xml", configuration.getWebappContext());
+		writeCode(new File(configuration.getSpringXmlBaseDir()),
+				myBatisSpringContext, generated);
+
+		String uicontext = TemplateUtil.renderTemplate(IOUtils
+				.toString(getClass().getResourceAsStream(
+						"spring-webui-context.xml.tmpl")), ParamMapBuilder
+				.newBuilder().buildMap());
+		//System.out.println(uicontext);
+		String uiSpringContext = String.format("%s-spring-ui-context.xml", configuration.getWebappContext());
+		writeCode(new File(configuration.getSpringXmlBaseDir()),
+				uiSpringContext, uicontext);
+		
+		
+		String bootstrap = TemplateUtil.renderTemplate(IOUtils
+				.toString(getClass().getResourceAsStream(
+						"spring-jetty-booststrap.xml.tmpl")), ParamMapBuilder
+				.newBuilder()
+				.addMapEntry("UI_CONTEXT_XML", uiSpringContext)
+				.addMapEntry("MYBATIS_CONTEXT_XML", myBatisSpringContext)
+				.buildMap());
+		
+		
+		String bootstrapSpringContext = String.format("%s-spring-bootstrap-context.xml", configuration.getWebappContext());
+		writeCode(new File(configuration.getSpringXmlBaseDir()),
+				bootstrapSpringContext, bootstrap);
+	}
+
+	public String genSpringMyBatisBeanXml(Entity entity) throws IOException {
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream(
+						"spring-mybatis-mapper.xml.tmpl")),
+				ParamMapBuilder
+						.newBuilder()
+						.addMapEntry("MAPPER_PACKAGE",
+								configuration.getMapperPackageName())
+						.addMapEntry("ENTITY_VAR_NAME",
+								entity.getEntityVarName())
+						.addMapEntry("ENTITY_NAME",
+								entity.getEntityObjectName()).buildMap());
+		return generated;
+	}
+
+	public SpringContextGenerator(CodeGenConfig configuration, Schema schema) {
+		super(configuration, schema);
+	}
+
+}
 
