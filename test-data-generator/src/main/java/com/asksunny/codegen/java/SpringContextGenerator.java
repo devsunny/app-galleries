@@ -1,8 +1,6 @@
 public class SpringContextGenerator extends CodeGenerator {
 
-	CodeGenConfig configuration = new CodeGenConfig();
-	Schema schema = null;
-
+		
 	public void doCodeGen() throws IOException {
 		StringBuilder mapperBeans = new StringBuilder();
 		List<Entity> entities = schema.getAllEntities();
@@ -24,7 +22,9 @@ public class SpringContextGenerator extends CodeGenerator {
 						.addMapEntry("REST_PACKAGE_NAME",
 								configuration.getRestPackageName()).buildMap());
 
-		String myBatisSpringContext = String.format("%s-spring-mybatis-context.xml", configuration.getWebappContext());
+		String myBatisSpringContext = String.format(
+				"%s-spring-mybatis-context.xml",
+				configuration.getWebappContext());
 		writeCode(new File(configuration.getSpringXmlBaseDir()),
 				myBatisSpringContext, generated);
 
@@ -32,24 +32,69 @@ public class SpringContextGenerator extends CodeGenerator {
 				.toString(getClass().getResourceAsStream(
 						"spring-webui-context.xml.tmpl")), ParamMapBuilder
 				.newBuilder().buildMap());
-		//System.out.println(uicontext);
-		String uiSpringContext = String.format("%s-spring-ui-context.xml", configuration.getWebappContext());
+		// System.out.println(uicontext);
+		String uiSpringContext = String.format("%s-spring-ui-context.xml",
+				configuration.getWebappContext());
 		writeCode(new File(configuration.getSpringXmlBaseDir()),
 				uiSpringContext, uicontext);
-		
-		
-		String bootstrap = TemplateUtil.renderTemplate(IOUtils
-				.toString(getClass().getResourceAsStream(
-						"spring-jetty-booststrap.xml.tmpl")), ParamMapBuilder
-				.newBuilder()
-				.addMapEntry("UI_CONTEXT_XML", uiSpringContext)
-				.addMapEntry("MYBATIS_CONTEXT_XML", myBatisSpringContext)
-				.buildMap());
-		
-		
-		String bootstrapSpringContext = String.format("%s-spring-bootstrap-context.xml", configuration.getWebappContext());
+
+		String bootstrap = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream(
+						"spring-jetty-booststrap.xml.tmpl")),
+				ParamMapBuilder
+						.newBuilder()
+						.addMapEntry("WEBAPP_CONTEXT", configuration.getWebappContext())
+						.addMapEntry("UI_CONTEXT_XML", uiSpringContext)
+						.addMapEntry("MYBATIS_CONTEXT_XML",
+								myBatisSpringContext).buildMap());
+
+		String bootstrapSpringContext = String.format(
+				"%s-spring-bootstrap-context.xml",
+				configuration.getWebappContext());
 		writeCode(new File(configuration.getSpringXmlBaseDir()),
 				bootstrapSpringContext, bootstrap);
+
+		if (configuration.getAppBootstrapClassName() != null) {
+			String bootstrapClass = writeSpringBootstrap();
+
+			File dir = new File(configuration.getJavaBaseDir());
+			if (configuration.getAppBootstrapPackage() != null) {
+				String fpath = configuration.getAppBootstrapPackage()
+						.replaceAll("[\\.]", "/");
+				dir = new File(dir, fpath);
+			}
+			writeCode(
+					dir,
+					String.format("%s.java",
+							configuration.getAppBootstrapClassName()),
+					bootstrapClass);
+		}
+
+	}
+
+	public String writeSpringBootstrap() throws IOException {
+
+		String bootstrappackage = configuration.getAppBootstrapPackage() == null ? ""
+				: String.format("package %s;",
+						configuration.getAppBootstrapPackage());
+		String boostrapContext = String.format(
+				"%s-spring-bootstrap-context.xml",
+				configuration.getWebappContext());
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass()
+						.getResourceAsStream("AppBootstrap.java.tmpl")),
+				ParamMapBuilder
+						.newBuilder()
+						.addMapEntry("BOOTSTRAP_PACKAGE", bootstrappackage)
+						.addMapEntry("DOMAIN_PACKAGE",
+								configuration.getDomainPackageName())
+						.addMapEntry("BOOTSTRAP_CLASSNAME",
+								configuration.getAppBootstrapClassName())
+						.addMapEntry("BOOTSTRAP_CONTEXT", boostrapContext)
+						.buildMap());
+
+		return generated;
+
 	}
 
 	public String genSpringMyBatisBeanXml(Entity entity) throws IOException {
@@ -72,4 +117,3 @@ public class SpringContextGenerator extends CodeGenerator {
 	}
 
 }
-
