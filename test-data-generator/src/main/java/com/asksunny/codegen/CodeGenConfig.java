@@ -20,8 +20,8 @@ public class CodeGenConfig {
 	String restPackageName;
 	String schemaFiles = null;
 	String angularAppName;
-	String webappContext;
-	String webBaseSrcDir;
+	String webappContext = "spring";
+	String webBaseSrcDir = "src/main/resources/META-INF/webapp";
 	
 	String appBootstrapPackage;
 	String appBootstrapClassName;
@@ -280,4 +280,5 @@ public class CodeGenConfig {
 	}
 
 }
+
 
