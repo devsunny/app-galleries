@@ -1,3 +1,13 @@
+package com.asksunny.codegen;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import com.asksunny.codegen.CodeGenConfig.CodeOverwriteStrategy;
+import com.asksunny.schema.Entity;
+import com.asksunny.schema.Schema;
+
 public abstract class CodeGenerator {
 
 	protected CodeGenConfig configuration;	

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.asksunny.codegen.CodeGenAnnotation;
+import com.asksunny.codegen.GroupFunction;
 import com.asksunny.codegen.utils.JavaIdentifierUtil;
 
 public class Entity {
@@ -301,6 +302,17 @@ public class Entity {
 
 	public void setVarname(String varname) {
 		this.varname = JavaIdentifierUtil.decapitalize(varname);
+	}
+
+	public Field getGroupFunctionField() {
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getGroupFunction()!=GroupFunction.NONE) {
+					return fd;
+				}
+			}
+		}
+		return null;
 	}
 
 }

@@ -14,6 +14,7 @@ import com.asksunny.codegen.utils.ParamMapBuilder;
 import com.asksunny.codegen.utils.TemplateUtil;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
+import com.asksunny.schema.FieldDrillDownComparator;
 import com.asksunny.schema.FieldGroupLevelComparator;
 import com.asksunny.schema.FieldOrderComparator;
 import com.asksunny.schema.parser.JdbcSqlTypeMap;
