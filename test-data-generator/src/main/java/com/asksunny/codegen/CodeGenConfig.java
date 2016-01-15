@@ -20,6 +20,9 @@ public class CodeGenConfig {
 	String restPackageName;
 	String schemaFiles = null;
 	String angularAppName;
+	String appBootstrapPackage;
+	String appBootstrapClassName;
+	
 
 	String webappContext;
 
@@ -242,6 +245,22 @@ public class CodeGenConfig {
 
 	public void setExcludes(CaselessHashSet excludes) {
 		this.excludes = excludes;
+	}
+
+	public String getAppBootstrapPackage() {
+		return appBootstrapPackage;
+	}
+
+	public void setAppBootstrapPackage(String appBootstrapPackage) {
+		this.appBootstrapPackage = appBootstrapPackage;
+	}
+
+	public String getAppBootstrapClassName() {
+		return appBootstrapClassName;
+	}
+
+	public void setAppBootstrapClassName(String appBootstrapClassName) {
+		this.appBootstrapClassName = appBootstrapClassName;
 	}
 
 }
