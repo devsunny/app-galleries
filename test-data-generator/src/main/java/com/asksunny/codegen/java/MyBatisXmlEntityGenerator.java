@@ -19,7 +19,7 @@ import com.asksunny.schema.FieldGroupLevelComparator;
 import com.asksunny.schema.FieldOrderComparator;
 import com.asksunny.schema.parser.JdbcSqlTypeMap;
 
-public class MyBatisXmlEntityGenerator {
+public class MyBatisXmlEntityGenerator extends CodeGenerator {
 
 	static final String INDENDENT_1 = "    ";
 	static final String INDENDENT_2 = "        ";
@@ -27,8 +27,6 @@ public class MyBatisXmlEntityGenerator {
 	static final String INDENDENT_4 = "                ";
 	static final String NEWLINE = "\n";
 
-	private CodeGenConfig configuration;
-	private Entity entity;
 	private String javaEntityName = null;
 	private String javaEntityVarName = null;
 	private List<Field> primaryKeys = new ArrayList<>();
@@ -54,9 +52,30 @@ public class MyBatisXmlEntityGenerator {
 		if (entity.hasDrillDownFields()) {
 			xmlmapper.append(genDrilldown()).append(NEWLINE);
 		}
-		
-		System.out.println(xmlmapper);
 
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream(
+						"MyBatis.xml.tmpl")),
+				ParamMapBuilder
+						.newBuilder()
+						.addMapEntry("MAPPER_PACKAGE_NAME",
+								configuration.getMapperPackageName())
+						.addMapEntry("DOMAIN_PACKAGE_NAME",
+								configuration.getDomainPackageName())
+						.addMapEntry("REST_PACKAGE_NAME",
+								configuration.getRestPackageName())
+						.addMapEntry("SQLMAP", xmlmapper.toString())
+						.addMapEntry("ENTITY_VAR_NAME",
+								entity.getEntityVarName())
+						.addMapEntry("ENTITY_NAME",
+								entity.getEntityObjectName())
+						.addMapEntry("ENTITY_LABEL", entity.getLabel())
+						.buildMap());
+		String filePath = configuration.getMapperPackageName().replaceAll(
+				"[\\.]", "/");
+		writeCode(new File(configuration.getMyBatisXmlBaseDir(), filePath),
+				String.format("%sMapper.xml", entity.getEntityObjectName()),
+				generated);
 	}
 
 	public String genInsert() throws IOException {
@@ -145,7 +164,7 @@ public class MyBatisXmlEntityGenerator {
 		String whereClause = StringUtils.join(keyCols, "\n        AND ");
 		String generated = TemplateUtil.renderTemplate(
 				IOUtils.toString(getClass().getResourceAsStream(
-						"myBatis.update.xml.tmpl")),
+						"myBatis.delete.xml.tmpl")),
 				ParamMapBuilder.newBuilder().addMapEntry("KEY_TYPE", keyType)
 						.addMapEntry("WHERE_CLAUSE", whereClause)
 						.addMapEntry("TABLE_NAME", entity.getName())
@@ -372,18 +391,8 @@ public class MyBatisXmlEntityGenerator {
 		return generated;
 	}
 
-	public CodeGenConfig getConfiguration() {
-		return configuration;
-	}
-
-	public void setConfiguration(CodeGenConfig configuration) {
-		this.configuration = configuration;
-	}
-
 	public MyBatisXmlEntityGenerator(CodeGenConfig configuration, Entity entity) {
-		super();
-		this.configuration = configuration;
-		this.entity = entity;
+		super(configuration, entity);
 		this.javaEntityName = this.entity.getEntityObjectName();
 		this.javaEntityVarName = this.entity.getEntityVarName();
 		this.allFields = this.entity.getFields();
