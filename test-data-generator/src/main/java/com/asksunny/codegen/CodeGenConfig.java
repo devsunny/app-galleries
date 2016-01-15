@@ -1,10 +1,10 @@
-package com.asksunny.codegen;
+package com.chase.cb.codegen;
 
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.asksunny.collections.CaselessHashSet;
+import com.chase.cb.codegen.collections.CaselessHashSet;
 
 public class CodeGenConfig {
 
@@ -20,26 +20,26 @@ public class CodeGenConfig {
 	String restPackageName;
 	String schemaFiles = null;
 	String angularAppName;
+	String webappContext;
+	String webBaseSrcDir;
+	
 	String appBootstrapPackage;
 	String appBootstrapClassName;
 	
 	String SSLIssuerDN = "CN=Test Certificate";
 	
+	
 
-	String webappContext;
+	boolean genAngularView = true;
+	boolean genAngularRoute = true;
+	boolean genAngularController = true;
 
 	boolean genDomainObject = true;
 	boolean genMyBatisMapper = true;
 	boolean genRestController = true;
-	
 	boolean genSpringContext = false;
-	boolean genMyBatisSpringXml = true;
-	
-	boolean genAngularController = true;
-	boolean genAngularRoute = true;
-	boolean genAngularView = true;
-	
-	
+	boolean genMyBatisSpringBeans = true;
+
 	boolean suffixSequenceIfExists = true;
 
 	CaselessHashSet includes = new CaselessHashSet();
@@ -68,15 +68,15 @@ public class CodeGenConfig {
 			includes.add(igs[i]);
 		}
 	}
-	
-	
 
 	public boolean shouldIgnore(String tableName) {
-		return tableName == null || StringUtils.isBlank(tableName) || this.excludes.contains(tableName);
+		return tableName == null || StringUtils.isBlank(tableName)
+				|| this.excludes.contains(tableName);
 	}
 
 	public boolean shouldInclude(String tableName) {
-		return tableName != null && (!StringUtils.isBlank(tableName)) && this.includes.contains(tableName);
+		return tableName != null && (!StringUtils.isBlank(tableName))
+				&& this.includes.contains(tableName);
 	}
 
 	public String getJavaBaseDir() {
@@ -151,8 +151,6 @@ public class CodeGenConfig {
 		this.genRestController = genRestController;
 	}
 
-	
-
 	public boolean isGenSpringContext() {
 		return genSpringContext;
 	}
@@ -193,14 +191,6 @@ public class CodeGenConfig {
 		return excludes;
 	}
 
-	public String getWebappContext() {
-		return webappContext;
-	}
-
-	public void setWebappContext(String webappContext) {
-		this.webappContext = webappContext;
-	}
-
 	public String getAngularAppName() {
 		return angularAppName;
 	}
@@ -209,28 +199,12 @@ public class CodeGenConfig {
 		this.angularAppName = angularAppName;
 	}
 
-	public boolean isGenMyBatisSpringXml() {
-		return genMyBatisSpringXml;
+	public String getWebappContext() {
+		return webappContext;
 	}
 
-	public void setGenMyBatisSpringXml(boolean genMyBatisSpringXml) {
-		this.genMyBatisSpringXml = genMyBatisSpringXml;
-	}
-
-	public boolean isGenAngularController() {
-		return genAngularController;
-	}
-
-	public void setGenAngularController(boolean genAngularController) {
-		this.genAngularController = genAngularController;
-	}
-
-	public boolean isGenAngularRoute() {
-		return genAngularRoute;
-	}
-
-	public void setGenAngularRoute(boolean genAngularRoute) {
-		this.genAngularRoute = genAngularRoute;
+	public void setWebappContext(String webappContext) {
+		this.webappContext = webappContext;
 	}
 
 	public boolean isGenAngularView() {
@@ -241,12 +215,36 @@ public class CodeGenConfig {
 		this.genAngularView = genAngularView;
 	}
 
-	public void setIncludes(CaselessHashSet includes) {
-		this.includes = includes;
+	public boolean isGenAngularRoute() {
+		return genAngularRoute;
 	}
 
-	public void setExcludes(CaselessHashSet excludes) {
-		this.excludes = excludes;
+	public void setGenAngularRoute(boolean genAngularRoute) {
+		this.genAngularRoute = genAngularRoute;
+	}
+
+	public boolean isGenAngularController() {
+		return genAngularController;
+	}
+
+	public void setGenAngularController(boolean genAngularController) {
+		this.genAngularController = genAngularController;
+	}
+
+	public String getWebBaseSrcDir() {
+		return webBaseSrcDir;
+	}
+
+	public void setWebBaseSrcDir(String webBaseSrcDir) {
+		this.webBaseSrcDir = webBaseSrcDir;
+	}
+
+	public boolean isGenMyBatisSpringBeans() {
+		return genMyBatisSpringBeans;
+	}
+
+	public void setGenMyBatisSpringBeans(boolean genMyBatisSpringBeans) {
+		this.genMyBatisSpringBeans = genMyBatisSpringBeans;
 	}
 
 	public String getAppBootstrapPackage() {
@@ -273,4 +271,13 @@ public class CodeGenConfig {
 		SSLIssuerDN = sSLIssuerDN;
 	}
 
+	public void setIncludes(CaselessHashSet includes) {
+		this.includes = includes;
+	}
+
+	public void setExcludes(CaselessHashSet excludes) {
+		this.excludes = excludes;
+	}
+
 }
+
