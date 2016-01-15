@@ -9,9 +9,9 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 
 import com.asksunny.codegen.CodeGenConfig;
+import com.asksunny.codegen.utils.ParamMapBuilder;
 import com.asksunny.codegen.utils.SearchReplaceUtils;
-
-
+import com.asksunny.codegen.utils.TemplateUtil;
 
 public class SourceCodeUtil {
 
@@ -20,6 +20,23 @@ public class SourceCodeUtil {
 		writeSpringTemplate(config, "spring-jetty-booststrap.xml.tmpl");
 		writeSpringTemplate(config, "spring-webapp-context.xml.tmpl");
 		writeSpringTemplate(config, "spring-webui-context.xml.tmpl");
+	}
+
+	public static void writeSpringBootstrap(CodeGenConfig configuration) throws IOException {
+
+		String bootstrappackage = configuration.getAppBootstrapPackage() == null ? ""
+				: String.format("package %s;", configuration.getAppBootstrapPackage());
+		String boostrapContext = String.format("%s-spring-bootstrap.xml", configuration.getWebappContext());
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(JavaCodeGen.class.getResourceAsStream("AppBootstrap.java.tmpl")),
+				ParamMapBuilder.newBuilder().addMapEntry("BOOTSTRAP_PACKAGE", bootstrappackage)
+						.addMapEntry("DOMAIN_PACKAGE", configuration.getDomainPackageName())
+						.addMapEntry("BOOTSTRAP_CLASSNAME", configuration.getAppBootstrapClassName())
+						.addMapEntry("BOOTSTRAP_CONTEXT", boostrapContext)
+						.buildMap());
+		
+		System.out.println(generated);
+
 	}
 
 	public static void writeSpringTemplate(CodeGenConfig config, String templateName) throws IOException {
@@ -35,6 +52,25 @@ public class SourceCodeUtil {
 		writeCode(config, new File(config.getMyBatisXmlBaseDir()), fileName, sqlMap);
 
 	}
+	
+	
+	public static void  main(String[] args) throws Exception
+	{
+		CodeGenConfig config = new CodeGenConfig();
+		config.setMapperPackageName("com.test.mappers");
+		config.setDomainPackageName("com.test.domain");
+		config.setJavaBaseDir("target/src/main/java");
+		config.setMyBatisXmlBaseDir("target/src/main/java");
+		config.setSpringXmlBaseDir("target/src/main/java");
+		config.setRestPackageName("com.test.rest");
+		config.setAppBootstrapClassName("WLMAppBootstrap");
+		config.setAppBootstrapPackage("com.asksunny.wlm");
+		config.setWebappContext("wm");
+		writeSpringBootstrap(config);
+		
+	}
+	
+	
 
 	public static void writeCode(CodeGenConfig config, File dir, String fileName, String code) throws IOException {
 		File fj = new File(dir, fileName);

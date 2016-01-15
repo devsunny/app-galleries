@@ -42,8 +42,8 @@
 									</manifestEntries>
 								</transformer>
 							</transformers>
-							<artifactSet>							
-								<excludes>									
+							<artifactSet>
+								<excludes>
 									<exclude>org.junit:junit</exclude>
 								</excludes>
 							</artifactSet>
@@ -64,6 +64,21 @@
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.52</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcmail-jdk15</artifactId>
+			<version>1.46</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.47</version>
 		</dependency>
 
 

@@ -23,6 +23,8 @@ public class CodeGenConfig {
 	String appBootstrapPackage;
 	String appBootstrapClassName;
 	
+	String SSLIssuerDN = "CN=Test Certificate";
+	
 
 	String webappContext;
 
@@ -261,6 +263,14 @@ public class CodeGenConfig {
 
 	public void setAppBootstrapClassName(String appBootstrapClassName) {
 		this.appBootstrapClassName = appBootstrapClassName;
+	}
+
+	public String getSSLIssuerDN() {
+		return SSLIssuerDN;
+	}
+
+	public void setSSLIssuerDN(String sSLIssuerDN) {
+		SSLIssuerDN = sSLIssuerDN;
 	}
 
 }
