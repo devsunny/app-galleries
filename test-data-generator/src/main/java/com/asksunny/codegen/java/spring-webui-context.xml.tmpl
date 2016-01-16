@@ -25,11 +25,10 @@
 	<!-- <context:property-placeholder location="classpath:web-app.properties" />  -->
 	
 	<mvc:annotation-driven />
-	<mvc:resources location="classpath:/META-INF/app/"		
-		mapping="/app/**" />		
-		<mvc:resources location="classpath:/META-INF/bower_components/"
-		mapping="/bower_components/**" />
-
+	<mvc:resources location="classpath:/META-INF/app/" mapping="/web/**" />	
+	<mvc:resources location="classpath:/META-INF/app/" mapping="/app/**" />	
+	<mvc:resources location="classpath:/META-INF/app/favicon.ico" mapping="/favicon.ico" />	
+	
 	<!-- Internationalization -->
 	<!--<bean id="messageSource" -->
 	<!--	class="org.springframework.context.support.ResourceBundleMessageSource"> -->

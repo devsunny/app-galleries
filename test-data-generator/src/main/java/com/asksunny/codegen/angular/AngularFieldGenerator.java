@@ -1,6 +1,7 @@
 package com.asksunny.codegen.angular;
 
 import java.io.IOException;
+import java.sql.Types;
 
 import org.apache.commons.io.IOUtils;
 
@@ -52,20 +53,19 @@ public class AngularFieldGenerator {
 					IOUtils.toString(getClass().getResourceAsStream("angularTextarea.html.tmpl")),
 					ParamMapBuilder.newBuilder().addMapEntry("FIELD_VAR_NAME", fieldVarName)
 							.addMapEntry("HTML_TYPE", HTML_INPUT_TYPE).addMapEntry("ENTITY_VAR_NAME", entityVarName)
-							.addMapEntry("FIELD_ATTRIBUTES", attrValue)
-							.addMapEntry("FIELD_LABEL", label).buildMap());			
+							.addMapEntry("FIELD_ATTRIBUTES", attrValue).addMapEntry("FIELD_LABEL", label).buildMap());
 			break;
 		case CHECKBOX:
 			StringBuilder checkboxSelections = new StringBuilder();
-			String[]  chkvals =   getEnumValues();
+			String[] chkvals = getEnumValues();
 			for (int i = 0; i < chkvals.length; i++) {
 				String opt = TemplateUtil.renderTemplate(
 						IOUtils.toString(getClass().getResourceAsStream("angularCheckboxOpt.html.tmpl")),
 						ParamMapBuilder.newBuilder().addMapEntry("OPTION_VALUE", chkvals[i])
-						.addMapEntry("ENTITY_VAR_NAME", entityVarName)
-						.addMapEntry("FIELD_VAR_NAME_SEQ", String.format("%s%02d", fieldVarName, i+1))
-						.addMapEntry("FIELD_VAR_NAME", fieldVarName)
-								.addMapEntry("FIELD_LABEL", label).buildMap());
+								.addMapEntry("ENTITY_VAR_NAME", entityVarName)
+								.addMapEntry("FIELD_VAR_NAME_SEQ", String.format("%s%02d", fieldVarName, i + 1))
+								.addMapEntry("FIELD_VAR_NAME", fieldVarName).addMapEntry("FIELD_LABEL", label)
+								.buildMap());
 				checkboxSelections.append(opt).append("\n");
 			}
 			generated = TemplateUtil.renderTemplate(
@@ -75,15 +75,15 @@ public class AngularFieldGenerator {
 			break;
 		case RADIO:
 			StringBuilder radioSelections = new StringBuilder();
-			String[]  enumvals =   getEnumValues();
+			String[] enumvals = getEnumValues();
 			for (int i = 0; i < enumvals.length; i++) {
 				String opt = TemplateUtil.renderTemplate(
 						IOUtils.toString(getClass().getResourceAsStream("angularRadioOpt.html.tmpl")),
 						ParamMapBuilder.newBuilder().addMapEntry("OPTION_VALUE", enumvals[i])
-						.addMapEntry("ENTITY_VAR_NAME", entityVarName)
-						.addMapEntry("FIELD_VAR_NAME_SEQ", String.format("%s%02d", fieldVarName, i+1))
-						.addMapEntry("FIELD_VAR_NAME", fieldVarName)
-								.addMapEntry("FIELD_LABEL", label).buildMap());
+								.addMapEntry("ENTITY_VAR_NAME", entityVarName)
+								.addMapEntry("FIELD_VAR_NAME_SEQ", String.format("%s%02d", fieldVarName, i + 1))
+								.addMapEntry("FIELD_VAR_NAME", fieldVarName).addMapEntry("FIELD_LABEL", label)
+								.buildMap());
 				radioSelections.append(opt).append("\n");
 			}
 			generated = TemplateUtil.renderTemplate(
@@ -93,33 +93,41 @@ public class AngularFieldGenerator {
 			break;
 		case SELECT:
 			StringBuilder selectSelections = new StringBuilder();
-			String[]  enumSvals =   getEnumValues();
+			String[] enumSvals = getEnumValues();
 			for (int i = 0; i < enumSvals.length; i++) {
 				String opt = TemplateUtil.renderTemplate(
 						IOUtils.toString(getClass().getResourceAsStream("angularSelectOpt.html.tmpl")),
-						ParamMapBuilder.newBuilder().addMapEntry("OPTION_VALUE", enumSvals[i])
-						.buildMap());
+						ParamMapBuilder.newBuilder().addMapEntry("OPTION_VALUE", enumSvals[i]).buildMap());
 				selectSelections.append(opt).append("\n");
 			}
 			generated = TemplateUtil.renderTemplate(
 					IOUtils.toString(getClass().getResourceAsStream("angularSelect.html.tmpl")),
 					ParamMapBuilder.newBuilder().addMapEntry("FIELD_LABEL", label)
-					.addMapEntry("ENTITY_VAR_NAME", entityVarName)
-					.addMapEntry("FIELD_VAR_NAME", fieldVarName)
-					.addMapEntry("SELECTIONS", selectSelections.toString())
-					.buildMap());
+							.addMapEntry("ENTITY_VAR_NAME", entityVarName).addMapEntry("FIELD_VAR_NAME", fieldVarName)
+							.addMapEntry("SELECTIONS", selectSelections.toString()).buildMap());
 			break;
 		default:
 			HTML_INPUT_TYPE = uiType;
 			if (htmlFormInputType == HtmlFormInputType.DATETIME_LOCAL) {
 				HTML_INPUT_TYPE = "datetime_local";
 			}
+			String dtFilter = "";
+			String fmt = field.getFormat();
+			if (this.field.getJdbcType() == Types.DATE || this.field.getJdbcType() == Types.TIME
+					|| this.field.getJdbcType() == Types.TIMESTAMP) {
+				if (fmt == null) {
+					fmt = this.field.getJdbcType() == Types.DATE ? "yyyy-MM-dd"
+							: (this.field.getJdbcType() == Types.TIMESTAMP) ? "yyyy-MM-dd HH:mm:ss" : "HH:mm:ss";
+				}
+				dtFilter = String.format(" | date:'%s'", fmt);
+			}
+
 			generated = TemplateUtil.renderTemplate(
 					IOUtils.toString(getClass().getResourceAsStream("angularField.input.html.tmpl")),
 					ParamMapBuilder.newBuilder().addMapEntry("FIELD_VAR_NAME", fieldVarName)
 							.addMapEntry("HTML_TYPE", HTML_INPUT_TYPE).addMapEntry("ENTITY_VAR_NAME", entityVarName)
-							.addMapEntry("FIELD_ATTRIBUTES", attrValue).addMapEntry("FIELD_INPUT_TYPE", element)
-							.addMapEntry("FIELD_LABEL", label).buildMap());
+							.addMapEntry("DATETIME_FILTER", dtFilter).addMapEntry("FIELD_ATTRIBUTES", attrValue)
+							.addMapEntry("FIELD_INPUT_TYPE", element).addMapEntry("FIELD_LABEL", label).buildMap());
 			break;
 		}
 		return generated;

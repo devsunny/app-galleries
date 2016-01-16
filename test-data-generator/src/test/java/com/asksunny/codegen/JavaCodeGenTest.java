@@ -30,13 +30,11 @@ public class JavaCodeGenTest {
 		config.setJavaBaseDir("target/src/main/java");
 		config.setMyBatisXmlBaseDir("target/src/main/resources");
 		config.setSpringXmlBaseDir("target/src/main/resources");
-		
-		config.setWebappContext("management");		
-		config.setAngularAppName("console");
+		config.setWebBaseSrcDir("target/src/main/resources/META-INF/app");
+		config.setWebappContext("management");	
 		config.setAppBootstrapClassName("ManConsoleBoostrap");		
-		config.setOverwriteStrategy(CodeOverwriteStrategy.OVERWRITE);
-		
-		
+		config.setOverwriteStrategy(CodeOverwriteStrategy.OVERWRITE);		
+		config.setGenPomXml(false);
 		
 		SQLScriptLexer lexer = new SQLScriptLexer(getClass().getResourceAsStream("/TestAngularGen.ddl.sql"));
 		SQLScriptParser tokenReader = new SQLScriptParser(lexer);

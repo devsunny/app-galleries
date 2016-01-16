@@ -251,7 +251,7 @@ public class Field {
 	}
 
 	public String getLabel() {
-		return label;
+		return label==null?getObjectname():label;
 	}
 
 	public void setLabel(String uiname) {

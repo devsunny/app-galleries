@@ -38,7 +38,6 @@ public class CRUDUIGenerator {
 					.append("\n");
 			tbody.append("<td>").append("{{listItem.")
 					.append(field.getVarname());
-
 			if (field.getFormat() != null) {
 				if (field.getJdbcType() == Types.DATE
 						| field.getJdbcType() == Types.TIME

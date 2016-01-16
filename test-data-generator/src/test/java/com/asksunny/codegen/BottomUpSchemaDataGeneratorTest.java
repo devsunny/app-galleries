@@ -21,7 +21,7 @@ public class BottomUpSchemaDataGeneratorTest {
 		Schema schema = tokenReader.parseSql();		
 		BottomUpSchemaDataGenerator sgen = new BottomUpSchemaDataGenerator(schema);
 		SchemaDataConfig config = new SchemaDataConfig();
-		config.setNumberOfRecords(100);
+		config.setNumberOfRecords(10);
 		config.setOutputType(SchemaOutputType.INSERT);
 		config.setOutputUri(null);
 		//config.setDebug(true);

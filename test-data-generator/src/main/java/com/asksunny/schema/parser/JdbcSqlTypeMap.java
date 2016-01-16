@@ -19,6 +19,7 @@ public final class JdbcSqlTypeMap {
 				jdbcTypeMap.put(String.format("%s", field.getName()), field.getInt(null));
 				jdbcTypeInvertMap.put(field.getInt(null), String.format("%s", field.getName()));
 			}
+			jdbcTypeMap.put("DATETIME", Types.TIMESTAMP);			
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to extact type info from JDBC types");
 		}

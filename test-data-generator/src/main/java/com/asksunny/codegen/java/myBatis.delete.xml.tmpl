@@ -1,4 +1,4 @@
-<delete  id="delete#{ENTITY_NAME}ByKey"  parameterType="#{ENTITY_NAME}"  flushCache="true" parameterType="#{KEY_TYPE}">
+<delete  id="delete#{ENTITY_NAME}By#{KEY_NAME}" parameterType="#{KEY_TYPE}">
 	DELETE FROM #{TABLE_NAME} 
 	WHERE
 	#{WHERE_CLAUSE}

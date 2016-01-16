@@ -29,7 +29,10 @@ public class TextGenerator implements Generator<String> {
 		if (field.isNullable() && RandomUtil.getInstance().isOddEnough()) {
 			return null;
 		}
-		String ret = TextUtils.getInstance().getText(0, size);
+		
+		int gsize = field.getMaxValue()!=null?Integer.valueOf(field.getMaxValue()):size;
+		
+		String ret = TextUtils.getInstance().getText(0, gsize);
 		if (ret.length() == 0 || ret.length() % 13 == 0) {
 			return null;
 		} else {

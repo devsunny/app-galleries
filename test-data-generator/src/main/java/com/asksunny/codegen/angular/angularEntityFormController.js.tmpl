@@ -1,0 +1,47 @@
+'use strict';
+/**
+ * @ngdoc function
+ * @name #{ANGULAR_APP_NAME}.controller:#{ENTITY_NAME}FormCtrl
+ * @description
+ * # #{ENTITY_NAME}Ctrl
+ * Controller of the #{ANGULAR_APP_NAME}
+ */
+angular.module('#{ANGULAR_APP_NAME}')
+  .controller('#{ENTITY_NAME}FormCtrl', ['$scope', '$filter', '$interpolate', '$http', '$stateParams', function ($scope, $filter, $interpolate, $http,  $stateParams) {
+   $scope.#{ENTITY_VAR_NAME}={};   
+   
+   
+   var errhandler = function(errresponse){ 
+   	$scope.error=errresponse.data || "failed on request"; 
+   }
+   
+    var fetchhandler = function(jsonEnvlope){ 
+   		$scope.#{ENTITY_VAR_NAME}=jsonEnvlope.data ; 
+   		$scope.$digest();
+   	}
+   	
+   	var updatehandler = function(jsonEnvlope){ 
+   		$scope.#{ENTITY_VAR_NAME}=jsonEnvlope.data ; 
+   	}
+   	   	
+   	$scope.save=function()
+   	{   		
+   		$http.post('#{INSERT_UPDATE_URI}', $scope.#{ENTITY_VAR_NAME}).then(updatehandler, errhandler);  	
+   	};
+   	
+   	$scope.update=function()
+   	{
+   		$http.put('#{INSERT_UPDATE_URI}', $scope.#{ENTITY_VAR_NAME}).then(updatehandler, errhandler);   		
+   	};
+   
+   
+   $scope.get=function(){
+   		 var urlExpr = $interpolate('#{GET_REQUEST_URI}');
+   		 var url  = urlExpr($stateParams);
+   		 console.log(url);
+   		 $http.get(url).then(fetchhandler, errhandler);   		
+   };
+   
+   
+   
+}]);

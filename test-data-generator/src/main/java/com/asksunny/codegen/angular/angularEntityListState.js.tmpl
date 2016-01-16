@@ -1,0 +1,17 @@
+	.state('dashboard.#{VIEW_NAME}List',{
+	        url:'/#{VIEW_NAME}List#{KEY_URI_PARAMS}',	       
+	        controller: '#{ENTITY_NAME}ListCtrl',
+	        templateUrl:'views/#{ENTITY_NAME}List.html',
+	        resolve: {
+	          loadMyFiles:function(\$ocLazyLoad) {
+	            return \$ocLazyLoad.load({
+	              name:'#{ANGULAR_APP_NAME}',
+	              files:[
+	              	'bower_components/angularUtils-pagination/dirPagination.js',
+	              	'scripts/controllers/#{ENTITY_NAME}ListController.js'	              		
+	              ]
+	            });
+	          }
+	        }
+	})
+	

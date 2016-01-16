@@ -8,13 +8,7 @@ public class TemplateUtil {
 	private static final Pattern SYS_PROP_PATTERN = Pattern
 			.compile("#\\{([^\\{\\}]+)\\}");
 	private static final String EMPTY = "";
-	
-	
-	
-	
-	
-	
-	
+		
 	public static String renderTemplate(CharSequence text,
 			Map<String, String> props) {
 		Matcher matcher = SYS_PROP_PATTERN.matcher(text);
@@ -22,7 +16,7 @@ public class TemplateUtil {
 		while (matcher.find()) {
 			String key = matcher.group(1);
 			String value = props.get(key);
-			if (value != null) {				
+			if (value != null) {
 				matcher.appendReplacement(buf, value);
 			}else{
 				matcher.appendReplacement(buf, EMPTY);

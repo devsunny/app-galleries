@@ -6,8 +6,6 @@ import org.apache.commons.lang.StringUtils;
 
 import com.asksunny.collections.CaselessHashSet;
 
-
-
 public class CodeGenConfig {
 
 	public static enum CodeOverwriteStrategy {
@@ -17,37 +15,36 @@ public class CodeGenConfig {
 	String javaBaseDir = "src/main/java";
 	String myBatisXmlBaseDir = "src/main/resources";
 	String springXmlBaseDir = "src/main/resources";
+	String webappContext = "spring";
+	String webBaseSrcDir = "src/main/resources/META-INF/app";
+	String baseSrcDir = ".";
+	String basePackageName = "com.foo";
+	
 	String domainPackageName;
 	String mapperPackageName;
 	String restPackageName;
 	String schemaFiles = null;
-	String angularAppName;
-	String webappContext = "spring";
-	String webBaseSrcDir = "src/main/resources/META-INF/webapp";
-	
+	String angularAppName = "sbAdminApp";
 	String appBootstrapPackage;
 	String appBootstrapClassName;
-	
+
 	String SSLIssuerDN = "CN=Test Certificate";
-	
-	
 
 	boolean genAngularView = true;
 	boolean genAngularRoute = true;
 	boolean genAngularController = true;
-
 	boolean genDomainObject = true;
 	boolean genMyBatisMapper = true;
 	boolean genRestController = true;
-	boolean genSpringContext = false;
+	boolean genSpringContext = true;
 	boolean genMyBatisSpringBeans = true;
-
 	boolean suffixSequenceIfExists = true;
+	boolean genPomXml = true;
 
 	CaselessHashSet includes = new CaselessHashSet();
 	CaselessHashSet excludes = new CaselessHashSet();
 
-	CodeOverwriteStrategy overwriteStrategy = CodeOverwriteStrategy.IGNORE;
+	CodeOverwriteStrategy overwriteStrategy = CodeOverwriteStrategy.RENAME_EXISTING;
 
 	public CodeGenConfig() {
 
@@ -72,17 +69,15 @@ public class CodeGenConfig {
 	}
 
 	public boolean shouldIgnore(String tableName) {
-		return tableName == null || StringUtils.isBlank(tableName)
-				|| this.excludes.contains(tableName);
+		return tableName == null || StringUtils.isBlank(tableName) || this.excludes.contains(tableName);
 	}
 
 	public boolean shouldInclude(String tableName) {
-		return tableName != null && (!StringUtils.isBlank(tableName))
-				&& this.includes.contains(tableName);
+		return tableName != null && (!StringUtils.isBlank(tableName)) && this.includes.contains(tableName);
 	}
 
 	public String getJavaBaseDir() {
-		return javaBaseDir;
+		return javaBaseDir == null ? String.format("%s/src/main/java", getBaseSrcDir()) : javaBaseDir;
 	}
 
 	public void setJavaBaseDir(String javaBaseDir) {
@@ -90,7 +85,7 @@ public class CodeGenConfig {
 	}
 
 	public String getMyBatisXmlBaseDir() {
-		return myBatisXmlBaseDir;
+		return myBatisXmlBaseDir == null ? String.format("%s/src/main/resources", getBaseSrcDir()) : myBatisXmlBaseDir;
 	}
 
 	public void setMyBatisXmlBaseDir(String myBatisXmlBaseDir) {
@@ -98,7 +93,7 @@ public class CodeGenConfig {
 	}
 
 	public String getDomainPackageName() {
-		return domainPackageName;
+		return domainPackageName == null ? String.format("%s.domain", getBasePackageName()) : domainPackageName;
 	}
 
 	public void setDomainPackageName(String domainPackageName) {
@@ -106,7 +101,7 @@ public class CodeGenConfig {
 	}
 
 	public String getMapperPackageName() {
-		return mapperPackageName;
+		return mapperPackageName == null ? String.format("%s.mappers", getBasePackageName()) : mapperPackageName;
 	}
 
 	public void setMapperPackageName(String mapperPackageName) {
@@ -114,7 +109,7 @@ public class CodeGenConfig {
 	}
 
 	public String getRestPackageName() {
-		return restPackageName;
+		return restPackageName == null ? String.format("%s.rest", getBasePackageName()) : restPackageName;
 	}
 
 	public void setRestPackageName(String restPackageName) {
@@ -170,7 +165,7 @@ public class CodeGenConfig {
 	}
 
 	public String getSpringXmlBaseDir() {
-		return springXmlBaseDir;
+		return springXmlBaseDir == null ? String.format("%s/src/main/resources", getBaseSrcDir()) : springXmlBaseDir;
 	}
 
 	public void setSpringXmlBaseDir(String springXmlBaseDir) {
@@ -220,6 +215,11 @@ public class CodeGenConfig {
 	public boolean isGenAngularRoute() {
 		return genAngularRoute;
 	}
+	
+	public boolean isGenAngular()
+	{
+		return this.isGenAngularController() || this.isGenAngularRoute()||isGenAngularView();
+	}
 
 	public void setGenAngularRoute(boolean genAngularRoute) {
 		this.genAngularRoute = genAngularRoute;
@@ -234,7 +234,8 @@ public class CodeGenConfig {
 	}
 
 	public String getWebBaseSrcDir() {
-		return webBaseSrcDir;
+		return webBaseSrcDir == null ? String.format("%s/src/main/resources/META-INF/webapp", getBaseSrcDir())
+				: webBaseSrcDir;
 	}
 
 	public void setWebBaseSrcDir(String webBaseSrcDir) {
@@ -250,7 +251,8 @@ public class CodeGenConfig {
 	}
 
 	public String getAppBootstrapPackage() {
-		return appBootstrapPackage;
+		return appBootstrapPackage == null
+				? getBasePackageName() : appBootstrapPackage;
 	}
 
 	public void setAppBootstrapPackage(String appBootstrapPackage) {
@@ -281,6 +283,28 @@ public class CodeGenConfig {
 		this.excludes = excludes;
 	}
 
+	public String getBaseSrcDir() {
+		return baseSrcDir == null ? "generated-src" : baseSrcDir;
+	}
+
+	public void setBaseSrcDir(String baseSrcDir) {
+		this.baseSrcDir = baseSrcDir;
+	}
+
+	public String getBasePackageName() {
+		return basePackageName == null ? "com.foo" : basePackageName;
+	}
+
+	public void setBasePackageName(String basePackageName) {
+		this.basePackageName = basePackageName;
+	}
+
+	public boolean isGenPomXml() {
+		return genPomXml;
+	}
+
+	public void setGenPomXml(boolean genPomXml) {
+		this.genPomXml = genPomXml;
+	}
+
 }
-
-

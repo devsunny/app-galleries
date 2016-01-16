@@ -1,38 +1,41 @@
 package com.asksunny.codegen.java;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
+
 import com.asksunny.CLIArguments;
 import com.asksunny.codegen.CodeGenConfig;
+import com.asksunny.codegen.CodeGenerator;
+import com.asksunny.codegen.angular.AngularUIGenerator;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Schema;
 import com.asksunny.schema.parser.SQLScriptParser;
 
-public class JavaCodeGen {
-
-	private CodeGenConfig configureation = new CodeGenConfig();
+public class JavaCodeGen extends CodeGenerator {
 
 	public JavaCodeGen() {
+		super(new CodeGenConfig(), (Schema) null);
 	}
 
-	public JavaCodeGen(CodeGenConfig configureation) {
-		super();
-		this.configureation = configureation;
+	public JavaCodeGen(CodeGenConfig configuration) {
+		super(configuration, (Schema) null);
 	}
 
-	public void doCodeGen() throws Exception {
-		String schemaFiles = configureation.getSchemaFiles();
+	public void doCodeGen() throws IOException {
+		String schemaFiles = configuration.getSchemaFiles();
 		if (schemaFiles == null) {
 			throw new IOException("Schema DDL file has not been specified");
 		}
 		Schema schema = null;
 		String[] sfs = schemaFiles.split("\\s*[,;]\\s*");
 		for (int i = 0; i < sfs.length; i++) {
-			InputStream in = getClass().getResourceAsStream(sfs[i]);
+			InputStream in = getClass().getResourceAsStream(String.format("/%s", sfs[i]));
 			if (in == null) {
 				in = new FileInputStream(sfs[i]);
 			}
@@ -50,37 +53,60 @@ public class JavaCodeGen {
 		}
 		doCodeGen(schema);
 
+		StringBuilder sqlBuffer = new StringBuilder();
+		for (int i = 0; i < sfs.length; i++) {
+			InputStream in = getClass().getResourceAsStream(String.format("/%s", sfs[i]));
+			sqlBuffer.append(IOUtils.toString(in));
+			sqlBuffer.append("\n;");
+			in.close();
+		}
+		writeCode(new File(configuration.getSpringXmlBaseDir()), "schema_ddl.sql", sqlBuffer.toString());
+		if (new File(configuration.getSpringXmlBaseDir(), "seed_data.sql").exists() == false) {
+			writeCode(new File(configuration.getSpringXmlBaseDir()), "seed_data.sql", "");
+		}
+
 	}
 
-	public void doCodeGen(Schema schema) throws Exception {
+	public void doCodeGen(Schema schema) throws IOException {
 		schema.buildRelationship();
-		
-		if(configureation.isGenSpringContext()){
-			SpringContextGenerator springContext = new SpringContextGenerator(configureation, schema);
+
+		if (configuration.isGenSpringContext()) {
+			SpringContextGenerator springContext = new SpringContextGenerator(configuration, schema);
 			springContext.doCodeGen();
 		}
-		
+
+		if (configuration.isGenPomXml()) {
+			PomXmlGenerator pomgen = new PomXmlGenerator(configuration, schema);
+			pomgen.doCodeGen();
+		}
+
 		List<Entity> entites = schema.getAllEntities();
 		for (Entity entity : entites) {
-			if (configureation.getIncludes().size() > 0 && !configureation.shouldInclude(entity.getName())) {
+			if (configuration.getIncludes().size() > 0 && !configuration.shouldInclude(entity.getName())) {
 				continue;
 			}
-			if (configureation.shouldIgnore(entity.getName())) {
+			if (configuration.shouldIgnore(entity.getName())) {
 				continue;
 			}
-			
-			JavaMyBatisMapperGenerator myBatisGen = new JavaMyBatisMapperGenerator(configureation, entity);
+
+			JavaMyBatisMapperGenerator myBatisGen = new JavaMyBatisMapperGenerator(configuration, entity);
 			myBatisGen.doCodeGen();
-			
-			JavaRestControllerGenerator restGen = new JavaRestControllerGenerator(configureation, entity);
+
+			JavaRestControllerGenerator restGen = new JavaRestControllerGenerator(configuration, entity);
 			restGen.doCodeGen();
-			
-			MyBatisXmlEntityGenerator myBatisXmlGen = new MyBatisXmlEntityGenerator(configureation, entity);
+
+			MyBatisXmlEntityGenerator myBatisXmlGen = new MyBatisXmlEntityGenerator(configuration, entity);
 			myBatisXmlGen.doCodeGen();
-			
+
+			JavaDomainObjectGenerator domainGen = new JavaDomainObjectGenerator(configuration, entity);
+			domainGen.doCodeGen();
+
 		}
-		
-		
+
+		if (configuration.isGenAngular()) {
+			AngularUIGenerator augularGenerator = new AngularUIGenerator(configuration, schema);
+			augularGenerator.doCodeGen();
+		}
 
 	}
 
@@ -93,27 +119,27 @@ public class JavaCodeGen {
 			valid = good;
 			buf.append("Missing schema files with argment -s\n");
 		} else {
-			configureation.setSchemaFiles(sfs);
+			configuration.setSchemaFiles(sfs);
 		}
 		String d = cliArgs.getOption("d");
-		configureation.setGenDomainObject(d != null);
-		if (configureation.isGenDomainObject()) {
-			configureation.setDomainPackageName(d);
+		configuration.setGenDomainObject(d != null);
+		if (configuration.isGenDomainObject()) {
+			configuration.setDomainPackageName(d);
 		}
 		String m = cliArgs.getOption("m");
-		configureation.setGenMyBatisMapper(m != null);
-		if (configureation.isGenMyBatisMapper()) {
-			configureation.setMapperPackageName(m);
+		configuration.setGenMyBatisMapper(m != null);
+		if (configuration.isGenMyBatisMapper()) {
+			configuration.setMapperPackageName(m);
 		}
 
 		String r = cliArgs.getOption("r");
-		configureation.setGenRestController(r != null);
-		if (configureation.isGenRestController()) {
-			configureation.setRestPackageName(r);
+		configuration.setGenRestController(r != null);
+		if (configuration.isGenRestController()) {
+			configuration.setRestPackageName(r);
 		}
 
-		if (!configureation.isGenDomainObject() && !configureation.isGenMyBatisMapper()
-				&& !configureation.isGenRestController()) {
+		if (!configuration.isGenDomainObject() && !configuration.isGenMyBatisMapper()
+				&& !configuration.isGenRestController()) {
 			valid = false;
 			buf.append("Need at least one code options with argment -d, -m or -r\n");
 		}
@@ -124,29 +150,29 @@ public class JavaCodeGen {
 		} else {
 			String ig = cliArgs.getOption("i");
 			if (ig != null) {
-				configureation.setIgnores(ig);
+				configuration.setIgnores(ig);
 			}
 			if (cliArgs.getOption("S") != null) {
-				configureation.setSuffixSequenceIfExists(cliArgs.getBooleanOption("S"));
+				configuration.setSuffixSequenceIfExists(cliArgs.getBooleanOption("S"));
 			}
 			String spring = cliArgs.getOption("spring");
 			if (spring != null) {
 				if (spring.equalsIgnoreCase("true")) {
-					configureation.setGenSpringContext(true);
+					configuration.setGenSpringContext(true);
 				} else if (spring.equalsIgnoreCase("false")) {
-					configureation.setGenSpringContext(false);
+					configuration.setGenSpringContext(false);
 				} else {
-					configureation.setGenSpringContext(true);
-					configureation.setSpringXmlBaseDir(spring);
+					configuration.setGenSpringContext(true);
+					configuration.setSpringXmlBaseDir(spring);
 				}
 			}
 
 			if (cliArgs.getOption("j") != null) {
-				configureation.setJavaBaseDir(cliArgs.getOption("j"));
+				configuration.setJavaBaseDir(cliArgs.getOption("j"));
 			}
 
 			if (cliArgs.getOption("x") != null) {
-				configureation.setMyBatisXmlBaseDir(cliArgs.getOption("x"));
+				configuration.setMyBatisXmlBaseDir(cliArgs.getOption("x"));
 			}
 		}
 
@@ -187,14 +213,6 @@ public class JavaCodeGen {
 		if (jcg.validateArguments(cliArgs)) {
 			jcg.doCodeGen();
 		}
-	}
-
-	public CodeGenConfig getConfigureation() {
-		return configureation;
-	}
-
-	public void setConfigureation(CodeGenConfig configureation) {
-		this.configureation = configureation;
 	}
 
 }

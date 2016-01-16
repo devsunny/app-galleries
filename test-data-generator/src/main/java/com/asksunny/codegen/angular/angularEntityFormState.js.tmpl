@@ -1,0 +1,14 @@
+	.state('dashboard.#{VIEW_NAME}Form',{
+	        url:'/#{VIEW_NAME}Form#{KEY_URI_PARAMS}',	       
+	        controller: '#{ENTITY_NAME}FormCtrl',
+	        templateUrl:'views/#{ENTITY_NAME}Form.html',
+	        resolve: {
+	          loadMyFiles:function(\$ocLazyLoad) {
+	            return \$ocLazyLoad.load({
+	              name:'#{ANGULAR_APP_NAME}',
+	              files:['scripts/controllers/#{ENTITY_NAME}FormController.js']
+	            });
+	          }
+	        }
+	})
+	

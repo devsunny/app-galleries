@@ -1,0 +1,31 @@
+'use strict';
+/**
+ * @ngdoc function
+ * @name #{ANGULAR_APP_NAME}.controller:#{ENTITY_NAME}ListCtrl
+ * @description
+ * # #{ENTITY_NAME}ListCtrl
+ * Controller of the #{ANGULAR_APP_NAME}
+ */
+angular.module('#{ANGULAR_APP_NAME}', ['angularUtils.directives.dirPagination'])
+  .controller('#{ENTITY_NAME}ListCtrl', ['$scope', '$filter', '$http', '$stateParams', '$timeout', function ($scope, $filter, $http,  $stateParams, $timeout) {
+   $scope.#{ENTITY_VAR_NAME}=[];   
+   
+   var errhandler = function(errresponse){ 
+   	$scope.errorMessage=errresponse.data || "failed on request"; 
+   }
+   
+    var fetchhandler = function(jsonEnvlope){ 
+   		$scope.#{ENTITY_VAR_NAME}=jsonEnvlope.data ; 
+   		$scope.$digest();
+   	}
+   	
+   	var updatehandler = function(jsonEnvlope){ 
+   		$scope.#{ENTITY_VAR_NAME}=jsonEnvlope.data ; 
+   	} 	   	   
+   
+   $scope.query=function(){
+   		$http.get('#{GET_REQUEST_URI}').then(fetchhandler, errhandler);   		
+   };
+   
+}]);
+

@@ -18,7 +18,7 @@ public class Entity {
 	private final List<Field> fields = new ArrayList<>();
 	private final Map<String, Field> fieldMaps = new HashMap<>();
 
-	private int itemsPerPage;
+	private int itemsPerPage = 10;
 	private boolean ignoreView;
 	private boolean ignoreRest;
 	private String orderBy;
@@ -57,6 +57,28 @@ public class Entity {
 		return null;
 	}
 
+	public boolean hasUniqueField() {
+
+		for (Field fd : fields) {
+			if (fd.isUnique() && !fd.isPrimaryKey()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public List<Field> getUniqueFields() {
+		List<Field> refs = new ArrayList<Field>();
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.isUnique() && !fd.isPrimaryKey()) {
+					refs.add(fd);
+				}
+			}
+		}
+		return refs;
+	}
+
 	public boolean hasKeyField() {
 
 		for (Field fd : fields) {
@@ -68,12 +90,13 @@ public class Entity {
 	}
 
 	public List<Field> getKeyFields() {
-		List<Field> refs = new ArrayList<Field>();
+		List<Field> refs = new ArrayList<Field>();		
 		if (this.fields != null) {
 			for (Field fd : this.fields) {
-				if (fd.isUnique()) {
+				if (fd.isPrimaryKey()) {
 					refs.add(fd);
 				}
+				
 			}
 		}
 		return refs;
@@ -140,6 +163,17 @@ public class Entity {
 			}
 		}
 		return refs;
+	}
+
+	public Field getDrillDownRoot() {
+		if (this.fields != null) {
+			for (Field fd : this.fields) {
+				if (fd.getDrillDown() == 1) {
+					return fd;
+				}
+			}
+		}
+		return null;
 	}
 
 	public boolean hasDrillDownFields() {
@@ -297,7 +331,7 @@ public class Entity {
 	}
 
 	public String getVarname() {
-		return varname==null?JavaIdentifierUtil.toVariableName(name):varname;
+		return varname == null ? JavaIdentifierUtil.toVariableName(name) : varname;
 	}
 
 	public void setVarname(String varname) {
@@ -307,7 +341,7 @@ public class Entity {
 	public Field getGroupFunctionField() {
 		if (this.fields != null) {
 			for (Field fd : this.fields) {
-				if (fd.getGroupFunction()!=GroupFunction.NONE) {
+				if (fd.getGroupFunction() != GroupFunction.NONE) {
 					return fd;
 				}
 			}
