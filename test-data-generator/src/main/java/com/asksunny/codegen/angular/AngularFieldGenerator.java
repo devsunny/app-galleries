@@ -10,6 +10,7 @@ import com.asksunny.codegen.utils.ParamMapBuilder;
 import com.asksunny.codegen.utils.TemplateUtil;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Field;
+import com.asksunny.schema.parser.JdbcSqlTypeMap;
 
 public class AngularFieldGenerator {
 
@@ -44,6 +45,21 @@ public class AngularFieldGenerator {
 		} catch (Exception ex) {
 			;
 		}
+		if(uiType==null || htmlFormInputType==HtmlFormInputType.TEXT){
+			if(field.getJdbcType()==Types.DATE){
+				htmlFormInputType = HtmlFormInputType.DATE;
+				uiType = "date";
+			}else if (field.getJdbcType()==Types.TIMESTAMP){
+				htmlFormInputType = HtmlFormInputType.DATETIME_LOCAL;
+				uiType = "datetime-local";
+			}else if (field.getJdbcType()==Types.TIME){
+				htmlFormInputType = HtmlFormInputType.TIME;
+				uiType = "time";
+			}
+			
+		}
+		
+		//System.out.println(String.format("%s %s > %s", field.getName(), uiType, JdbcSqlTypeMap.getJdbcTyepName(field.getJdbcType())));
 
 		String generated = "";
 		String HTML_INPUT_TYPE = "";
