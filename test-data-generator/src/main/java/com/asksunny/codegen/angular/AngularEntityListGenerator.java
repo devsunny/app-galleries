@@ -144,12 +144,21 @@ public class AngularEntityListGenerator extends CodeGenerator {
 		if (drilldownFields == null || drilldownFields.size() == 0) {
 			return;
 		}
-		String generated = TemplateUtil
-				.renderTemplate(IOUtils.toString(getClass().getResourceAsStream("angularEntityDrilldownController.js.tmpl")),
-						ParamMapBuilder.newBuilder().addMapEntry("ANGULAR_APP_NAME", configuration.getAngularAppName())
-								.addMapEntry("GET_REQUEST_URI",
-										String.format("/%s/%sDrilldown", configuration.getWebappContext(),
-												entity.getEntityVarName()))
+		StringBuilder ddParams = new StringBuilder();
+		for (Field field : drilldownFields) {
+			ddParams.append(TemplateUtil.renderTemplate(
+					IOUtils.toString(getClass().getResourceAsStream("angularDrilldownStateParam.js.tmpl")),
+					ParamMapBuilder.newBuilder().addMapEntry("FIELD_VAR_NAME", field.getVarname())
+							.buildMap()));
+		}
+
+		String generated = TemplateUtil.renderTemplate(
+				IOUtils.toString(getClass().getResourceAsStream("angularEntityDrilldownController.js.tmpl")),
+				ParamMapBuilder.newBuilder().addMapEntry("ANGULAR_APP_NAME", configuration.getAngularAppName())
+						.addMapEntry("GET_REQUEST_URI",
+								String.format("/%s/%s/drilldown", configuration.getWebappContext(),
+										entity.getEntityVarName()))
+						.addMapEntry("STATE_PARAMETERS", ddParams.toString())
 						.addMapEntry("WEBCONTEXT", configuration.getWebappContext())
 						.addMapEntry("ENTITY_NAME", entity.getEntityObjectName())
 						.addMapEntry("ENTITY_VAR_NAME", entity.getEntityVarName())
@@ -190,12 +199,29 @@ public class AngularEntityListGenerator extends CodeGenerator {
 		String ListCtrl = controllerName == null ? String.format("%sListCtrl", entity.getEntityObjectName())
 				: controllerName;
 		String label = entity.getLabel() == null ? entity.getName() : entity.getLabel();
+		
+		String dilldownLink = "";
+		if(entity.hasDrillDownFields()){
+			Field ddf = entity.getDrillDownRoot();
+			dilldownLink = TemplateUtil
+					.renderTemplate(
+							IOUtils.toString(
+									getClass()
+											.getResourceAsStream("angularDrilldownLink.html.tmpl")),
+							ParamMapBuilder.newBuilder().addMapEntry("FIELD_OBJECT_NAME", ddf.getObjectname())
+									.addMapEntry("FIELD_LABEL", ddf.getLabel())									
+									.addMapEntry("ENTITY_VAR_NAME", entityVarName)
+									.addMapEntry("ENTITY_NAME", entity.getEntityObjectName())
+									.addMapEntry("ENTITY_LABEL", label).buildMap());
+		}
+		
 		String generated = TemplateUtil
 				.renderTemplate(
 						IOUtils.toString(
 								getClass()
 										.getResourceAsStream("angularEntityList.html.tmpl")),
 						ParamMapBuilder.newBuilder().addMapEntry("TABLE_HEADER", fields.toString())
+								.addMapEntry("DRILLDOWN_LINK", dilldownLink)
 								.addMapEntry("ENTITY_LIST_CONTROLLER", ListCtrl)
 								.addMapEntry("ITEMS_PER_PAGE", Integer.toString(entity.getItemsPerPage()))
 								.addMapEntry("TABLE_BODY", tbody.toString())

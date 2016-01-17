@@ -1,0 +1,38 @@
+'use strict';
+/**
+ * @ngdoc function
+ * @name #{ANGULAR_APP_NAME}.controller:#{ENTITY_NAME}ListCtrl
+ * @description
+ * # #{ENTITY_NAME}DrilldownCtrl
+ * Controller of the #{ANGULAR_APP_NAME}
+ */
+angular.module('#{ANGULAR_APP_NAME}', ['angularUtils.directives.dirPagination'])
+  .controller('#{ENTITY_NAME}DrilldownCtrl', ['$scope', '$location', '$http', '$stateParams', '$timeout', function ($scope, $location, $http,  $stateParams, $timeout) {
+   $scope.#{ENTITY_VAR_NAME}=[];   
+   
+   var errhandler = function(errresponse){ 
+   	$scope.errorMessage=errresponse.data || "failed on request"; 
+   }
+   
+    var fetchhandler = function(jsonEnvlope){ 
+   		$scope.#{ENTITY_VAR_NAME}=jsonEnvlope.data ; 
+   		$scope.#{ENTITY_VAR_NAME}.forEach(function(el, idx, ar){
+   			//additionalParam;
+   			#{STATE_PARAMETERS}
+   		});   		
+   		$scope.$digest();
+   	}
+   	
+   	var updatehandler = function(jsonEnvlope){ 
+   		$scope.#{ENTITY_VAR_NAME}=jsonEnvlope.data ; 
+   	} 	   	   
+   
+   $scope.query=function(){
+   		var urlExpr = $location.url();
+   		var uri = urlExpr.substring(10);
+   		var url = '/#{WEBCONTEXT}' + uri;   		
+   		$http.get(url).then(fetchhandler, errhandler);   		
+   };
+   
+}]);
+
