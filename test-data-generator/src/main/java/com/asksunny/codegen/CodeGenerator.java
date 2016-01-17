@@ -3,9 +3,11 @@ package com.asksunny.codegen;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import com.asksunny.codegen.CodeGenConfig.CodeOverwriteStrategy;
@@ -123,18 +125,28 @@ public abstract class CodeGenerator {
 	public String getKeyParamURI() {
 		return keyParamURI;
 	}
-	
-	public String generateInterpolateURL(List<Field> fields)
-	{
+
+	public String generateInterpolateURL(List<Field> fields) {
 		List<String> parts = new ArrayList<>();
-		for (Field fd : fields) {			
+		for (Field fd : fields) {
 			parts.add(String.format("/{{%s}}", fd.getVarname()));
-		}		
+		}
 		return StringUtils.join(parts, "");
 	}
 
 	public String getKeyStateParameters() {
 		return keyStateParameters;
+	}
+
+	public String getClassTemplate(Class<?> neighbor, String sysid) throws IOException {
+		String tmpl = "";
+		InputStream bin = neighbor.getResourceAsStream(sysid);
+		try {
+			tmpl = IOUtils.toString(bin);
+		} finally {
+			bin.close();
+		}
+		return tmpl;
 	}
 
 }

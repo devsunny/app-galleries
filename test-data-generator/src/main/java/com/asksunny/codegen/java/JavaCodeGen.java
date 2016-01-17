@@ -13,6 +13,8 @@ import com.asksunny.CLIArguments;
 import com.asksunny.codegen.CodeGenConfig;
 import com.asksunny.codegen.CodeGenerator;
 import com.asksunny.codegen.angular.AngularUIGenerator;
+import com.asksunny.codegen.utils.ParamMapBuilder;
+import com.asksunny.codegen.utils.TemplateUtil;
 import com.asksunny.schema.Entity;
 import com.asksunny.schema.Schema;
 import com.asksunny.schema.parser.SQLScriptParser;
@@ -63,6 +65,12 @@ public class JavaCodeGen extends CodeGenerator {
 		writeCode(new File(configuration.getSpringXmlBaseDir()), "schema_ddl.sql", sqlBuffer.toString());
 		if (new File(configuration.getSpringXmlBaseDir(), "seed_data.sql").exists() == false) {
 			writeCode(new File(configuration.getSpringXmlBaseDir()), "seed_data.sql", "");
+		}
+
+		if (new File(configuration.getSpringXmlBaseDir(), "log4j.xml").exists() == false) {
+			String log4j = TemplateUtil.renderTemplate(getClassTemplate(getClass(), "log4j.xml.tmpl"),
+					ParamMapBuilder.newBuilder().buildMap());
+			writeCode(new File(configuration.getSpringXmlBaseDir()), "log4j.xml", log4j);
 		}
 
 	}
