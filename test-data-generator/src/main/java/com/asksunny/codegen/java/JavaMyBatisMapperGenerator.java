@@ -87,8 +87,8 @@ public class JavaMyBatisMapperGenerator extends CodeGenerator {
 		Collections.sort(ddFields, new FieldDrillDownComparator());
 		if (ddFields.size() > 0) {
 			Field dd0 = ddFields.get(0);
-			methods.append(String.format("%2$sjava.util.List<%1$s> select%1$sDrillDownBy%3$s(%5$s %4$s);",
-					entity.getEntityObjectName(), INDENDENT_2, dd0.getObjectname(), dd0.getVarname(),
+			methods.append(String.format("%1$sjava.util.List<%2$s> select%2$sDrilldownBy%4$s(%2$s %3$s);",
+					INDENDENT_2, entity.getEntityObjectName(), entity.getEntityVarName(), dd0.getObjectname(), dd0.getVarname(),
 					JdbcSqlTypeMap.toJavaTypeName(dd0))).append("\n");
 
 		}
@@ -101,7 +101,7 @@ public class JavaMyBatisMapperGenerator extends CodeGenerator {
 
 			for (int i = 1; i < ddFields.size(); i++) {
 				Field dd0 = ddFields.get(i);
-				methods.append(String.format("%2$sjava.util.List<%1$s> select%1$sDrillDownBy%3$s(%1$s %4$s);",
+				methods.append(String.format("%2$sjava.util.List<%1$s> select%1$sDrilldownBy%3$s(%1$s %4$s);",
 						entity.getEntityObjectName(), INDENDENT_2, dd0.getObjectname(), entity.getEntityVarName(),
 						JdbcSqlTypeMap.toJavaTypeName(dd0), entity.getVarname())).append("\n");
 
@@ -118,7 +118,7 @@ public class JavaMyBatisMapperGenerator extends CodeGenerator {
 				uiPath.append(String.format("/:%s", dd0.getVarname()));
 			}
 
-			methods.append(String.format("%1$sjava.util.List<%2$s> select%2$sDrillDownDetail(%2$s %3$s);\n",
+			methods.append(String.format("%1$sjava.util.List<%2$s> select%2$sDrilldownDetail(%2$s %3$s);\n",
 					INDENDENT_2, entity.getEntityObjectName(), entity.getEntityVarName()));
 
 		}

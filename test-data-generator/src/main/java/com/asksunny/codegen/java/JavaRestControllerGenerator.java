@@ -57,13 +57,13 @@ public class JavaRestControllerGenerator extends CodeGenerator {
 	}
 
 	protected void doMultipleKey(List<Field> keyFields, StringBuilder methods) {
-		if(!entity.hasKeyField()){
+		if (!entity.hasKeyField()) {
 			return;
 		}
 		StringBuilder uri = new StringBuilder();
 		List<String> params = new ArrayList<>();
 		StringBuilder keyName = new StringBuilder();
-		
+
 		for (Field kf : keyFields) {
 			uri.append("/{").append(kf.getVarname()).append("}");
 			params.add(String.format("@PathVariable(\"%1$s\")%2$s %1$s", kf.getVarname(),
@@ -74,8 +74,8 @@ public class JavaRestControllerGenerator extends CodeGenerator {
 		methods.append(String.format("%2$s@RequestMapping(value=\"%1$s\", method = { RequestMethod.GET })\n",
 				uri.toString(), INDENDENT_2));
 		methods.append(INDENDENT_2).append("@ResponseBody\n");
-		methods.append(String.format("%2$spublic %1$s get%1$sBy%4$s(%3$s){\n", entity.getEntityObjectName(), INDENDENT_2,
-				paramsString,  keyName.toString()));
+		methods.append(String.format("%2$spublic %1$s get%1$sBy%4$s(%3$s){\n", entity.getEntityObjectName(),
+				INDENDENT_2, paramsString, keyName.toString()));
 
 		methods.append(String.format("%2$s%1$s %3$s = new  %1$s();\n", entity.getEntityObjectName(), INDENDENT_2,
 				entity.getEntityVarName()));
@@ -105,10 +105,10 @@ public class JavaRestControllerGenerator extends CodeGenerator {
 	}
 
 	protected void doSingleKey(Field keyField, StringBuilder methods) throws IOException {
-		if(!entity.hasKeyField()){
+		if (!entity.hasKeyField()) {
 			return;
 		}
-		
+
 		methods.append(String.format("%2$s@RequestMapping(value=\"/{%1$s}\", method = { RequestMethod.GET })\n",
 				keyField.getVarname(), INDENDENT_2));
 		methods.append(INDENDENT_2).append("@ResponseBody\n");
@@ -190,13 +190,16 @@ public class JavaRestControllerGenerator extends CodeGenerator {
 
 		StringBuilder restPath = new StringBuilder();
 		restPath.append("/drilldown");
-		for (int i = 0; i < ddFields.size(); i++) {
-			Field dd0 = ddFields.get(i);
-			restPath.append(String.format("/{%s}", dd0.getVarname()));
+		for (int i = 0; i <=ddFields.size(); i++) {
+			//Field dd0 = ddFields.get(i);
+			String drilldownName = (i==ddFields.size())?"Detail":String.format("By%s", ddFields.get(i).getObjectname());
+			if (i > 0) {
+				restPath.append(String.format("/{%s}", ddFields.get(i-1).getVarname()));
+			}
 			String drillDownRestPath = restPath.toString();
 			List<String> params = new ArrayList<>();
-			for (int k = 0; k <= i; k++) {
-				Field ddk = ddFields.get(k);
+			for (int k = 1; k <=i; k++) {
+				Field ddk = ddFields.get(k-1);
 				params.add(String.format("@PathVariable(\"%2$s\")%1$s %2$s", JdbcSqlTypeMap.toJavaTypeName(ddk),
 						ddk.getVarname()));
 			}
@@ -205,20 +208,20 @@ public class JavaRestControllerGenerator extends CodeGenerator {
 					INDENDENT_2, drillDownRestPath));
 			methods.append(INDENDENT_2).append("@ResponseBody\n");
 			methods.append(
-					String.format("%1$s public java.util.List<%2$s> select%2$sDrillDownBy%4$s(%5$s){\n", INDENDENT_2,
-							entity.getEntityObjectName(), entity.getEntityVarName(), dd0.getObjectname(), paramstr));
+					String.format("%1$s public java.util.List<%2$s> select%2$sDrilldown%4$s(%5$s){\n", INDENDENT_2,
+							entity.getEntityObjectName(), entity.getEntityVarName(), drilldownName, paramstr));
 
 			methods.append(String.format("%1$s %2$s %3$s = new %2$s();\n", INDENDENT_2, entity.getEntityObjectName(),
-					entity.getEntityVarName(), dd0.getObjectname()));
-			for (int k = 0; k <= i; k++) {
-				Field ddk = ddFields.get(k);
+					entity.getEntityVarName()));
+			for (int k = 1; k <=i; k++) {
+				Field ddk = ddFields.get(k-1);
 				methods.append(String.format("%1$s %3$s.set%4$s(%5$s);\n", INDENDENT_2, entity.getEntityObjectName(),
 						entity.getEntityVarName(), ddk.getObjectname(), ddk.getVarname()));
 			}
-			methods.append(String.format("%1$s return this.%3$sMapper.select%2$sDrillDownBy%4$s(%3$s);\n", INDENDENT_2,
-					entity.getEntityObjectName(), entity.getEntityVarName(), dd0.getObjectname()));
-
-			methods.append(INDENDENT_2).append("}\n\n");
+			methods.append(String.format("%1$s return this.%3$sMapper.select%2$sDrilldown%4$s(%3$s);\n", INDENDENT_2,
+					entity.getEntityObjectName(), entity.getEntityVarName(), drilldownName));
+			methods.append(INDENDENT_2).append("}\n\n");			
+			
 
 		}
 	}

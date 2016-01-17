@@ -1,0 +1,9 @@
+<select id="select#{ENTITY_NAME}DrilldownDetail" resultMap="#{ENTITY_VAR_NAME}ResultMap" parameterType="#{ENTITY_NAME}">
+  SELECT 
+  #{DETAIL_SELECT_LIST}
+  FROM 
+  #{TABLE_NAME}
+ WHERE
+ #{WHERE_CLAUSE}
+  ORDER BY #{ORDER_BY_FIELD}
+</select>

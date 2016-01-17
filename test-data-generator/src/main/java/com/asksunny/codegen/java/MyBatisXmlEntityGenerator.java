@@ -44,7 +44,7 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 		xmlmapper.append(genSelectBasic()).append(NEWLINE);
 
 		if (entity.hasKeyField() || entity.hasUniqueField()) {
-			xmlmapper.append(genSelectByKey()).append(NEWLINE);			
+			xmlmapper.append(genSelectByKey()).append(NEWLINE);
 			xmlmapper.append(genUpdate()).append(NEWLINE);
 			xmlmapper.append(genDelete()).append(NEWLINE);
 		}
@@ -77,16 +77,15 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 			Field fd = this.allFields.get(i);
 			if (!fd.isAutogen()) {
 				collist.add(fd.getName());
-				if((fd.getJdbcType()==Types.BIT || fd.getJdbcType()==Types.BOOLEAN)){					
+				if ((fd.getJdbcType() == Types.BIT || fd.getJdbcType() == Types.BOOLEAN)) {
 					vallist.add(String.format("#{%s,javaType=boolean,jdbcType=%s}", fd.getVarname(),
 							JdbcSqlTypeMap.getJdbcTyepName(fd.getJdbcType())));
-				}else{
+				} else {
 					vallist.add(String.format("#{%s,jdbcType=%s}", fd.getVarname(),
 							JdbcSqlTypeMap.getJdbcTyepName(fd.getJdbcType())));
-					
+
 				}
-				
-				
+
 			}
 		}
 		String cols = StringUtils.join(collist, ",");
@@ -103,7 +102,7 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 	public String genUpdate() throws IOException {
 		boolean hasKey = entity.hasKeyField();
 		boolean hasUnique = entity.hasUniqueField();
-		if(!(hasKey || hasUnique)){
+		if (!(hasKey || hasUnique)) {
 			return null;
 		}
 		List<String> keyCols = new ArrayList<>();
@@ -140,11 +139,10 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 		String generated = TemplateUtil.renderTemplate(
 				IOUtils.toString(getClass().getResourceAsStream("myBatis.update.xml.tmpl")),
 				ParamMapBuilder.newBuilder().addMapEntry("KEY_TYPE", keyType)
-				.addMapEntry("KEY_NAME", keyName.toString())		
-				.addMapEntry("UPDATE_FIELD_LIST", updateLists).addMapEntry("WHERE_CLAUSE", whereClause)
-						.addMapEntry("TABLE_NAME", entity.getName()).addMapEntry("ENTITY_VAR_NAME", javaEntityVarName)
-						.addMapEntry("ENTITY_NAME", javaEntityName).addMapEntry("ENTITY_LABEL", entity.getLabel())
-						.buildMap());
+						.addMapEntry("KEY_NAME", keyName.toString()).addMapEntry("UPDATE_FIELD_LIST", updateLists)
+						.addMapEntry("WHERE_CLAUSE", whereClause).addMapEntry("TABLE_NAME", entity.getName())
+						.addMapEntry("ENTITY_VAR_NAME", javaEntityVarName).addMapEntry("ENTITY_NAME", javaEntityName)
+						.addMapEntry("ENTITY_LABEL", entity.getLabel()).buildMap());
 		return generated;
 	}
 
@@ -294,6 +292,7 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 		}
 		int gpSize = groupList.size();
 		String generated = null;
+		StringBuilder allsql = new StringBuilder();
 		if (gpSize > 0) {
 			StringBuilder cols = new StringBuilder();
 			List<String> gbs = new ArrayList<>();
@@ -303,10 +302,9 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 			gbs.add(fd.getName());
 			cols.append(StringUtils.join(acollist, ','));
 			generated = toGroupBySql("myBatis.select.drilldowntop.xml.tmpl", cols.toString(), fd, null, null);
+			allsql.append(generated);
 		}
 		if (gpSize > 1) {
-			StringBuilder allsql = new StringBuilder();
-			allsql.append(generated);
 			List<String> innercollist = new ArrayList<>(plainlist);
 			innercollist.add(0, groupList.get(0).getName());
 			for (int i = 1; i < gpSize; i++) {
@@ -323,19 +321,46 @@ public class MyBatisXmlEntityGenerator extends CodeGenerator {
 						groupList.get(i), StringUtils.join(innercollist, ','), StringUtils.join(whereClauses, " AND "));
 				allsql.append("\n").append(generated);
 			}
-			generated = allsql.toString();
 		}
-		return generated;
+		List<String> selectList = new ArrayList<>();
+		List<String> whereClauses = new ArrayList<>();
+		List<String> orderby = new ArrayList<>();
+		for (Field fd : sortFields) {
+			selectList.add(fd.getName());
+		}
+		for (Field fd : groupList) {
+			whereClauses.add(String.format(String.format("%s=#{%s,jdbcType=%s}", fd.getName(), fd.getVarname(),
+					JdbcSqlTypeMap.getJdbcTyepName(fd.getJdbcType()))));
+			orderby.add(fd.getName());
+		}
+
+		generated = TemplateUtil
+				.renderTemplate(
+						IOUtils.toString(
+								getClass()
+										.getResourceAsStream(
+												"myBatis.select.drilldowndetail.xml.tmpl")),
+						ParamMapBuilder.newBuilder()
+								.addMapEntry("DETAIL_SELECT_LIST", StringUtils.join(selectList, ","))
+								.addMapEntry("ORDER_BY_FIELD", StringUtils.join(orderby, ","))
+								.addMapEntry("WHERE_CLAUSE", StringUtils.join(whereClauses, " AND "))
+								.addMapEntry("TABLE_NAME", entity.getName())
+								.addMapEntry("ENTITY_VAR_NAME", javaEntityVarName)
+								.addMapEntry("ENTITY_NAME", javaEntityName)
+								.addMapEntry("ENTITY_LABEL", entity.getLabel()).buildMap());
+		allsql.append(generated);
+		// System.out.println(generated);
+		return allsql.toString();
 	}
 
 	protected String toGroupBySql(String tmpl, String selectionList, Field gbField, String innerSQl, String whereClause)
 			throws IOException {
 		return TemplateUtil.renderTemplate(IOUtils.toString(getClass().getResourceAsStream(tmpl)),
-				ParamMapBuilder.newBuilder().addMapEntry("FIELD_SELECT_LIST", selectionList)
+				ParamMapBuilder.newBuilder().addMapEntry("DRILLDOWN_SELECT_LIST", selectionList)
 						.addMapEntry("ORDER_BY_FIELD", gbField.getName())
 						.addMapEntry("GROUP_BY_KEY", gbField.getObjectname())
 						.addMapEntry("GROUP_BY_FIELD", gbField.getName()).addMapEntry("WHERE_KEY_FIELD", whereClause)
-						.addMapEntry("INNER_FIELD_SELECT_LIST", innerSQl).addMapEntry("TABLE_NAME", entity.getName())
+						.addMapEntry("INNER_SELECT_LIST", innerSQl).addMapEntry("TABLE_NAME", entity.getName())
 						.addMapEntry("ENTITY_VAR_NAME", javaEntityVarName).addMapEntry("ENTITY_NAME", javaEntityName)
 						.addMapEntry("ENTITY_LABEL", entity.getLabel()).buildMap());
 	}

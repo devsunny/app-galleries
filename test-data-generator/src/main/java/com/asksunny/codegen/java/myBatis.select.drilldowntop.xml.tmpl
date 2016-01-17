@@ -1,6 +1,6 @@
 <select id="select#{ENTITY_NAME}DrilldownBy#{GROUP_BY_KEY}" resultMap="#{ENTITY_VAR_NAME}ResultMap">
   SELECT 
-  #{FIELD_SELECT_LIST}
+  #{DRILLDOWN_SELECT_LIST}
   FROM 
   #{TABLE_NAME}
   GROUP BY #{GROUP_BY_FIELD}

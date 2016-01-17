@@ -1,0 +1,17 @@
+	.state('dashboard.#{VIEW_NAME}#{DRILLDOWN_NAME}',{
+	        url:'/#{VIEW_NAME}Drilldown#{DRILLDOWN_URL}',	       
+	        controller: '#{ENTITY_NAME}DrilldownCtrl',
+	        templateUrl:'views/#{ENTITY_NAME}#{DRILLDOWN_NAME}.html',
+	        resolve: {
+	          loadMyFiles:function(\$ocLazyLoad) {
+	            return \$ocLazyLoad.load({
+	              name:'#{ANGULAR_APP_NAME}',
+	              files:[
+	              	'bower_components/angular-utils-pagination/dirPagination.js',
+	              	'scripts/controllers/#{ENTITY_NAME}DrilldownController.js'	              		
+	              ]
+	            });
+	          }
+	        }
+	})
+	

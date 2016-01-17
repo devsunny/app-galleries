@@ -1,9 +1,17 @@
-<select id="select#{ENTITY_NAME}ByKey" resultMap="#{ENTITY_VAR_NAME}ResultMap" 
-			parameterType="#{KEY_TYPE}">
+<select id="select#{ENTITY_NAME}DrilldownBy#{GROUP_BY_KEY}" resultMap="#{ENTITY_VAR_NAME}ResultMap" 
+			parameterType="#{ENTITY_NAME}">  
   SELECT 
-  #{FIELD_SELECT_LIST}
-  FROM 
+  #{DRILLDOWN_SELECT_LIST}  
+  FROM
+  (
+  SELECT 
+  #{INNER_SELECT_LIST}
+  FROM
   #{TABLE_NAME}
-  WHERE #{WHERE_KEY_FIELD}
-  #{ORDER_BY}
+  WHERE
+  #{WHERE_KEY_FIELD}
+  )
+ GROUP BY #{GROUP_BY_FIELD}
+ ORDER BY #{ORDER_BY_FIELD}   
 </select>
+
