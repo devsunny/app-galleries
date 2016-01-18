@@ -19,6 +19,8 @@ import javax.net.ssl.SSLSocket;
  * <pre>
  * keytool -genkey -keypass "changeit" -dname "CN=Sample Cert, OU=R&D, O=Company Ltd., L=New York City, S=NY, C=US" 
  *         -keyalg RSA -alias myserver -keystore selfsigned.jks -validity 3650  -keysize 2048 -storepass "changeit"
+ *         
+ * keytool -v -list -keystore selfsigned.jks -storepass "changeit"
  * </pre>
  * 
  * @author SunnyLiu
