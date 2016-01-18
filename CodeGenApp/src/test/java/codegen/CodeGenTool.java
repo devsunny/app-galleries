@@ -18,6 +18,7 @@ import com.asksunny.schema.parser.SQLScriptParser;
 public class CodeGenTool {
 
 	@Test
+	@Ignore
 	public void genApp() throws Exception {
 		CodeGenConfig config = new CodeGenConfig();
 		config.setBaseSrcDir(".");
@@ -31,7 +32,7 @@ public class CodeGenTool {
 	}
 	
 	@Test
-	@Ignore
+	
 	public void genData() throws Exception {
 		SQLScriptLexer lexer = new SQLScriptLexer(getClass().getResourceAsStream("/TestAngularGen.ddl.sql"));
 		SQLScriptParser tokenReader = new SQLScriptParser(lexer);
