@@ -8,7 +8,6 @@ import org.apache.commons.io.IOUtils;
 
 import tachyon.TachyonURI;
 import tachyon.client.UnderStorageType;
-import tachyon.client.WriteType;
 import tachyon.client.file.FileInStream;
 import tachyon.client.file.FileOutStream;
 import tachyon.client.file.TachyonFileSystem;
