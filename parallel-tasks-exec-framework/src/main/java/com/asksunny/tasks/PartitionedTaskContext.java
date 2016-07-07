@@ -9,6 +9,7 @@ public class PartitionedTaskContext extends HashMap<String, String> {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private final String parallelTaskGuid = null;
 	private String className;
 	private String[] cliArgs = new String[] {};
 	private final String taskGuid = UUID.randomUUID().toString();
@@ -56,6 +57,10 @@ public class PartitionedTaskContext extends HashMap<String, String> {
 
 	public void setTotalPartitions(int totalPartitions) {
 		this.totalPartitions = totalPartitions;
+	}
+
+	public String getParallelTaskGuid() {
+		return parallelTaskGuid;
 	}
 
 }
