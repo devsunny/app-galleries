@@ -2,7 +2,6 @@ package com.asksunny.tasks.demo;
 
 import com.asksunny.tasks.ParallePartitioner;
 import com.asksunny.tasks.ParallelTask;
-import com.asksunny.tasks.ParallelTaskContext;
 import com.asksunny.tasks.PartitionedTask;
 import com.asksunny.tasks.PartitionedTaskContext;
 
@@ -22,9 +21,9 @@ public class MockParallelTask implements ParallelTask {
 	}
 
 	@Override
-	public void init(ParallelTaskContext context) 
-	{
-		
+	public boolean init(String[] args) 
+	{		
+		return true;
 	}
 
 	@Override

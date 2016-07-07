@@ -1,10 +1,9 @@
 package com.asksunny.tasks.demo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.asksunny.tasks.ParallePartitioner;
-import com.asksunny.tasks.ParallelTaskContext;
-import com.asksunny.tasks.PartitionedTaskContext;
 
 public class MockTaskPartitioner implements ParallePartitioner{
 
@@ -13,7 +12,7 @@ public class MockTaskPartitioner implements ParallePartitioner{
 	}
 
 	@Override
-	public void init(ParallelTaskContext context) {
+	public void init(String[] args) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -25,9 +24,12 @@ public class MockTaskPartitioner implements ParallePartitioner{
 	}
 
 	@Override
-	public List<PartitionedTaskContext> doPartition() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String[]> doPartition() {
+		List<String[]> ret = new ArrayList<>();
+		for (int i = 0; i < 20; i++) {
+			ret.add(new String[]{Integer.toString(i)});			
+		}
+		return ret;
 	}
 
 }

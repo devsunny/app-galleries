@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface ParallePartitioner {
 
-	public void init(ParallelTaskContext context);
+	public void init(String[] args);
 
 	/**
 	 * If negative or 0 return, TaskMaster will wait forever; otherwise it will
@@ -15,5 +15,5 @@ public interface ParallePartitioner {
 	 */
 	public long getTimeout();
 
-	public List<PartitionedTaskContext> doPartition();
+	public List<String[]> doPartition();
 }

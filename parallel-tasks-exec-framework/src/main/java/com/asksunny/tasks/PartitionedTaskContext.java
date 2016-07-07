@@ -9,8 +9,12 @@ public class PartitionedTaskContext extends HashMap<String, String> {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private String className;
 	private String[] cliArgs = new String[] {};
 	private final String taskGuid = UUID.randomUUID().toString();
+	private int partitionSequence;
+	private int totalPartitions;
+	
 
 	public PartitionedTaskContext() {
 		super();
@@ -28,6 +32,30 @@ public class PartitionedTaskContext extends HashMap<String, String> {
 
 	public String getTaskGuid() {
 		return taskGuid;
+	}
+
+	public String getClassName() {
+		return className;
+	}
+
+	public void setClassName(String className) {
+		this.className = className;
+	}
+
+	public int getPartitionSequence() {
+		return partitionSequence;
+	}
+
+	public void setPartitionSequence(int partitionSequence) {
+		this.partitionSequence = partitionSequence;
+	}
+
+	public int getTotalPartitions() {
+		return totalPartitions;
+	}
+
+	public void setTotalPartitions(int totalPartitions) {
+		this.totalPartitions = totalPartitions;
 	}
 
 }

@@ -102,6 +102,7 @@ public class ParallelExecutionMaster implements ParallelExecutionService, Server
 					break;
 				}
 				if (handler != null && handler instanceof ParallelExecutionClientHandler) {
+					logger.info("Initialize {}", handler.getClass().getName());
 					handler.init(this, clientSocket);
 					this.workerExecutor.execute(handler);
 				} else {

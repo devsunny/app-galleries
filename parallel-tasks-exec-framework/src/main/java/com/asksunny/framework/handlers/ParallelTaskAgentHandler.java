@@ -25,7 +25,7 @@ public class ParallelTaskAgentHandler implements ParallelExecutionClientHandler 
 		this.peService = peService;
 		try {
 			dout = new DataOutputStream(clientSocket.getOutputStream());
-			dout.write('R');
+			dout.write('W');
 			dout.flush();
 			din = new DataInputStream(clientSocket.getInputStream());
 		} catch (IOException e) {

@@ -9,7 +9,12 @@ public interface ParallelTask {
 
 	public void setParallelTaskGUID(String uuid);
 
-	public void init(ParallelTaskContext context);
+	/**
+	 * 
+	 * @param args
+	 * @return to indicated parameters are valid or not
+	 */
+	public boolean init(String[] args);
 
 	public ParallePartitioner getParallePartitioner();
 

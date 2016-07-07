@@ -48,18 +48,18 @@ public class TaskLauncher {
 		if (indicator != 'R') {
 			throw new Exception("Failed to perform handshake for Task launcher");
 		}
+		logger.debug("Connected");
 	}
 
 	public void launchTask(String[] args) throws Exception {
-
-		dout.write('R');
-		dout.writeInt(args[0].length());
-		dout.write(args[0].getBytes());
+		dout.write('R');		
+		dout.writeUTF(args[0]);
+		dout.writeInt(args.length-1);
 		for (int i = 1; i < args.length; i++) {
-			dout.writeInt(args[i].length());
-			dout.write(args[i].getBytes());
+			dout.writeUTF(args[i]);
 		}
 		dout.flush();
+		logger.debug("Sent command");
 	}
 	
 	
