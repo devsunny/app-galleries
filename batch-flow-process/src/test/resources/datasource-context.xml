@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:cache="http://www.springframework.org/schema/cache" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans    
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/jdbc
+    http://www.springframework.org/schema/jdbc/spring-jdbc.xsd   
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc.xsd   
+    http://www.springframework.org/schema/task
+    http://www.springframework.org/schema/task/spring-task.xsd  
+    http://www.springframework.org/schema/cache
+    http://www.springframework.org/schema/cache/spring-cache.xsd   
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd   
+    http://mybatis.org/schema/mybatis-spring 
+    http://mybatis.org/schema/mybatis-spring.xsd
+    ">
+	<context:property-placeholder location="classpath:datasource.properties" />
+
+	<!-- uncomment the following dataSource to use other database for production -->
+	<jdbc:embedded-database id="dataSource1" type="H2">
+		<jdbc:script location="classpath:dataSource1.sql" />
+	</jdbc:embedded-database>
+
+	<jdbc:embedded-database id="dataSource2" type="HSQL">
+		<jdbc:script location="classpath:dataSource2.sql" />
+	</jdbc:embedded-database>
+
+	<bean id="sqlSessionFactory1" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource1" />
+		<property name="mapperLocations" value="classpath*:datasource1/mappers/**/*.xml" />
+	</bean>
+
+	<bean id="sqlSessionFactory2" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource2" />
+		<property name="mapperLocations" value="classpath*:datasource2/mappers/**/*.xml" />
+	</bean>
+
+	<bean id="tasklet"  class="com.asksunny.batch.tasklets.TableCopyTasklet">
+		<property name="sourceSqlSessionFactory" ref="sqlSessionFactory1"></property>
+		<property name="destinationSqlSessionFactory" ref="sqlSessionFactory2"></property>
+		<property name="sourceSelectSqlId" value="getItemListByProduct"></property>
+		<property name="destinationInsertSqlId" value="insertProduct"></property>	
+		<property name="successTaskIds">
+			<array>
+				<value>tasklet1</value>
+			</array>
+		</property>	
+	</bean>
+	
+	<bean id="tasklet1"  class="com.asksunny.batch.tasklets.SingleSqlTasklet">		
+		<property name="sqlSessionFactory" ref="sqlSessionFactory2"></property>
+		<property name="sqlId" value="updateProduct1"></property>		
+		<property name="successTaskIds">
+			<array>
+				<value>tasklet2</value>
+			</array>
+		</property>	
+	</bean>
+	
+	<bean id="tasklet2"  class="com.asksunny.batch.tasklets.SingleSqlTasklet">		
+		<property name="sqlSessionFactory" ref="sqlSessionFactory2"></property>
+		<property name="sqlId" value="updateProduct2"></property>		
+		<property name="successTaskIds">
+			<array>
+				<value>tasklet3</value>
+			</array>
+		</property>	
+	</bean>
+	
+	
+	<bean id="tasklet3"  class="com.asksunny.batch.tasklets.SingleSqlTasklet">		
+		<property name="sqlSessionFactory" ref="sqlSessionFactory2"></property>
+		<property name="sqlId" value="updateProduct3"></property>		
+		<property name="successTaskIds">
+			<array>
+				<value>tasklet4</value>
+			</array>
+		</property>	
+	</bean>
+	
+	
+	<bean id="tasklet4"  class="com.asksunny.batch.tasklets.SingleSqlTasklet">		
+		<property name="sqlSessionFactory" ref="sqlSessionFactory2"></property>
+		<property name="sqlId" value="updateProduct4"></property>		
+		<property name="successTaskIds">
+			<array>
+				<value>tasklet5</value>
+			</array>
+		</property>	
+	</bean>
+	
+	
+	<bean id="tasklet5"  class="com.asksunny.batch.tasklets.SingleSqlTasklet">		
+		<property name="sqlSessionFactory" ref="sqlSessionFactory2"></property>
+		<property name="sqlId" value="updateProduct5"></property>
+	</bean>
+	
+	
+
+</beans>
