@@ -1,32 +1,48 @@
 package com.asksunny.batch.graph;
 
-import javax.script.ScriptContext;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 public class EmbeddedScriptWorkflowTask extends AbstractWorkflowTask {
 
-	private String scriptEngineName = "nashorn";
+	private ScriptLanguage scriptLanguage = ScriptLanguage.JAVASCRIPT;
+
 	private String scriptSource = "print(\"Please provide script source\")";
+	private CompiledScript compiledScript = null;
+	private ScriptEngine engine = null;
 
 	public EmbeddedScriptWorkflowTask() {
 	}
 
-	
 	protected void executeTask() throws Exception {
-		ScriptEngineManager manager = new ScriptEngineManager();
-		ScriptEngine engine = manager.getEngineByName(getScriptEngineName());
-		engine.getContext().setAttribute("flowContext", getFlowContext(), ScriptContext.ENGINE_SCOPE);
-		engine.getContext().setAttribute("cliContext", getFlowContext().getCliArgument(), ScriptContext.ENGINE_SCOPE);
-		engine.eval(getScriptSource());
+		if (compiledScript == null) {
+			ScriptEngineManager manager = new ScriptEngineManager();
+			engine = manager.getEngineByName(getScriptEngineName());
+			Compilable compilingEngine = (Compilable) engine;
+			compiledScript = compilingEngine.compile(getScriptSource());
+		}
+		Bindings bindings = engine.createBindings();
+		bindings.put("flowContext", getFlowContext());
+		bindings.put("cliContext", getFlowContext().getCliArgument());
+		compiledScript.eval(bindings);
 	}
 
 	public String getScriptEngineName() {
-		return scriptEngineName;
-	}
-
-	public void setScriptEngineName(String scriptEngineName) {
-		this.scriptEngineName = scriptEngineName;
+		switch (scriptLanguage) {
+		case JAVASCRIPT:
+			return "Nashorn";
+		case GROOVY:
+			return "groovy";
+		case PYTHON:
+			return "python";
+		case RUBY:
+			return "ruby";
+		default:
+			return "Nashorn";
+		}
 	}
 
 	public String getScriptSource() {
@@ -35,6 +51,15 @@ public class EmbeddedScriptWorkflowTask extends AbstractWorkflowTask {
 
 	public void setScriptSource(String scriptSource) {
 		this.scriptSource = scriptSource;
+
+	}
+
+	public ScriptLanguage getScriptLanguage() {
+		return scriptLanguage;
+	}
+
+	public void setScriptLanguage(ScriptLanguage scriptLanguage) {
+		this.scriptLanguage = scriptLanguage;
 	}
 
 }
