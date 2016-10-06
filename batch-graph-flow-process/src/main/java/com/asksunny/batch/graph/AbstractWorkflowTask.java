@@ -26,7 +26,7 @@ public abstract class AbstractWorkflowTask implements WorkflowTask {
 	@Override
 	public void run() {
 		try {
-			logger.info("start executing task:{}", getTaskName());			
+			logger.info("start executing task:{}", getTaskName());
 			executeTask();
 			logger.info("Task execution completed:{}");
 			if (getPostSuccessTasks() != null) {
@@ -58,8 +58,8 @@ public abstract class AbstractWorkflowTask implements WorkflowTask {
 		}
 	}
 
-	public Object getTaskParameter() {
-		switch (flowTaskParameterType) {
+	public Object getParameter(FlowTaskParameterType pType) {
+		switch (pType) {
 		case CLIArgumentContext:
 			return getFlowContext().getCliArgument();
 		case BatchFlowContext:
@@ -88,6 +88,7 @@ public abstract class AbstractWorkflowTask implements WorkflowTask {
 
 	@Override
 	public void init(BatchFlowContext flowContext) {
+		flowContext.submitTask();
 		this.flowContext = flowContext;
 	}
 

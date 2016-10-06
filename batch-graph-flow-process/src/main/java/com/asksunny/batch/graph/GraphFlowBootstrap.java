@@ -38,8 +38,7 @@ public class GraphFlowBootstrap {
 			ExecutorService fixedThreadExecutor = Executors.newFixedThreadPool(this.maxConcurrentFlow);
 			String[] tasks = args[1].split(",");
 			for (int i = 0; i < tasks.length; i++) {
-				WorkflowTask task = appContext.getBean(tasks[i], WorkflowTask.class);
-				flowContext.submitTask();
+				WorkflowTask task = appContext.getBean(tasks[i], WorkflowTask.class);				
 				task.init(flowContext);
 				fixedThreadExecutor.execute(task);
 			}
