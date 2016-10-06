@@ -23,8 +23,8 @@ import com.asksunny.batch.graph.sql.StatementParameter;
 
 public class JdbcRecordStoreTransformer implements RecordTransformer {
 	private static final Logger logger = LoggerFactory.getLogger(JdbcRecordStoreTransformer.class);
-	private DataSource sourceDataSource;
-	private StatementHolder sourceStatement;
+	private DataSource destinationDataSource;
+	private StatementHolder destinationStatement;
 	private TextPreprocessor statementPreprocessor;
 	protected FlowTaskParameterType flowTaskParameterType = FlowTaskParameterType.None;
 	protected BatchFlowContext flowContext;
@@ -45,15 +45,22 @@ public class JdbcRecordStoreTransformer implements RecordTransformer {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object transform(Object transformee) throws Exception {
-		updatedRecords++;
-		List listParam = (List) transformee;
-		setParameter(preparedStatement, listParam, sourceStatement);
-		preparedStatement.addBatch();
-		if (updatedRecords % sourceStatement.getBatchSize() == 0) {
-			int[] effs = preparedStatement.executeBatch();
-			for (int i = 0; i < effs.length; i++) {
-				effectedRecords += effs[i];
+		try {
+			updatedRecords++;
+			List listParam = (List) transformee;
+			setParameter(preparedStatement, listParam, destinationStatement);
+			preparedStatement.addBatch();
+			if (updatedRecords % destinationStatement.getBatchSize() == 0) {
+				int[] effs = preparedStatement.executeBatch();
+				for (int i = 0; i < effs.length; i++) {
+					effectedRecords += effs[i];
+				}
 			}
+		} catch (Exception ex) {
+			if (!getDestinationStatement().isAutoCommit()) {
+				connection.rollback();
+			}
+			throw ex;
 		}
 		return transformee;
 	}
@@ -148,20 +155,20 @@ public class JdbcRecordStoreTransformer implements RecordTransformer {
 
 	}
 
-	public DataSource getSourceDataSource() {
-		return sourceDataSource;
+	public DataSource getDestinationDataSource() {
+		return destinationDataSource;
 	}
 
-	public void setSourceDataSource(DataSource sourceDataSource) {
-		this.sourceDataSource = sourceDataSource;
+	public void setDestinationDataSource(DataSource destinationDataSource) {
+		this.destinationDataSource = destinationDataSource;
 	}
 
-	public StatementHolder getSourceStatement() {
-		return sourceStatement;
+	public StatementHolder getDestinationStatement() {
+		return destinationStatement;
 	}
 
-	public void setSourceStatement(StatementHolder sourceStatement) {
-		this.sourceStatement = sourceStatement;
+	public void setDestinationStatement(StatementHolder destinationStatement) {
+		this.destinationStatement = destinationStatement;
 	}
 
 	public TextPreprocessor getStatementPreprocessor() {
@@ -177,9 +184,9 @@ public class JdbcRecordStoreTransformer implements RecordTransformer {
 		setFlowContext(flowContext);
 		if (initialized.weakCompareAndSet(false, true)) {
 			try {
-				connection = getSourceDataSource().getConnection();
-				connection.setAutoCommit(getSourceStatement().isAutoCommit());
-				preparedStatement = prepareStatement(connection, getSourceStatement());
+				connection = getDestinationDataSource().getConnection();
+				connection.setAutoCommit(getDestinationStatement().isAutoCommit());
+				preparedStatement = prepareStatement(connection, getDestinationStatement());
 			} catch (Exception e) {
 				throw new RuntimeException("Failed to prepare statement", e);
 			}
@@ -212,18 +219,18 @@ public class JdbcRecordStoreTransformer implements RecordTransformer {
 
 	@Override
 	public void shutdown() throws Exception {
-		if (updatedRecords % sourceStatement.getBatchSize() != 0) {
+		if (updatedRecords % destinationStatement.getBatchSize() != 0) {
 			int[] effs = preparedStatement.executeBatch();
 			for (int i = 0; i < effs.length; i++) {
 				effectedRecords += effs[i];
 			}
 		}
 		logger.info("Updated count:[{}] effected count:[{}]", updatedRecords, effectedRecords);
-		if (!getSourceStatement().isAutoCommit()) {
+		if (!getDestinationStatement().isAutoCommit()) {
 			connection.commit();
 		}
 		close(preparedStatement);
-		close(getSourceDataSource(), connection);
+		close(getDestinationDataSource(), connection);
 	}
 
 }
