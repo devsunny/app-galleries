@@ -16,7 +16,7 @@ public class JBossDroolsStatelessTransformer implements RecordTransformer {
 	public void init(BatchFlowContext flowContext) {
 		this.flowContext = flowContext;
 		kc = KieServices.Factory.get().getKieClasspathContainer();
-		ksession = kc.newStatelessKieSession("DecisionTableKS");
+		ksession = kc.newStatelessKieSession(getRuleName());
 	}
 
 	@Override
@@ -28,6 +28,30 @@ public class JBossDroolsStatelessTransformer implements RecordTransformer {
 	@Override
 	public void shutdown() throws Exception 
 	{
+	}
+
+	public StatelessKieSession getKsession() {
+		return ksession;
+	}
+
+	public void setKsession(StatelessKieSession ksession) {
+		this.ksession = ksession;
+	}
+
+	public String getRuleName() {
+		return ruleName;
+	}
+
+	public void setRuleName(String ruleName) {
+		this.ruleName = ruleName;
+	}
+
+	public BatchFlowContext getFlowContext() {
+		return flowContext;
+	}
+
+	public void setFlowContext(BatchFlowContext flowContext) {
+		this.flowContext = flowContext;
 	}
 
 }
