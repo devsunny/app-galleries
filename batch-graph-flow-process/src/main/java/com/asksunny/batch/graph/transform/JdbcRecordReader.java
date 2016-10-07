@@ -17,11 +17,13 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.asksunny.batch.graph.BatchFlowContext;
 import com.asksunny.batch.graph.sql.AbstractQueryable;
+import com.asksunny.batch.graph.sql.StatementHolder;
 
 public class JdbcRecordReader extends AbstractQueryable implements RecordReader {
 	private static final Logger logger = LoggerFactory.getLogger(JdbcRecordReader.class);
 
 	protected AtomicBoolean initialized = new AtomicBoolean(false);
+	private StatementHolder statement;
 	protected ResultSet resultSet = null;
 	protected PreparedStatement preparedStatement = null;
 	protected Connection connection = null;
@@ -108,5 +110,13 @@ public class JdbcRecordReader extends AbstractQueryable implements RecordReader 
 		close(preparedStatement);
 		close(getDatasource(), connection);
 
+	}
+
+	public StatementHolder getStatement() {
+		return statement;
+	}
+
+	public void setStatement(StatementHolder statement) {
+		this.statement = statement;
 	}
 }

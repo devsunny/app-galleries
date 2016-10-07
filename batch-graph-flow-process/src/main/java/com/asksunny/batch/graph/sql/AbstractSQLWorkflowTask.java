@@ -16,7 +16,6 @@ public abstract class AbstractSQLWorkflowTask extends AbstractQueryable implemen
 	protected List<WorkflowTask> postFailureTasks;
 	protected BatchFlowContext flowContext;
 	protected ExecutorService executor;
-
 	private String taskName;
 
 	protected abstract void executeTask() throws Exception;

@@ -1,6 +1,7 @@
 package com.asksunny.batch.graph.sql;
 
 import com.asksunny.batch.graph.FlowTaskParameterType;
+import com.asksunny.batch.graph.TextPreprocessor;
 
 public class StatementHolder {
 
@@ -10,13 +11,12 @@ public class StatementHolder {
 	protected FlowTaskParameterType statementParameterType = FlowTaskParameterType.None;
 	protected String statementParameterName = null;
 	private String name;
-	
-	
+	private TextPreprocessor statementPreprocessor;
+
 	private StatementParameter[] parameters = StatementParameter.EMPTY_PARAMS;
 
 	public StatementHolder() {
 	}
-	
 
 	public int getBatchSize() {
 		return batchSize;
@@ -50,36 +50,36 @@ public class StatementHolder {
 		this.parameters = parameters;
 	}
 
-
 	public FlowTaskParameterType getStatementParameterType() {
 		return statementParameterType;
 	}
-
 
 	public void setStatementParameterType(FlowTaskParameterType statementParameterType) {
 		this.statementParameterType = statementParameterType;
 	}
 
-
 	public String getStatementParameterName() {
 		return statementParameterName;
 	}
-
 
 	public void setStatementParameterName(String statementParameterName) {
 		this.statementParameterName = statementParameterName;
 	}
 
-
 	public String getName() {
 		return name;
 	}
-
 
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	public TextPreprocessor getStatementPreprocessor() {
+		return statementPreprocessor;
+	}
 
-	
+	public void setStatementPreprocessor(TextPreprocessor statementPreprocessor) {
+		this.statementPreprocessor = statementPreprocessor;
+	}
+
 }

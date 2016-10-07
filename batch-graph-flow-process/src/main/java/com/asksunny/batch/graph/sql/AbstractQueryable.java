@@ -17,25 +17,21 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.asksunny.batch.graph.BatchFlowContext;
 import com.asksunny.batch.graph.FlowTaskParameterType;
-import com.asksunny.batch.graph.TextPreprocessor;
 
 public abstract class AbstractQueryable {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractQueryable.class);
 	private DataSource datasource;
-	private StatementHolder statement;
-	private TextPreprocessor statementPreprocessor;
 	protected BatchFlowContext flowContext;
-
-	private String taskName;
+	
 
 	protected PreparedStatement prepareStatement(Connection conn, StatementHolder sourceStatement) throws Exception {
 		Object params = getParameter(sourceStatement.getStatementParameterType(),
 				sourceStatement.getStatementParameterName());
 		PreparedStatement pstmt = null;
 		String sql = sourceStatement.getSqlSource();
-		if (getStatementPreprocessor() != null) {
-			sql = getStatementPreprocessor().preprocess(sourceStatement.getSqlSource(), params);
+		if (sourceStatement.getStatementPreprocessor() != null) {
+			sql = sourceStatement.getStatementPreprocessor().preprocess(sourceStatement.getSqlSource(), params);
 		}
 		pstmt = conn.prepareStatement(sql);
 		return pstmt;
@@ -186,24 +182,12 @@ public abstract class AbstractQueryable {
 
 	}
 
-	public void setStatementPreprocessor(TextPreprocessor statementPreprocessor) {
-		this.statementPreprocessor = statementPreprocessor;
-	}
-
 	public DataSource getDatasource() {
 		return datasource;
 	}
 
 	public void setDatasource(DataSource datasource) {
 		this.datasource = datasource;
-	}
-
-	public StatementHolder getStatement() {
-		return statement;
-	}
-
-	public void setStatement(StatementHolder statement) {
-		this.statement = statement;
 	}
 
 	public BatchFlowContext getFlowContext() {
@@ -214,13 +198,7 @@ public abstract class AbstractQueryable {
 		this.flowContext = flowContext;
 	}
 
-	public String getTaskName() {
-		return taskName;
-	}
-
-	public void setTaskName(String taskName) {
-		this.taskName = taskName;
-	}
+	
 
 	public Object getParameter(FlowTaskParameterType pType, String parameterName) {
 		switch (pType) {
@@ -243,7 +221,4 @@ public abstract class AbstractQueryable {
 		}
 	}
 
-	public TextPreprocessor getStatementPreprocessor() {
-		return statementPreprocessor;
-	}
 }
