@@ -8,6 +8,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.asksunny.batch.graph.FlowTaskParameterType;
+
 public class JdbcSQLUpdateWorkflowTask extends AbstractSQLWorkflowTask {
 	private static final Logger logger = LoggerFactory.getLogger(JdbcSQLUpdateWorkflowTask.class);
 	private List<StatementHolder> statements;
@@ -23,8 +25,8 @@ public class JdbcSQLUpdateWorkflowTask extends AbstractSQLWorkflowTask {
 		connection.setAutoCommit(isAutoCommit());
 		try {
 			for (StatementHolder statement : statements) {
-				Object params = getParameter(statement.getStatementParameterType(),
-						statement.getStatementParameterName());
+				Object params = FlowTaskParameterType.getParameter(getFlowContext(),
+						statement.getStatementParameterType(), statement.getStatementParameterName());
 				PreparedStatement pstmt = prepareStatement(connection, statement);
 				if (statement.getParameters() != null && statement.getParameters().length > 0) {
 					setParameters(pstmt, params, statement);

@@ -23,11 +23,10 @@ public abstract class AbstractQueryable {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractQueryable.class);
 	private DataSource datasource;
 	protected BatchFlowContext flowContext;
-	
 
 	protected PreparedStatement prepareStatement(Connection conn, StatementHolder sourceStatement) throws Exception {
-		Object params = getParameter(sourceStatement.getStatementParameterType(),
-				sourceStatement.getStatementParameterName());
+		Object params = FlowTaskParameterType.getParameter(getFlowContext(),
+				sourceStatement.getStatementParameterType(), sourceStatement.getStatementParameterName());
 		PreparedStatement pstmt = null;
 		String sql = sourceStatement.getSqlSource();
 		if (sourceStatement.getStatementPreprocessor() != null) {
@@ -38,8 +37,8 @@ public abstract class AbstractQueryable {
 	}
 
 	protected void setParameters(PreparedStatement pstmt, StatementHolder sourceStatement) throws Exception {
-		Object params = getParameter(sourceStatement.getStatementParameterType(),
-				sourceStatement.getStatementParameterName());
+		Object params = FlowTaskParameterType.getParameter(getFlowContext(),
+				sourceStatement.getStatementParameterType(), sourceStatement.getStatementParameterName());
 		setParameters(pstmt, params, sourceStatement);
 	}
 
@@ -196,29 +195,6 @@ public abstract class AbstractQueryable {
 
 	public void setFlowContext(BatchFlowContext flowContext) {
 		this.flowContext = flowContext;
-	}
-
-	
-
-	public Object getParameter(FlowTaskParameterType pType, String parameterName) {
-		switch (pType) {
-		case CLIArgumentContext:
-			return getFlowContext().getCliArgument();
-		case BatchFlowContext:
-			return getFlowContext();
-		case CLIArgument:
-			return getFlowContext().getCliArgument().get(parameterName);
-		case BatchFlowContextObject:
-			return getFlowContext().get(parameterName);
-		case SystemProperties:
-			return System.getProperties();
-		case SystemEnvs:
-			return System.getenv();
-		case None:
-			return null;
-		default:
-			return null;
-		}
 	}
 
 }
