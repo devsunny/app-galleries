@@ -17,8 +17,8 @@ public class BatchFlowContext extends ConcurrentHashMap<String, Object> {
 	private AbstractApplicationContext appContext;
 	private CLIArgumentContext cliArgument = new CLIArgumentContext(new String[] {});
 
-	private AtomicInteger submittedTask;
-	private AtomicInteger completedTask;
+	private AtomicInteger submittedTask = new AtomicInteger(0);
+	private AtomicInteger completedTask = new AtomicInteger(0);
 	
 	public BatchFlowContext() {
 

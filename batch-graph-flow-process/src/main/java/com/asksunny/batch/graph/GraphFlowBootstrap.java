@@ -30,6 +30,16 @@ public class GraphFlowBootstrap {
 	}
 
 	protected void executeGraph(String[] args) {
+
+		final ExceptionHolder errHolder = new ExceptionHolder();
+		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+			@Override
+			public void uncaughtException(Thread t, Throwable e) {
+				logger.info("Caught unhandled exception in the thread jungle {}:{}", t.getName(), t.getThreadGroup(), e);
+				errHolder.setCauseThread(t);
+				errHolder.setUncaughtException(e);
+			}
+		});
 		CLIArgumentContext argsmap = new CLIArgumentContext(args);
 		AbstractApplicationContext appContext = null;
 		try {
@@ -38,7 +48,7 @@ public class GraphFlowBootstrap {
 			ExecutorService fixedThreadExecutor = Executors.newFixedThreadPool(this.maxConcurrentFlow);
 			String[] tasks = args[1].split(",");
 			for (int i = 0; i < tasks.length; i++) {
-				WorkflowTask task = appContext.getBean(tasks[i], WorkflowTask.class);				
+				WorkflowTask task = appContext.getBean(tasks[i], WorkflowTask.class);
 				task.init(flowContext);
 				fixedThreadExecutor.execute(task);
 			}
@@ -56,6 +66,9 @@ public class GraphFlowBootstrap {
 			}
 			logger.error("Failed to execute tasks", e);
 			System.exit(1);
+		}
+		if (errHolder.getUncaughtException() != null) {
+			throw new RuntimeException("Encountered unhandled exception", errHolder.getUncaughtException());
 		}
 	}
 

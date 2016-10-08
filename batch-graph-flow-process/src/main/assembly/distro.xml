@@ -1,0 +1,47 @@
+<assembly>
+	<formats>
+		<format>tar.gz</format>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<dependencySets>
+		<dependencySet>
+			<useProjectArtifact>true</useProjectArtifact>
+			<outputDirectory>lib</outputDirectory>
+		</dependencySet>
+	</dependencySets>
+	<fileSets>
+		<fileSet>
+			<directory>src/test/resources</directory>
+			<outputDirectory>config</outputDirectory>
+			<excludes>
+				<exclude>**/test-*.xml</exclude>
+			</excludes>
+		</fileSet>
+		<fileSet>
+			<directory>lib</directory>
+			<outputDirectory>lib</outputDirectory>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</fileSet>
+
+		<fileSet>
+			<directory>src/main/scripts</directory>
+			<outputDirectory>sbin</outputDirectory>
+			<fileMode>0755</fileMode>
+			<lineEnding>unix</lineEnding>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</fileSet>
+
+		<fileSet>
+			<outputDirectory>log</outputDirectory>
+			<excludes>
+				<exclude>**/*</exclude>
+			</excludes>
+		</fileSet>
+
+	</fileSets>
+</assembly>
