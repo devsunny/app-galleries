@@ -7,7 +7,7 @@
 	<properties>
 		<springframework-version>4.0.6.RELEASE</springframework-version>
 		<jetty-version>9.2.1.v20140609</jetty-version>
-		<logback.version>1.1.2</logback.version>
+		<logback.version>1.2.0</logback.version>
 	</properties>
 	<build>
 		<plugins>
