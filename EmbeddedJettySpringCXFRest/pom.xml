@@ -9,7 +9,7 @@
 		<project.build.sourceencoding>UTF-8</project.build.sourceencoding>
 		<org.apache.cxf.version>3.0.1</org.apache.cxf.version>
 		<org.springframework.version>4.0.6.RELEASE</org.springframework.version>
-		<org.eclipse.jetty.version>9.2.1.v20140609</org.eclipse.jetty.version>
+		<org.eclipse.jetty.version>9.4.41.v20210516</org.eclipse.jetty.version>
 	</properties>
 
 	<dependencies>
