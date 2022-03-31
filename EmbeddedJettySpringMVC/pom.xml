@@ -5,7 +5,7 @@
 	<artifactId>EmbeddedJettySpringMVC</artifactId>
 	<version>1.0.0</version>
 	<properties>
-		<springframework-version>4.0.6.RELEASE</springframework-version>
+		<springframework-version>5.3.18</springframework-version>
 		<jetty-version>9.2.1.v20140609</jetty-version>
 		<logback.version>1.1.2</logback.version>
 	</properties>
