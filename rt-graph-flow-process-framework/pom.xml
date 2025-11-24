@@ -7,19 +7,19 @@
 		<java-version>1.8</java-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<org.springframework.version>4.2.2.RELEASE</org.springframework.version>
-		<slf4j.version>1.7.6</slf4j.version>
-		<jetty.version>9.2.13.v20150730</jetty.version>
-		<mybatis.version>3.3.0</mybatis.version>
-		<mybatis.spring.version>1.2.3</mybatis.spring.version>
-		<junit.version>4.13.1</junit.version>
+		<org.springframework.version>5.3.31</org.springframework.version>
+		<slf4j.version>2.0.9</slf4j.version>
+		<jetty.version>9.4.54.v20240208</jetty.version>
+		<mybatis.version>3.5.13</mybatis.version>
+		<mybatis.spring.version>2.0.7</mybatis.spring.version>
+		<junit.version>4.13.2</junit.version>
 	</properties>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>3.11.0</version>
 				<configuration>
 					<source>${java-version}</source>
 					<target>${java-version}</target>
@@ -37,12 +37,12 @@
 			<plugin>
 				<groupId>org.drools</groupId>
 				<artifactId>drools-maven-plugin</artifactId>
-				<version>6.0.0.CR5</version>
+				<version>10.1.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.kie</groupId>
 				<artifactId>kie-maven-plugin</artifactId>
-				<version>6.4.0.Final</version>
+				<version>10.1.0</version>
 				<extensions>true</extensions>
 			</plugin>
 		</plugins>
@@ -51,58 +51,58 @@
 		<dependency>
 			<groupId>org.drools</groupId>
 			<artifactId>drools-compiler</artifactId>
-			<version>6.4.0.Final</version>
+			<version>10.1.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.kie</groupId>
 			<artifactId>kie-api</artifactId>
-			<version>6.4.0.Final</version>
+			<version>10.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.drools</groupId>
 			<artifactId>drools-core</artifactId>
-			<version>6.4.0.Final</version>
+			<version>10.1.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.drools</groupId>
 			<artifactId>drools-decisiontables</artifactId>
-			<version>6.4.0.Final</version>
+			<version>10.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.drools</groupId>
 			<artifactId>drools-templates</artifactId>
-			<version>6.4.0.Final</version>
+			<version>10.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.kie</groupId>
 			<artifactId>kie-internal</artifactId>
-			<version>6.4.0.Final</version>
+			<version>10.1.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.mvel</groupId>
 			<artifactId>mvel2</artifactId>
-			<version>2.3.1.Final</version>
+			<version>2.5.0.Final</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.python</groupId>
 			<artifactId>jython-standalone</artifactId>
-			<version>2.7.0</version>
+			<version>2.7.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.jruby</groupId>
 			<artifactId>jruby-complete</artifactId>
-			<version>9.1.5.0</version>
+			<version>9.4.5.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-jsr223</artifactId>
-			<version>2.4.7</version>
+			<version>3.0.17</version>
 		</dependency>
 
 		<dependency>
@@ -121,12 +121,12 @@
 		<dependency>
 			<groupId>org.hsqldb</groupId>
 			<artifactId>hsqldb</artifactId>
-			<version>2.3.2</version>
+			<version>2.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>1.4.190</version>
+			<version>2.2.224</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mybatis</groupId>
@@ -141,7 +141,7 @@
 		<dependency>
 			<groupId>javassist</groupId>
 			<artifactId>javassist</artifactId>
-			<version>3.12.1.GA</version>
+			<version>3.29.2-GA</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -156,8 +156,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
-			<artifactId>mockito-all</artifactId>
-			<version>1.9.5</version>
+			<artifactId>mockito-core</artifactId>
+			<version>4.6.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
